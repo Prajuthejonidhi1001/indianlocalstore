@@ -1,10 +1,14 @@
 import React from 'react';
-import { View, Text } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import AppNavigator from './src/navigation/AppNavigator';
+import { AuthProvider } from './src/context/AuthContext';
 
 export default function App() {
   return (
-    <View style={{flex: 1, backgroundColor: '#1A3A8F', justifyContent: 'center', alignItems: 'center'}}>
-      <Text style={{fontSize: 28, fontWeight: 'bold', color: '#fff'}}>Test</Text>
-    </View>
+    <AuthProvider>
+      <NavigationContainer>
+        <AppNavigator />
+      </NavigationContainer>
+    </AuthProvider>
   );
 }
