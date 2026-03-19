@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "TestApp",
-    "slug": "testapp-fresh",
+    "name": "IndianLocalStore",
+    "slug": "indianlocalstore",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
@@ -38,7 +38,6 @@
     "ios": {
       "bundleIdentifier": "com.indianlocalstore.app",
       "buildNumber": "1",
-      "supportsTabletMode": false,
       "infoPlist": {
         "NSCameraUsageDescription": "This app needs camera access to upload product photos",
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show nearby shops",
