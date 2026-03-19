@@ -1,0 +1,70 @@
+.profile-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+.profile-avatar-card {
+  padding: 2rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.pa-avatar {
+  width: 90px; height: 90px;
+  background: linear-gradient(135deg, var(--saffron), var(--gold));
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 8px 24px rgba(255,107,53,0.25);
+}
+.pa-name { font-size: 1.35rem; margin-bottom: 0.25rem; }
+.pa-role { color: var(--text-muted); font-size: 0.9rem; }
+.pa-role .badge { margin-left: 4px; vertical-align: middle; }
+
+.pa-contact {
+  width: 100%;
+  border-top: 1px dashed var(--border-default);
+  padding-top: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.pa-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: left;
+}
+
+.profile-form-card { padding: 2rem; }
+.form-card-title {
+  font-size: 1.15rem;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.profile-form-card input:disabled,
+.profile-form-card textarea:disabled {
+  background: transparent;
+  border-color: transparent;
+  color: var(--text-primary);
+  padding-left: 0;
+  padding-right: 0;
+  resize: none;
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .profile-layout { grid-template-columns: 1fr; }
+}

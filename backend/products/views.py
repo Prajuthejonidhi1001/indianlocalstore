@@ -1,0 +1,81 @@
+from rest_framework import viewsets, status, filters
+from rest_framework.decorators import action
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from django_filters.rest_framework import DjangoFilterBackend
+from .models import Category, SubCategory, Product, ProductReview
+from .serializers import (
+    CategorySerializer, SubCategorySerializer, ProductListSerializer,
+    ProductDetailSerializer, ProductCreateUpdateSerializer, ProductReviewSerializer
+)
+
+
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """Get all categories and subcategories"""
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = [AllowAny]
+
+
+class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+    """Get subcategories by category"""
+    queryset = SubCategory.objects.all()
+    serializer_class = SubCategorySerializer
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend]
+    filterset_fields = ['category']
+
+
+class ProductViewSet(viewsets.ModelViewSet):
+    """Product listing and management"""
+    queryset = Product.objects.filter(is_active=True)
+    permission_classes = [AllowAny]
+    filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
+    filterset_fields = ['category', 'seller']
+    search_fields = ['name', 'description']
+    ordering_fields = ['price', 'rating', 'created_at']
+    ordering = ['-created_at']
+
+    def get_serializer_class(self):
+        if self.action == 'retrieve':
+            return ProductDetailSerializer
+        elif self.action in ['create', 'update', 'partial_update']:
+            return ProductCreateUpdateSerializer
+        return ProductListSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(seller=self.request.user)
+
+    def get_queryset(self):
+        if self.request.user.is_authenticated and self.request.user.role == 'seller':
+            if self.request.query_params.get('my_products'):
+                return Product.objects.filter(seller=self.request.user)
+        return super().get_queryset()
+
+    @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
+    def add_review(self, request, pk=None):
+        product = self.get_object()
+        serializer = ProductReviewSerializer(data=request.data)
+        
+        if serializer.is_valid():
+            serializer.save(product=product, user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def my_products(self, request):
+        """Get seller's products"""
+        if request.user.role != 'seller':
+            return Response({'error': 'Only sellers can view this'}, status=status.HTTP_403_FORBIDDEN)
+        
+        products = Product.objects.filter(seller=request.user)
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    def search(self, request):
+        """Search products by name or category"""
+        query = request.query_params.get('q', '')
+        products = Product.objects.filter(name__icontains=query, is_active=True)
+        serializer = self.get_serializer(products, many=True)
+        return Response(serializer.data)

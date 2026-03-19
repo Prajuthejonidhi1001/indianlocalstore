@@ -1,0 +1,3 @@
+# Heroku Configuration for Django App
+# Make sure migrations run on release
+django_db_logging_enabled = False

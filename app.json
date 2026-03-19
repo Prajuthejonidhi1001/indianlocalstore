@@ -1,0 +1,59 @@
+{
+  "expo": {
+    "name": "TestApp",
+    "slug": "testapp-fresh",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "scheme": "indianlocalstore",
+    "description": "Your Trusted Neighborhood Marketplace - Connect with local sellers and thriving local businesses",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#0D1B5E"
+    },
+    "icon": "./assets/icon.png",
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location"
+        }
+      ]
+    ],
+    "android": {
+      "package": "com.indianlocalstore.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundImage": "./assets/adaptive-icon-bg.png",
+        "backgroundColor": "#0D1B5E"
+      },
+      "permissions": [
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.INTERNET"
+      ]
+    },
+    "ios": {
+      "bundleIdentifier": "com.indianlocalstore.app",
+      "buildNumber": "1",
+      "supportsTabletMode": false,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app needs camera access to upload product photos",
+        "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show nearby shops",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload product images",
+        "NSPhotoLibraryAddOnlyUsageDescription": "This app needs to save photos to your library"
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "7c3ee6ec-0ebd-442a-abfc-c49480f26988"
+      }
+    },
+    "owner": "prajwalthejonidhi"
+  }
+}

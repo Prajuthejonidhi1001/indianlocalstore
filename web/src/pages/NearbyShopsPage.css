@@ -1,0 +1,100 @@
+.shops-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+.shops-controls { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.shops-search {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--bg-elevated);
+  border: 1.5px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.55rem 1rem;
+  transition: all var(--transition-fast);
+}
+.shops-search:focus-within { border-color: var(--saffron); }
+.ss-icon { color: var(--text-muted); flex-shrink: 0; }
+.shops-search input {
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.9rem;
+  width: 220px;
+}
+
+.shops-page-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+.sp-card {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  text-decoration: none;
+}
+.sp-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+.sp-avatar {
+  width: 54px; height: 54px;
+  background: linear-gradient(135deg, var(--saffron), var(--gold));
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: white;
+  flex-shrink: 0;
+  font-family: var(--font-heading);
+  box-shadow: 0 4px 12px rgba(255,107,53,0.25);
+}
+.sp-name { font-size: 1.1rem; color: var(--text-primary); margin-bottom: 4px; }
+.sp-meta { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; }
+.sp-rating { display: flex; align-items: center; gap: 3px; color: var(--gold); font-weight: 700; }
+.sp-dot { color: var(--text-muted); }
+.sp-status { color: var(--text-muted); text-transform: capitalize; }
+.sp-status.verified { color: var(--green); font-weight: 600; }
+
+.sp-desc {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 1.25rem;
+  flex: 1;
+}
+.sp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--border-subtle);
+  padding-top: 1rem;
+}
+.sp-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+.sp-distance {
+  position: absolute;
+  top: 1.25rem; right: 1.25rem;
+  background: rgba(46,204,113,0.15);
+  color: var(--green);
+  padding: 0.2rem 0.6rem;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 700;
+}

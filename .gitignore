@@ -1,0 +1,60 @@
+# Dependencies
+node_modules/
+npm-debug.log
+yarn-error.log
+.pnp
+.pnp.js
+
+# Expo
+.expo/
+.expo-shared/
+dist/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# Environment
+.env
+.env.local
+.env.*.local
+.env.production
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Build outputs
+build/
+dist/
+.next
+out/
+
+# Testing
+.nyc_output
+coverage
+*.lcov
+
+# Misc
+*.log
+lerna-debug.log
+*.bak
+.cache
+tmp/
+
+# App-specific
+service-account.json
+*.keystore
+credentials.json
+
+# OS
+Thumbs.db
+.DS_Store
