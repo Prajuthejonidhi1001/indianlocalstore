@@ -1,6 +1,7 @@
 services:
   - type: web
     name: indianlocalstore-api
+    plan: free
     env: python
     rootDir: backend
     buildCommand: "./build.sh"
