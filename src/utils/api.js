@@ -89,7 +89,7 @@ export const productAPI = {
 export const shopAPI = {
   getShops: (params) => api.get('/shops/', { params }),
   getShopDetail: (id) => api.get(`/shops/${id}/`),
-  getNearbyShops: () => api.get('/shops/nearby/'),
+  getNearbyShops: (params) => api.get('/shops/nearby/', { params }),
   createShop: (data) => api.post('/shops/', data, {
     headers: { 'Content-Type': 'multipart/form-data' },
   }),

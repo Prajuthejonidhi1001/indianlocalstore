@@ -25,7 +25,7 @@ export default function Navbar() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (search.trim()) {
-      navigate(`/products?search=${encodeURIComponent(search.trim())}`);
+      navigate(`/shops?search=${encodeURIComponent(search.trim())}`);
       setSearch('');
       setMenuOpen(false);
     }
@@ -53,7 +53,7 @@ export default function Navbar() {
           <input
             id="navbar-search"
             type="text"
-            placeholder="Search products..."
+            placeholder="Search local shops..."
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
@@ -61,7 +61,6 @@ export default function Navbar() {
 
         {/* Nav Links (desktop) */}
         <div className="navbar-links">
-          <Link to="/products" className={`nav-link ${isActive('/products') ? 'active' : ''}`}>Products</Link>
           <Link to="/categories" className={`nav-link ${isActive('/categories') ? 'active' : ''}`}>Categories</Link>
           <Link to="/shops" className={`nav-link ${isActive('/shops') ? 'active' : ''}`}>Shops</Link>
 
@@ -132,12 +131,11 @@ export default function Navbar() {
             <Search size={15} />
             <input
               type="text"
-              placeholder="Search products..."
+              placeholder="Search local shops..."
               value={search}
               onChange={e => setSearch(e.target.value)}
             />
           </form>
-          <Link to="/products" className="mobile-link" onClick={() => setMenuOpen(false)}>Products</Link>
           <Link to="/categories" className="mobile-link" onClick={() => setMenuOpen(false)}>Categories</Link>
           <Link to="/shops" className="mobile-link" onClick={() => setMenuOpen(false)}>Shops</Link>
           {isAuthenticated ? (

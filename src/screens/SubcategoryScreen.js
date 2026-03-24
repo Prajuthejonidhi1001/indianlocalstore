@@ -1,77 +1,173 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  ActivityIndicator,
+  Dimensions
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants';
+import { COLORS, SHADOWS, RADIUS } from '../constants';
+import { shopAPI } from '../utils/api';
 
-const DEFAULT_SHOPS = [
-  { id: 1, name: 'Sri Ram Store', location: 'Bengaluru, Karnataka', rating: 4.5, distance: '1.2 km', products: 12 },
-  { id: 2, name: 'Lakshmi Traders', location: 'Mysuru, Karnataka', rating: 4.2, distance: '2.5 km', products: 8 },
-  { id: 3, name: 'Ganesh Enterprises', location: 'Hassan, Karnataka', rating: 4.7, distance: '3.1 km', products: 20 },
-];
+const { width } = Dimensions.get('window');
 
 export default function SubcategoryScreen({ route, navigation }) {
-  const { subsector, sector } = route.params;
+  const { subcategory, sectorName } = route.params;
+  const [shops, setShops] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchShops();
+  }, [subcategory]);
+
+  const fetchShops = async () => {
+    try {
+      setLoading(true);
+      const res = await shopAPI.getNearbyShops({ subcategory: subcategory.name });
+      setShops(res.data.results || res.data);
+    } catch (error) {
+      console.error('Error fetching shops:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderShopCard = (shop) => (
+    <TouchableOpacity 
+      key={shop.id} 
+      style={styles.shopCard}
+      onPress={() => navigation.navigate('ShopProducts', { shopId: shop.id, shopName: shop.name })}
+    >
+      <View style={styles.shopHeader}>
+        <View style={styles.shopAvatar}>
+          <Text style={styles.avatarText}>{shop.name[0]}</Text>
+        </View>
+        <View style={styles.shopBasicInfo}>
+          <Text style={styles.shopName} numberOfLines={1}>{shop.name}</Text>
+          <Text style={styles.shopCity}>
+             <Ionicons name="location" size={12} color={COLORS.textMuted} /> {shop.city || 'Local Area'}
+          </Text>
+        </View>
+        <View style={styles.shopRating}>
+          <Ionicons name="star" size={13} color={COLORS.secondary} />
+          <Text style={styles.ratingValue}>{shop.rating?.toFixed(1) || '4.5'}</Text>
+        </View>
+      </View>
+      
+      {shop.description && (
+        <Text style={styles.shopDesc} numberOfLines={2}>{shop.description}</Text>
+      )}
+      
+      <View style={[styles.statusBadge, { 
+        backgroundColor: shop.verification_status === 'verified' ? 'rgba(46,204,113,0.1)' : 'rgba(255,107,53,0.1)' 
+      }]}>
+        <Text style={[styles.statusText, { 
+          color: shop.verification_status === 'verified' ? COLORS.green : COLORS.primary 
+        }]}>
+          {shop.verification_status?.toUpperCase() || 'REGISTERED'}
+        </Text>
+      </View>
+    </TouchableOpacity>
+  );
 
   return (
     <View style={styles.container}>
-      <View style={styles.headerWrap}>
-        <Image source={{ uri: subsector.image }} style={styles.headerImage} />
-        <View style={styles.headerOverlay} />
+      <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color="#fff" />
+          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>{subsector.name}</Text>
-        <Text style={styles.headerSub}>{sector}</Text>
+        <View style={styles.headerInfo}>
+          <Text style={styles.headerLabel}>{sectorName.toUpperCase()}</Text>
+          <Text style={styles.title}>{subcategory.name}</Text>
+        </View>
       </View>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-        <Text style={styles.sectionTitle}>{DEFAULT_SHOPS.length} Shops Available</Text>
-        {DEFAULT_SHOPS.map((shop) => (
-          <TouchableOpacity key={shop.id} style={styles.shopCard} onPress={() => navigation.navigate('ShopProducts', { shop, subsector: subsector.name, sector })} activeOpacity={0.85}>
-            <View style={styles.shopAvatar}><Text style={styles.shopAvatarText}>{shop.name[0]}</Text></View>
-            <View style={styles.shopInfo}>
-              <Text style={styles.shopName}>{shop.name}</Text>
-              <View style={styles.row}>
-                <Ionicons name="location-outline" size={13} color={COLORS.gray} />
-                <Text style={styles.shopLoc}> {shop.location}</Text>
+
+      {loading ? (
+        <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
+      ) : (
+        <ScrollView 
+          showsVerticalScrollIndicator={false} 
+          contentContainerStyle={styles.scroll}
+        >
+          <View style={styles.shopsList}>
+            {shops.length > 0 ? (
+              shops.map(renderShopCard)
+            ) : (
+              <View style={styles.emptyContainer}>
+                <Ionicons name="storefront-outline" size={60} color={COLORS.elevated} />
+                <Text style={styles.emptyTitle}>No shops here yet</Text>
+                <Text style={styles.emptySub}>We're expanding quickly. Check back soon!</Text>
               </View>
-              <View style={styles.row}>
-                <Ionicons name="star" size={13} color="#F59E0B" />
-                <Text style={styles.rating}> {shop.rating}</Text>
-                <Text style={styles.dot}> · </Text>
-                <Text style={styles.productCount}>{shop.products} products</Text>
-                <Text style={styles.dot}> · </Text>
-                <Text style={styles.distance}>{shop.distance}</Text>
-              </View>
-            </View>
-            <View style={styles.arrowWrap}><Ionicons name="chevron-forward" size={20} color={COLORS.primary} /></View>
-          </TouchableOpacity>
-        ))}
-        <View style={{ height: 40 }} />
-      </ScrollView>
+            )}
+          </View>
+          <View style={{ height: 120 }} />
+        </ScrollView>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  headerWrap: { height: 200, position: 'relative' },
-  headerImage: { width: '100%', height: '100%' },
-  headerOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.5)' },
-  backBtn: { position: 'absolute', top: 48, left: 16, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { position: 'absolute', bottom: 36, left: 20, fontSize: 28, fontWeight: '800', color: '#fff' },
-  headerSub: { position: 'absolute', bottom: 16, left: 20, fontSize: 13, color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
-  list: { padding: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.dark, marginBottom: 16 },
-  shopCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, borderRadius: 16, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 3 },
-  shopAvatar: { width: 52, height: 52, borderRadius: 26, backgroundColor: COLORS.primaryLight, justifyContent: 'center', alignItems: 'center', marginRight: 14 },
-  shopAvatarText: { fontSize: 22, fontWeight: '800', color: COLORS.primary },
-  shopInfo: { flex: 1 },
-  shopName: { fontSize: 16, fontWeight: '700', color: COLORS.dark, marginBottom: 4 },
-  row: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-  shopLoc: { fontSize: 12, color: COLORS.gray },
-  rating: { fontSize: 12, fontWeight: '600', color: COLORS.dark },
-  dot: { color: COLORS.gray, fontSize: 12 },
-  productCount: { fontSize: 12, color: COLORS.gray },
-  distance: { fontSize: 12, color: COLORS.primary, fontWeight: '600' },
-  arrowWrap: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.primaryLight, justifyContent: 'center', alignItems: 'center', marginLeft: 8 },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingTop: 60, 
+    paddingHorizontal: 20, 
+    paddingBottom: 20,
+    backgroundColor: COLORS.background,
+  },
+  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.card, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border },
+  headerInfo: { marginLeft: 15 },
+  headerLabel: { color: COLORS.primary, fontSize: 10, fontWeight: '800', letterSpacing: 1.5, marginBottom: 2 },
+  title: { fontSize: 22, fontWeight: '800', color: COLORS.text },
+
+  loader: { flex: 1, justifyContent: 'center' },
+
+  scroll: { paddingTop: 10 },
+  shopsList: { paddingHorizontal: 25 },
+  shopCard: { 
+    backgroundColor: COLORS.card, 
+    borderRadius: RADIUS.lg, 
+    padding: 20,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    ...SHADOWS.sm
+  },
+  shopHeader: { flexDirection: 'row', alignItems: 'center', gap: 15, marginBottom: 12 },
+  shopAvatar: { 
+    width: 44, 
+    height: 44, 
+    borderRadius: 22, 
+    backgroundColor: COLORS.elevated, 
+    alignItems: 'center', 
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.border
+  },
+  avatarText: { color: COLORS.primary, fontSize: 18, fontWeight: '800' },
+  shopBasicInfo: { flex: 1 },
+  shopName: { fontSize: 17, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
+  shopCity: { fontSize: 13, color: COLORS.textMuted },
+  shopRating: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    gap: 4, 
+    backgroundColor: 'rgba(255,182,39,0.1)', 
+    paddingHorizontal: 8, 
+    paddingVertical: 4, 
+    borderRadius: RADIUS.sm 
+  },
+  ratingValue: { color: COLORS.secondary, fontSize: 12, fontWeight: '700' },
+  shopDesc: { color: COLORS.textMuted, fontSize: 13, lineHeight: 18, marginBottom: 15 },
+  statusBadge: { alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.sm },
+  statusText: { fontSize: 10, fontWeight: '800', letterSpacing: 1 },
+
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', marginTop: 100 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginTop: 15, marginBottom: 5 },
+  emptySub: { fontSize: 14, color: COLORS.textMuted, textAlign: 'center' },
 });

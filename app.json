@@ -4,7 +4,7 @@
     "slug": "indianlocalstore",
     "version": "1.0.0",
     "orientation": "portrait",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "scheme": "indianlocalstore",
     "description": "Your Trusted Neighborhood Marketplace - Connect with local sellers and thriving local businesses",
     "splash": {

@@ -1,76 +1,132 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Dimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { COLORS } from '../constants';
+import { COLORS, SHADOWS, RADIUS } from '../constants';
+import { shopAPI, productAPI } from '../utils/api';
+import { useCart } from '../context/CartContext';
 
-const DEFAULT_PRODUCTS = [
-  { id: 1, name: 'Product 1', price: '₹500', description: 'Quality product available here', image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=400' },
-  { id: 2, name: 'Product 2', price: '₹750', description: 'Best in class product', image: 'https://images.unsplash.com/photo-1513885535751-8b9238bd345a?w=400' },
-  { id: 3, name: 'Product 3', price: '₹1200', description: 'Premium quality guaranteed', image: 'https://images.unsplash.com/photo-1488459716781-31db52582fe9?w=400' },
-];
+const { width } = Dimensions.get('window');
 
 export default function ShopProductsScreen({ route, navigation }) {
-  const { shop, subsector, sector } = route.params;
-  const products = DEFAULT_PRODUCTS;
+  const { shopId, shopName } = route.params;
+  const [shop, setShop] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const { addToCart, cartCount } = useCart();
+
+  useEffect(() => {
+    fetchShopData();
+  }, [shopId]);
+
+  const fetchShopData = async () => {
+    try {
+      setLoading(true);
+      const [shopRes, prodRes] = await Promise.all([
+        shopAPI.getShopDetail(shopId),
+        productAPI.getProducts({ shop: shopId })
+      ]);
+      setShop(shopRes.data);
+      setProducts(prodRes.data);
+    } catch (error) {
+      console.error('Error fetching shop detail:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+      </View>
+    );
+  }
+
+  if (!shop) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Text style={styles.errorText}>Shop not found</Text>
+        <TouchableOpacity style={styles.backBtnLarge} onPress={() => navigation.goBack()}>
+          <Text style={styles.backBtnText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color={COLORS.dark} />
+          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
-        <View style={styles.shopAvatar}><Text style={styles.shopAvatarText}>{shop.name[0]}</Text></View>
-        <View style={styles.shopMeta}>
-          <Text style={styles.shopName}>{shop.name}</Text>
-          <Text style={styles.shopCategory}>{subsector} · {sector}</Text>
-          <View style={styles.row}>
-            <Ionicons name="location-outline" size={12} color={COLORS.gray} />
-            <Text style={styles.shopLoc}> {shop.location}</Text>
-          </View>
+        
+        <View style={styles.shopInfo}>
+          <Text style={styles.shopTitle} numberOfLines={1}>{shop.name}</Text>
+          <Text style={styles.shopSubtitle}>{shop.category_name} · {shop.distance_km || '1.2'} km</Text>
         </View>
-        <TouchableOpacity style={styles.mapBtn}><Ionicons name="navigate" size={20} color={COLORS.primary} /></TouchableOpacity>
-      </View>
 
-      <View style={styles.ratingBar}>
-        <View style={styles.ratingItem}>
-          <Ionicons name="star" size={16} color="#F59E0B" />
-          <Text style={styles.ratingText}> {shop.rating || 4.5} Rating</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.ratingItem}>
-          <Ionicons name="cube-outline" size={16} color={COLORS.primary} />
-          <Text style={styles.ratingText}> {products.length} Products</Text>
-        </View>
-        <View style={styles.divider} />
-        <View style={styles.ratingItem}>
-          <Ionicons name="call-outline" size={16} color={COLORS.success} />
-          <Text style={styles.ratingText}> Contact</Text>
-        </View>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
-        <Text style={styles.sectionTitle}>Products</Text>
-        {products.map((product) => (
-          <View key={product.id} style={styles.productCard}>
-            <Image source={{ uri: product.image }} style={styles.productImage} />
-            <View style={styles.productInfo}>
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productDesc}>{product.description}</Text>
-              <View style={styles.productBottom}>
-                <Text style={styles.productPrice}>{product.price}</Text>
-                <TouchableOpacity style={styles.contactBtn}>
-                  <Ionicons name="call-outline" size={14} color="#fff" />
-                  <Text style={styles.contactBtnText}> Contact</Text>
-                </TouchableOpacity>
-              </View>
+        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Cart')}>
+          <Ionicons name="cart" size={20} color={COLORS.primary} />
+          {cartCount > 0 && (
+            <View style={styles.cartBadge}>
+              <Text style={styles.cartBadgeText}>{cartCount}</Text>
             </View>
-          </View>
-        ))}
-        <TouchableOpacity style={styles.navigateBtn}>
-          <Ionicons name="location" size={20} color="#fff" />
-          <Text style={styles.navigateBtnText}> Navigate to Shop</Text>
+          )}
         </TouchableOpacity>
-        <View style={{ height: 40 }} />
+      </View>
+
+      <ScrollView showsVerticalScrollIndicator={false}>
+        <Image 
+          source={{ uri: shop.banner_image || 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=800&q=80' }} 
+          style={styles.banner} 
+        />
+        
+        <View style={styles.detailsCard}>
+          <View style={styles.ratingRow}>
+            <View style={styles.badge}>
+              <Ionicons name="star" size={14} color={COLORS.secondary} />
+              <Text style={styles.badgeText}>{shop.rating || '4.5'}</Text>
+            </View>
+            <View style={styles.badge}>
+              <Ionicons name="cube" size={14} color={COLORS.primary} />
+              <Text style={styles.badgeText}>{products.length} Products</Text>
+            </View>
+            <TouchableOpacity style={styles.badge}>
+              <Ionicons name="location" size={14} color={COLORS.textMuted} />
+              <Text style={styles.badgeText}>Map</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <Text style={styles.description}>{shop.description || 'Welcome to our shop! We provide the best quality products for our local community.'}</Text>
+          <View style={styles.locationRow}>
+            <Ionicons name="map-outline" size={16} color={COLORS.textMuted} />
+            <Text style={styles.addressText}>{shop.address || 'Local Market Area'}</Text>
+          </View>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Product Catalog</Text>
+          {products.length > 0 ? (
+            products.map((item) => (
+              <TouchableOpacity key={item.id} style={styles.productCard}>
+                <Image source={{ uri: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80' }} style={styles.productImage} />
+                <View style={styles.productDetails}>
+                  <Text style={styles.productName}>{item.name}</Text>
+                  <Text style={styles.productCategory}>{item.category_name}</Text>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.price}>₹{item.price}</Text>
+                    <TouchableOpacity style={styles.addBtn} onPress={() => addToCart(item.id)}>
+                      <Ionicons name="cart-outline" size={18} color="#fff" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No products listed yet.</Text>
+          )}
+        </View>
+        <View style={{ height: 100 }} />
       </ScrollView>
     </View>
   );
@@ -78,31 +134,67 @@ export default function ShopProductsScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  header: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.white, paddingHorizontal: 16, paddingTop: 52, paddingBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 3 },
-  backBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.lightGray, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  shopAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: COLORS.primaryLight, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  shopAvatarText: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
-  shopMeta: { flex: 1 },
-  shopName: { fontSize: 16, fontWeight: '800', color: COLORS.dark },
-  shopCategory: { fontSize: 11, color: COLORS.primary, fontWeight: '600', marginBottom: 2 },
-  row: { flexDirection: 'row', alignItems: 'center' },
-  shopLoc: { fontSize: 11, color: COLORS.gray },
-  mapBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primaryLight, justifyContent: 'center', alignItems: 'center' },
-  ratingBar: { flexDirection: 'row', backgroundColor: COLORS.white, marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 14, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 4, elevation: 2 },
-  ratingItem: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' },
-  ratingText: { fontSize: 13, fontWeight: '600', color: COLORS.dark },
-  divider: { width: 1, backgroundColor: COLORS.border },
-  list: { padding: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.dark, marginBottom: 16, marginTop: 4 },
-  productCard: { backgroundColor: COLORS.white, borderRadius: 16, marginBottom: 12, overflow: 'hidden', flexDirection: 'row', shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 6, elevation: 3 },
-  productImage: { width: 110, height: 110 },
-  productInfo: { flex: 1, padding: 14, justifyContent: 'space-between' },
-  productName: { fontSize: 16, fontWeight: '800', color: COLORS.dark, marginBottom: 4 },
-  productDesc: { fontSize: 12, color: COLORS.gray, lineHeight: 18, flex: 1 },
-  productBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 8 },
-  productPrice: { fontSize: 18, fontWeight: '800', color: COLORS.primary },
-  contactBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20 },
-  contactBtnText: { color: '#fff', fontWeight: '700', fontSize: 12 },
-  navigateBtn: { backgroundColor: COLORS.dark, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 16, borderRadius: 16, marginTop: 8 },
-  navigateBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  centered: { justifyContent: 'center', alignItems: 'center' },
+  header: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingTop: 60, 
+    paddingHorizontal: 20, 
+    paddingBottom: 20,
+    backgroundColor: COLORS.background,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border
+  },
+  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
+  shopInfo: { flex: 1, marginLeft: 10 },
+  shopTitle: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
+  shopSubtitle: { color: COLORS.textMuted, fontSize: 13, marginTop: 2 },
+  actionBtn: { width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: COLORS.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border },
+  cartBadge: { position: 'absolute', top: -5, right: -5, backgroundColor: COLORS.red, borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: COLORS.background },
+  cartBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
+
+  banner: { width: '100%', height: 200 },
+  detailsCard: { 
+    backgroundColor: COLORS.card, 
+    margin: 20, 
+    marginTop: -30, 
+    borderRadius: 20, 
+    padding: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 10
+  },
+  ratingRow: { flexDirection: 'row', gap: 10, marginBottom: 15 },
+  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,107,53,0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,107,53,0.1)' },
+  badgeText: { color: COLORS.text, fontSize: 12, fontWeight: '700' },
+  description: { color: COLORS.text, fontSize: 14, lineHeight: 22, marginBottom: 15 },
+  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  addressText: { color: COLORS.textMuted, fontSize: 13 },
+
+  section: { paddingHorizontal: 20 },
+  sectionTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text, marginBottom: 15 },
+  productCard: { 
+    flexDirection: 'row', 
+    backgroundColor: COLORS.card, 
+    borderRadius: 18, 
+    padding: 12, 
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border
+  },
+  productImage: { width: 90, height: 90, borderRadius: 12 },
+  productDetails: { flex: 1, marginLeft: 15, justifyContent: 'space-between' },
+  productName: { color: COLORS.text, fontSize: 16, fontWeight: '700' },
+  productCategory: { color: COLORS.textMuted, fontSize: 12 },
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  price: { color: COLORS.primary, fontSize: 18, fontWeight: '800' },
+  addBtn: { backgroundColor: COLORS.primary, width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  
+  emptyText: { color: COLORS.textMuted, textAlign: 'center', marginTop: 30 },
+  errorText: { color: COLORS.text, fontSize: 18, marginBottom: 20 },
+  backBtnLarge: { backgroundColor: COLORS.primary, paddingHorizontal: 30, paddingVertical: 12, borderRadius: 10 },
+  backBtnText: { color: '#fff', fontWeight: '700' }
 });

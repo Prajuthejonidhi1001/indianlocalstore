@@ -1,169 +1,90 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '../utils/api';
-import { logger } from '../utils/logger';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Initialize auth on app launch
-  useEffect(() => {
-    initializeAuth();
-  }, []);
-
-  const initializeAuth = async () => {
+  const fetchUser = useCallback(async () => {
     try {
-      const access_token = await AsyncStorage.getItem('access_token');
-      if (access_token) {
-        // Verify token by getting user profile
-        const response = await authAPI.getProfile();
-        setUser(response.data);
-        setIsLoggedIn(true);
+      const token = await AsyncStorage.getItem('access_token');
+      if (!token) {
+        setLoading(false);
+        return;
       }
+      const { data } = await authAPI.getProfile();
+      setUser(data);
     } catch (error) {
-      logger.error('Auth initialization failed:', error);
+      console.error('Fetch user error:', error);
       await AsyncStorage.removeItem('access_token');
       await AsyncStorage.removeItem('refresh_token');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const login = async (email, password) => {
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  const login = async (username, password) => {
     try {
       setLoading(true);
-      const response = await authAPI.login(email, password);
-      const { access, refresh, ...userData } = response.data;
-
-      // Store tokens
-      await AsyncStorage.setItem('access_token', access);
-      await AsyncStorage.setItem('refresh_token', refresh);
-
-      // Decode token to get user data
-      const profileResponse = await authAPI.getProfile();
-      setUser(profileResponse.data);
-      setIsLoggedIn(true);
-      logger.log('Login successful');
+      const { data } = await authAPI.login(username, password);
+      await AsyncStorage.setItem('access_token', data.access);
+      await AsyncStorage.setItem('refresh_token', data.refresh);
+      await fetchUser();
       return { success: true };
     } catch (error) {
-      const message = error.response?.data?.detail || 'Login failed';
-      logger.error('Login error:', message);
+      console.error('Login error:', error.response?.data || error.message);
+      const message = error.response?.data?.detail || 'Invalid username or password';
       return { success: false, error: message };
     } finally {
       setLoading(false);
     }
   };
 
-  const register = async (data) => {
+  const register = async (formData) => {
     try {
       setLoading(true);
-      const response = await authAPI.register(data);
-      
-      // Auto-login after registration
-      return loginAfterRegister(data.username, data.password);
+      const { data } = await authAPI.register(formData);
+      return { success: true, data };
     } catch (error) {
-      const message = error.response?.data?.username?.[0] || 'Registration failed';
-      logger.error('Registration error:', message);
+      console.error('Register error:', error.response?.data || error.message);
+      const message = error.response?.data?.username?.[0] || 
+                      error.response?.data?.email?.[0] || 
+                      'Registration failed';
       return { success: false, error: message };
     } finally {
       setLoading(false);
-    }
-  };
-
-  const registerBuyer = async (name, email, password) => {
-    try {
-      setLoading(true);
-      const response = await authAPI.register({
-        first_name: name.split(' ')[0],
-        last_name: name.split(' ').slice(1).join(' '),
-        username: email,
-        email: email,
-        password: password,
-        role: 'customer',
-      });
-      
-      // Auto-login after registration
-      return await login(email, password);
-    } catch (error) {
-      const message = error.response?.data?.detail || error.response?.data?.username?.[0] || 'Registration failed';
-      logger.error('Buyer registration error:', message, error);
-      return { success: false, error: message };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const registerSeller = async (data) => {
-    try {
-      setLoading(true);
-      const response = await authAPI.register({
-        first_name: data.name.split(' ')[0],
-        last_name: data.name.split(' ').slice(1).join(' '),
-        username: data.email,
-        email: data.email,
-        password: data.password || 'TempPassword123!',
-        role: 'seller',
-      });
-      
-      // Auto-login after registration
-      return await login(data.email, data.password || 'TempPassword123!');
-    } catch (error) {
-      const message = error.response?.data?.detail || error.response?.data?.username?.[0] || 'Registration failed';
-      logger.error('Seller registration error:', message, error);
-      return { success: false, error: message };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const loginAfterRegister = async (username, password) => {
-    try {
-      return await login(username, password);
-    } catch (error) {
-      logger.error('Auto-login after registration failed');
-      return { success: false, error: 'Registration successful, please login' };
-    }
-  };
-
-  const updateProfile = async (profileData) => {
-    try {
-      const response = await authAPI.updateProfile(profileData);
-      setUser(response.data);
-      return { success: true };
-    } catch (error) {
-      const message = error.response?.data?.detail || 'Update failed';
-      logger.error('Profile update error:', message);
-      return { success: false, error: message };
     }
   };
 
   const logout = async () => {
-    try {
-      await AsyncStorage.removeItem('access_token');
-      await AsyncStorage.removeItem('refresh_token');
-      setUser(null);
-      setIsLoggedIn(false);
-      logger.log('Logout successful');
-    } catch (error) {
-      logger.error('Logout error:', error);
-    }
+    await AsyncStorage.removeItem('access_token');
+    await AsyncStorage.removeItem('refresh_token');
+    setUser(null);
   };
 
+  const updateUser = (updatedUser) => setUser(updatedUser);
+
+  const isAuthenticated = !!user;
+  const isSeller = user?.role === 'seller';
+
   return (
-    <AuthContext.Provider value={{
-      user,
-      isLoggedIn,
-      loading,
-      login,
-      register,
-      registerBuyer,
-      registerSeller,
-      logout,
-      updateProfile,
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      isAuthenticated, 
+      isSeller, 
+      login, 
+      register, 
+      logout, 
+      updateUser, 
+      refetchUser: fetchUser 
     }}>
       {children}
     </AuthContext.Provider>
@@ -171,9 +92,7 @@ export const AuthProvider = ({ children }) => {
 };
 
 export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within AuthProvider');
-  }
-  return context;
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
+  return ctx;
 };
