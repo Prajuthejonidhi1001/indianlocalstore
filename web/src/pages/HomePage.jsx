@@ -5,14 +5,10 @@ import { productAPI, shopAPI } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
 import './HomePage.css';
+import './CategoriesPage.css';
 
-const CAT_EMOJIS = {
-  'Vegetables': '🥬', 'Fruits': '🍎', 'Dairy': '🥛',
-  'Spices': '🌿', 'Grains': '🌾', 'Snacks': '🥜',
-  'Meat': '🍖', 'Beverages': '🧃', 'Bakery': '🍞',
-  'Personal Care': '🧴', 'Home & Living': '🏠', 'Electronics': '📱',
-  'Clothing': '👕', 'Stationery': '📚', 'Pharmacy': '💊',
-};
+const EMOJIS = ['🥬', '🍎', '🥛', '🌿', '🌾', '🥜', '🧴', '🏠', '🐟', '🍬', '🥦', '🫙'];
+import { ChevronDown } from 'lucide-react';
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -23,6 +19,11 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [locating, setLocating] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [expandedCats, setExpandedCats] = useState({});
+
+  const toggleCat = (id) => {
+    setExpandedCats(prev => ({ ...prev, [id]: !prev[id] }));
+  };
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -105,40 +106,41 @@ export default function HomePage() {
             </Link>
           </div>
 
-          {/* Category pill filters */}
-          <div style={{ display: 'flex', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.75rem', scrollbarWidth: 'none' }}>
-            <button
-              onClick={() => setSelectedCategory(null)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                padding: '0.45rem 1rem', borderRadius: '999px', border: '1.5px solid',
-                cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.2s',
-                borderColor: !selectedCategory ? 'var(--primary-color)' : 'var(--border-color)',
-                background: !selectedCategory ? 'var(--primary-color)' : 'transparent',
-                color: !selectedCategory ? '#fff' : 'var(--text-gray)',
-              }}
-            >
-              <Grid size={13} /> All
-            </button>
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => handleCategoryClick(cat)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                  padding: '0.45rem 1rem', borderRadius: '999px', border: '1.5px solid',
-                  cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', transition: 'all 0.2s',
-                  borderColor: selectedCategory === cat.id ? 'var(--primary-color)' : 'var(--border-color)',
-                  background: selectedCategory === cat.id ? 'var(--primary-color)' : 'transparent',
-                  color: selectedCategory === cat.id ? '#fff' : 'var(--text-light)',
-                }}
-              >
-                {cat.icon
-                  ? <img src={cat.icon} alt="" style={{ width: 16, height: 16, borderRadius: '4px', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: '1rem' }}>{CAT_EMOJIS[cat.name] || '🛍️'}</span>
-                }
-                {cat.name}
-              </button>
+          {/* Category Accordions (Imported from Categories Page) */}
+          <div className="categories-list" style={{ marginTop: '1rem' }}>
+            {categories.map((cat, i) => (
+              <div key={cat.id} className="cat-section" id={`cat-section-${cat.id}`}>
+                <div className="cat-section-header clickable" onClick={() => toggleCat(cat.id)}>
+                  {cat.icon ? (
+                    <img src={cat.icon} alt={cat.name} className="cat-section-img" />
+                  ) : (
+                    <div className="cat-page-emoji">{EMOJIS[i % EMOJIS.length]}</div>
+                  )}
+                  <div className="cat-section-title">
+                    <h2 style={{ margin: 0, fontSize: '1.25rem', color: 'var(--text-dark)' }}>{cat.name}</h2>
+                    {cat.description && <p style={{ margin: '4px 0 0', color: 'var(--text-gray)', fontSize: '0.9rem' }}>{cat.description}</p>}
+                  </div>
+                  <ChevronDown className={`cat-chevron ${expandedCats[cat.id] ? 'expanded' : ''}`} />
+                </div>
+                
+                {expandedCats[cat.id] && (
+                  cat.subcategories?.length > 0 ? (
+                  <div className="subcat-grid">
+                    {cat.subcategories.map((sub, j) => (
+                      <Link to={`/products?category=${cat.id}&subcategory=${sub.id}`} key={sub.id} className="subcat-card card" id={`subcat-${sub.id}`}>
+                        {sub.icon ? (
+                          <img src={sub.icon} alt={sub.name} className="subcat-img" />
+                        ) : (
+                          <div className="subcat-emoji">{EMOJIS[(i + j + 1) % EMOJIS.length]}</div>
+                        )}
+                        <span className="subcat-name">{sub.name}</span>
+                      </Link>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="subcat-empty">No subcategories available.</div>
+                ))}
+              </div>
             ))}
           </div>
         </section>
