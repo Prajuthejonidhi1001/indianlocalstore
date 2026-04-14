@@ -138,7 +138,18 @@ export default function RegisterPage() {
       }
     } catch (err) {
       console.error(err);
-      toast.error('Registration failed. Username or email might be taken.');
+      if (err.response?.data) {
+        const errorData = err.response.data;
+        const firstErrorKey = Object.keys(errorData)[0];
+        if (firstErrorKey) {
+          const message = Array.isArray(errorData[firstErrorKey]) 
+            ? errorData[firstErrorKey][0] 
+            : errorData[firstErrorKey];
+          toast.error(`${firstErrorKey.toUpperCase()}: ${message}`);
+          return;
+        }
+      }
+      toast.error('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }

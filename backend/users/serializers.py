@@ -2,6 +2,7 @@ from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+import re
 from .models import User
 
 
@@ -32,8 +33,18 @@ class UserRegisterSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Passwords don't match")
         
         # Enforce Amazon-level Security Rules!
+        password = data['password']
+        if not re.search(r'[A-Z]', password):
+            raise serializers.ValidationError({"password": ["Password must contain at least one uppercase letter."]})
+        if not re.search(r'[a-z]', password):
+            raise serializers.ValidationError({"password": ["Password must contain at least one lowercase letter."]})
+        if not re.search(r'[0-9]', password):
+            raise serializers.ValidationError({"password": ["Password must contain at least one number."]})
+        if not re.search(r'[^A-Za-z0-9]', password):
+            raise serializers.ValidationError({"password": ["Password must contain at least one special character."]})
+
         try:
-            validate_password(data['password'])
+            validate_password(password)
         except ValidationError as e:
             raise serializers.ValidationError({"password": list(e.messages)})
             
