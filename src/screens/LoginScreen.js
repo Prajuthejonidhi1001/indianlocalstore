@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, 
-  ScrollView, Alert, Animated, Easing, KeyboardAvoidingView, Platform, Dimensions
+  ScrollView, Alert, Animated, Easing, KeyboardAvoidingView, Platform, Dimensions, Vibration
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,107 +18,148 @@ export default function LoginScreen({ navigation }) {
   
   const { login, loading } = useAuth();
   
-  // Animation Values
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  const blob1Anim = useRef(new Animated.Value(0)).current;
-  const blob2Anim = useRef(new Animated.Value(0)).current;
+  // -- Hyper Unique Animation Engines --
+  const cardScale = useRef(new Animated.Value(0.8)).current;
+  const cardOpacity = useRef(new Animated.Value(0)).current;
+  const logoRot = useRef(new Animated.Value(0)).current;
+  const inputLeft = useRef(new Animated.Value(-width)).current;
+  const inputRight = useRef(new Animated.Value(width)).current;
+  const btnUp = useRef(new Animated.Value(100)).current;
+  const blobShape = useRef(new Animated.Value(0)).current;
+  const shakeAnim = useRef(new Animated.Value(0)).current;
 
+  // Render Pipeline
   useEffect(() => {
-    // Entrance Animation
+    // 1. Enter the Main Card
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1, duration: 800, useNativeDriver: true, easing: Easing.out(Easing.cubic)
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0, duration: 800, useNativeDriver: true, easing: Easing.out(Easing.cubic)
-      })
+      Animated.spring(cardScale, { toValue: 1, friction: 5, tension: 40, useNativeDriver: true }),
+      Animated.timing(cardOpacity, { toValue: 1, duration: 600, useNativeDriver: true })
     ]).start();
 
-    // Infinite Background Floating Animation
-    const float = (val, to, duration) => Animated.sequence([
-      Animated.timing(val, { toValue: to, duration, useNativeDriver: true, easing: Easing.inOut(Easing.sin) }),
-      Animated.timing(val, { toValue: 0, duration, useNativeDriver: true, easing: Easing.inOut(Easing.sin) })
-    ]);
-    
-    Animated.loop(float(blob1Anim, 30, 4000)).start();
-    Animated.loop(float(blob2Anim, -30, 5000)).start();
+    // 2. Stagger the inputs flying in from opposite dimensions
+    Animated.stagger(200, [
+      Animated.spring(inputLeft, { toValue: 0, friction: 6, tension: 50, useNativeDriver: true }),
+      Animated.spring(inputRight, { toValue: 0, friction: 6, tension: 50, useNativeDriver: true }),
+      Animated.spring(btnUp, { toValue: 0, friction: 5, tension: 40, useNativeDriver: true }),
+    ]).start();
+
+    // 3. Ambient Liquid Background Morphing
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(blobShape, { toValue: 1, duration: 4000, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
+        Animated.timing(blobShape, { toValue: 0, duration: 4000, easing: Easing.inOut(Easing.sin), useNativeDriver: false })
+      ])
+    ).start();
+
+    // 4. Logo 3D Flip
+    Animated.loop(
+      Animated.timing(logoRot, { toValue: 1, duration: 6000, easing: Easing.linear, useNativeDriver: true })
+    ).start();
   }, []);
 
+  const triggerErrorShake = () => {
+    Vibration.vibrate(100);
+    Animated.sequence([
+      Animated.timing(shakeAnim, { toValue: 15, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: -15, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 15, duration: 50, useNativeDriver: true }),
+      Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true })
+    ]).start();
+  };
+
   const handleLogin = async () => {
-    if (!username || !password) { Alert.alert('Error', 'Please fill all fields'); return; }
+    if (!username || !password) { triggerErrorShake(); Alert.alert('Error', 'Please fill all fields'); return; }
     const result = await login(username, password);
     if (!result.success) {
+      triggerErrorShake();
       Alert.alert('Login Failed', result.error);
     }
   };
 
+  // Interpolations
+  const logoRotation = logoRot.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const blobBorderRadius = blobShape.interpolate({ inputRange: [0, 1], outputRange: [200, 50] });
+
   return (
     <SafeAreaView style={styles.container}>
-      {/* Animated Abstract Background */}
-      <Animated.View style={[styles.blob, styles.blob1, { transform: [{ translateY: blob1Anim }, { translateX: blob1Anim }] }]} />
-      <Animated.View style={[styles.blob, styles.blob2, { transform: [{ translateY: blob2Anim }, { translateX: Animated.multiply(blob2Anim, -1) }] }]} />
+      {/* Hyper-Animated Liquid Background Matrices */}
+      <Animated.View style={[styles.liquidBlob, { 
+        backgroundColor: '#FF6B00', top: -100, left: -50,
+        transform: [{ scaleX: blobShape.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] }) }],
+        borderBottomRightRadius: blobBorderRadius 
+      }]} />
+      <Animated.View style={[styles.liquidBlob, { 
+        backgroundColor: '#5521FF', bottom: -120, right: -80,
+        transform: [{ scaleY: blobShape.interpolate({ inputRange: [0, 1], outputRange: [1, 1.8] }) }],
+        borderTopLeftRadius: blobBorderRadius 
+      }]} />
       
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           
-          <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            <View style={styles.logoContainer}>
+          <Animated.View style={[styles.card, { 
+            opacity: cardOpacity, 
+            transform: [
+              { scale: cardScale }, 
+              { translateX: shakeAnim },
+              { perspective: 1000 }
+            ] 
+          }]}>
+            <View style={styles.headerRow}>
+              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                <Ionicons name="arrow-back" size={24} color="#FFF" />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.logoWrap}>
+              <Animated.View style={[styles.hologramRing, { transform: [{ rotate: logoRotation }] }]} />
               <View style={styles.logoBox}>
-                <Ionicons name="storefront" size={32} color="#FFF" />
+                <Ionicons name="flash" size={36} color="#FFF" />
               </View>
             </View>
 
             <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to support your local shops</Text>
+            <Text style={styles.subtitle}>Unlock your local marketplace</Text>
 
-            <View style={[styles.inputContainer, focusedInput === 'username' && styles.inputFocused]}>
-              <Ionicons name="person-outline" size={20} color={focusedInput === 'username' ? COLORS.primary : COLORS.textMuted} style={styles.icon} />
-              <TextInput 
-                placeholder="Username" 
-                value={username} 
-                onChangeText={setUsername} 
-                style={styles.input} 
-                autoCapitalize="none" 
-                placeholderTextColor={COLORS.borderStrong}
-                onFocus={() => setFocusedInput('username')}
-                onBlur={() => setFocusedInput(null)}
-              />
-            </View>
+            <Animated.View style={{ transform: [{ translateX: inputLeft }] }}>
+              <View style={[styles.inputContainer, focusedInput === 'username' && styles.inputFocused]}>
+                <Ionicons name="person" size={20} color={focusedInput === 'username' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+                <TextInput 
+                  placeholder="Username" value={username} onChangeText={setUsername} 
+                  style={styles.input} autoCapitalize="none" placeholderTextColor={COLORS.borderStrong}
+                  onFocus={() => setFocusedInput('username')} onBlur={() => setFocusedInput(null)}
+                />
+              </View>
+            </Animated.View>
 
-            <View style={[styles.inputContainer, focusedInput === 'password' && styles.inputFocused]}>
-              <Ionicons name="lock-closed-outline" size={20} color={focusedInput === 'password' ? COLORS.primary : COLORS.textMuted} style={styles.icon} />
-              <TextInput 
-                placeholder="Password" 
-                value={password} 
-                onChangeText={setPassword} 
-                style={styles.input} 
-                secureTextEntry={!showPass} 
-                placeholderTextColor={COLORS.borderStrong}
-                onFocus={() => setFocusedInput('password')}
-                onBlur={() => setFocusedInput(null)}
-              />
-              <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
-                <Ionicons name={showPass ? 'eye-off-outline' : 'eye-outline'} size={20} color={COLORS.textMuted} />
+            <Animated.View style={{ transform: [{ translateX: inputRight }] }}>
+              <View style={[styles.inputContainer, focusedInput === 'password' && styles.inputFocused]}>
+                <Ionicons name="finger-print" size={20} color={focusedInput === 'password' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+                <TextInput 
+                  placeholder="Secure Password" value={password} onChangeText={setPassword} 
+                  style={styles.input} secureTextEntry={!showPass} placeholderTextColor={COLORS.borderStrong}
+                  onFocus={() => setFocusedInput('password')} onBlur={() => setFocusedInput(null)}
+                />
+                <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
+                  <Ionicons name={showPass ? 'eye-off' : 'eye'} size={22} color={showPass ? '#FF6B00' : COLORS.textMuted} />
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+
+            <Animated.View style={{ transform: [{ translateY: btnUp }] }}>
+              <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading} activeOpacity={0.85}>
+                <View style={styles.btnHologram} />
+                <Text style={styles.loginBtnText}>{loading ? 'Authenticating...' : 'Sign In Now'}</Text>
+                {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
               </TouchableOpacity>
-            </View>
+            </Animated.View>
 
-            <TouchableOpacity 
-              style={[styles.loginBtn, loading && styles.loginBtnDisabled]} 
-              onPress={handleLogin} 
-              disabled={loading}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.loginBtnText}>{loading ? 'Authenticating...' : 'Sign In'}</Text>
-              {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
-            </TouchableOpacity>
-
-            <View style={styles.footer}>
-              <Text style={styles.footerText}>Don't have an account? </Text>
+            <Animated.View style={[styles.footer, { opacity: cardOpacity }]}>
+              <Text style={styles.footerText}>New to IndianLocalStore? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.footerAction}>Create one</Text>
+                <Text style={styles.footerAction}>Join Free</Text>
               </TouchableOpacity>
-            </View>
+            </Animated.View>
           </Animated.View>
 
         </ScrollView>
@@ -128,127 +169,26 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#0b0f19',
-    position: 'relative',
-  },
-  blob: {
-    position: 'absolute',
-    borderRadius: 200,
-    opacity: 0.15,
-  },
-  blob1: {
-    width: 300,
-    height: 300,
-    backgroundColor: '#FF6B00',
-    top: -50,
-    left: -100,
-  },
-  blob2: {
-    width: 400,
-    height: 400,
-    backgroundColor: '#5521FF',
-    bottom: -100,
-    right: -150,
-  },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    padding: 24,
-  },
-  card: {
-    backgroundColor: 'rgba(19, 25, 32, 0.7)',
-    borderRadius: 28,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    ...SHADOWS.xl,
-  },
-  logoContainer: {
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  logoBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.md,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#FFF',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: COLORS.textMuted,
-    textAlign: 'center',
-    marginBottom: 32,
-  },
-  inputContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: 16,
-    height: 56,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  inputFocused: {
-    borderColor: COLORS.primary,
-    backgroundColor: 'rgba(255, 107, 0, 0.05)',
-  },
-  icon: {
-    marginRight: 12,
-  },
-  input: {
-    flex: 1,
-    color: '#FFF',
-    fontSize: 16,
-    height: '100%',
-  },
-  eyeBtn: {
-    padding: 8,
-  },
-  loginBtn: {
-    backgroundColor: COLORS.primary,
-    borderRadius: RADIUS.lg,
-    height: 56,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-    ...SHADOWS.md,
-  },
-  loginBtnDisabled: {
-    opacity: 0.7,
-  },
-  loginBtnText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '700',
-    marginRight: 8,
-  },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 32,
-  },
-  footerText: {
-    color: COLORS.textMuted,
-    fontSize: 14,
-  },
-  footerAction: {
-    color: COLORS.primary,
-    fontSize: 14,
-    fontWeight: '700',
-  }
+  container: { flex: 1, backgroundColor: '#070a12', position: 'relative' },
+  liquidBlob: { position: 'absolute', width: 350, height: 350, opacity: 0.25 },
+  scroll: { flexGrow: 1, justifyContent: 'center', padding: 22 },
+  card: { backgroundColor: 'rgba(20, 25, 34, 0.65)', borderRadius: 32, padding: 28, borderWidth: 1, borderColor: 'rgba(255,255,255,0.08)', ...SHADOWS.xl },
+  headerRow: { position: 'absolute', top: 24, left: 24, zIndex: 10 },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.05)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  logoWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 30, marginTop: 40 },
+  hologramRing: { position: 'absolute', width: 90, height: 90, borderRadius: 45, borderWidth: 2, borderColor: '#5521FF', borderStyle: 'dashed', opacity: 0.5 },
+  logoBox: { width: 70, height: 70, borderRadius: 24, backgroundColor: '#FF6B00', alignItems: 'center', justifyContent: 'center', shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.5, shadowRadius: 20, elevation: 15 },
+  title: { fontSize: 32, fontWeight: '900', color: '#FFF', textAlign: 'center', marginBottom: 8, letterSpacing: 0.5 },
+  subtitle: { fontSize: 15, color: '#8b9bb4', textAlign: 'center', marginBottom: 36, letterSpacing: 0.5 },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 16, paddingHorizontal: 16, height: 60, marginBottom: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.05)' },
+  inputFocused: { borderColor: '#FF6B00', backgroundColor: 'rgba(255, 107, 0, 0.05)', transform: [{ scale: 1.02 }] },
+  icon: { marginRight: 14 },
+  input: { flex: 1, color: '#FFF', fontSize: 17, height: '100%', fontWeight: '500' },
+  eyeBtn: { padding: 8 },
+  loginBtn: { height: 60, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12, backgroundColor: '#FF6B00', overflow: 'hidden' },
+  btnHologram: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.1)' },
+  loginBtnText: { color: '#FFF', fontSize: 17, fontWeight: '800', marginRight: 10, letterSpacing: 0.5 },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
+  footerText: { color: '#8b9bb4', fontSize: 15 },
+  footerAction: { color: '#00D4FF', fontSize: 15, fontWeight: '800' }
 });
