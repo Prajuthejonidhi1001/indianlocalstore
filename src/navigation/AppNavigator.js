@@ -92,16 +92,33 @@ function MainTabs() {
   );
 }
 
+import { useAuth } from '../context/AuthContext';
+
 export default function AppNavigator() {
+  const { isAuthenticated, loading } = useAuth();
+  
+  if (loading) {
+    return <View style={{flex: 1, backgroundColor: COLORS.background}} />;
+  }
+
   return (
     <RootStack.Navigator screenOptions={{ headerShown: false, cardStyle: { backgroundColor: COLORS.background } }}>
-      <RootStack.Screen name="MainTabs" component={MainTabs} />
-      
-      {/* Global E-Commerce & Management Screens (Hides Tab Bar) */}
-      <RootStack.Screen name="Cart" component={CartScreen} />
-      <RootStack.Screen name="Checkout" component={CheckoutScreen} />
-      <RootStack.Screen name="Orders" component={OrdersScreen} />
-      <RootStack.Screen name="SellerDashboard" component={SellerDashboardScreen} />
+      {!isAuthenticated ? (
+        <>
+          <RootStack.Screen name="Login" component={LoginScreen} />
+          <RootStack.Screen name="Register" component={RegisterScreen} />
+        </>
+      ) : (
+        <>
+          <RootStack.Screen name="MainTabs" component={MainTabs} />
+          
+          {/* Global E-Commerce & Management Screens (Hides Tab Bar) */}
+          <RootStack.Screen name="Cart" component={CartScreen} />
+          <RootStack.Screen name="Checkout" component={CheckoutScreen} />
+          <RootStack.Screen name="Orders" component={OrdersScreen} />
+          <RootStack.Screen name="SellerDashboard" component={SellerDashboardScreen} />
+        </>
+      )}
     </RootStack.Navigator>
   );
 }
