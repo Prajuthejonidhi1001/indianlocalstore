@@ -1,10 +1,9 @@
 from django.contrib import admin
-from django.urls import path, include, re_path
+from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from django.http import JsonResponse, HttpResponse
 from django.core.management import call_command
-from django.views.static import serve
 
 def seed_db(request):
     try:
@@ -27,8 +26,10 @@ urlpatterns = [
     path('api/products/', include('products.urls')),
     path('api/shops/', include('shops.urls')),
     path('api/orders/', include('orders.urls')),
-    path('api/users/', include('users.urls')),
 ]
+
+from django.urls import re_path
+from django.views.static import serve
 
 urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
