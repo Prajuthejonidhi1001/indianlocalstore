@@ -33,10 +33,16 @@ api.interceptors.response.use(
     const originalRequest = error.config;
 
     if (error.response?.status === 401 && !originalRequest._retry) {
+      if (originalRequest.url.includes('/users/token/')) {
+        return Promise.reject(error);
+      }
       originalRequest._retry = true;
 
       try {
         const refresh_token = await AsyncStorage.getItem('refresh_token');
+        if (!refresh_token) {
+           return Promise.reject(error);
+        }
         const response = await axios.post(`${API_URL}/users/token/refresh/`, {
           refresh: refresh_token,
         });

@@ -21,6 +21,18 @@ export default function RegisterPage() {
   const [shopPhoto, setShopPhoto] = useState(null);
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [passwordStrength, setPasswordStrength] = useState(0);
+
+  const handlePasswordChange = (e) => {
+    const pw = e.target.value;
+    setForm({ ...form, password: pw });
+    let score = 0;
+    if (pw.length > 7) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    setPasswordStrength(score);
+  };
   
   // Location States
   const [locating, setLocating] = useState(false);
@@ -250,12 +262,22 @@ export default function RegisterPage() {
             <label className="form-label" htmlFor="reg-password">Password *</label>
             <div className="input-with-icon">
               <input id="reg-password" type={showPw ? 'text' : 'password'} className="form-input"
-                placeholder="Min. 6 characters" value={form.password}
-                onChange={e => setForm({ ...form, password: e.target.value })} />
+                placeholder="Minimum 8 characters" value={form.password}
+                onChange={handlePasswordChange} />
               <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)}>
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
+            {form.password.length > 0 && (
+              <>
+                <div className="security-indicator-bar" style={{ marginTop: '8px' }}>
+                  <div className="security-fill" style={{ height: '4px', borderRadius: '2px', transition: 'all 0.4s', width: `${(passwordStrength / 4) * 100}%`, backgroundColor: passwordStrength <= 1 ? '#E74C3C' : passwordStrength === 2 ? '#F1C40F' : passwordStrength === 3 ? '#3498DB' : '#2ECC71' }} />
+                </div>
+                <div className="security-text" style={{ fontSize: '13px', marginTop: '6px', textAlign: 'right', color: passwordStrength <= 1 ? '#E74C3C' : passwordStrength === 2 ? '#F1C40F' : passwordStrength === 3 ? '#3498DB' : '#2ECC71' }}>
+                  {passwordStrength <= 1 ? 'Weak' : passwordStrength === 2 ? 'Fair' : passwordStrength === 3 ? 'Good' : 'Strong'}
+                </div>
+              </>
+            )}
           </div>
 
           <button id="register-btn" type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ marginTop: '10px' }}>

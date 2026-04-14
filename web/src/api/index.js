@@ -22,6 +22,9 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
     if (error.response?.status === 401 && !original._retry) {
+      if (original.url?.includes('/users/token/')) {
+        return Promise.reject(error);
+      }
       original._retry = true;
       try {
         const refresh = localStorage.getItem('refresh_token');
