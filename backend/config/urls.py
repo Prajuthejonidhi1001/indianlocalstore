@@ -26,6 +26,7 @@ urlpatterns = [
     path('api/products/', include('products.urls')),
     path('api/shops/', include('shops.urls')),
     path('api/orders/', include('orders.urls')),
+    path('api/users/', include('users.urls')),
 ]
 
 from django.urls import re_path
