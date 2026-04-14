@@ -45,10 +45,13 @@ class ShopViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def nearby(self, request):
         """Get nearby shops based on user location"""
-        if not request.user.is_authenticated or not request.user.latitude:
-            return Response({'error': 'Location required'}, status=status.HTTP_400_BAD_REQUEST)
+        city = request.query_params.get('city')
+        shops = Shop.objects.filter(is_active=True)
         
-        shops = Shop.objects.filter(is_active=True).order_by('-rating')
+        if city and city != 'undefined':
+            shops = shops.filter(city__icontains=city)
+            
+        shops = shops.order_by('-rating')
         serializer = ShopListSerializer(shops, many=True, context={'request': request})
         return Response(serializer.data)
 

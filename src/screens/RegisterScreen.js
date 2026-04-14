@@ -163,7 +163,7 @@ export default function RegisterScreen({ navigation }) {
 
         const shopRes = await shopAPI.createShop(shopData);
         Alert.alert('Success', 'Account & Shop created! Welcome aboard.');
-        navigation.navigate('Main'); // Navigate to home
+        navigation.navigate('MainTabs'); // Navigate to home
       } else {
         Alert.alert('Success', 'Account created! Please log in.');
         navigation.navigate('Login');
