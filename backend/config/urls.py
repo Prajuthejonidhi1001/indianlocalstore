@@ -17,20 +17,5 @@ def seed_db(request):
 
 def api_root(request):
     return JsonResponse({"message": "Welcome to the Indian Local Store API! The server is running perfectly.", "status": "online"})
-
-urlpatterns = [
-    path('', api_root, name='api_root'),
-    path('admin/', admin.site.urls),
-    path('api/', api_root, name='api-root'),
-    path('api/seed-db-magic-777/', seed_db),
-    path('api/products/', include('products.urls')),
-    path('api/shops/', include('shops.urls')),
-    path('api/orders/', include('orders.urls')),
-]
-
-from django.urls import re_path
-from django.views.static import serve
-
-urlpatterns += [
     re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
 ]
