@@ -1,9 +1,10 @@
 from django.db import models
 from users.models import User
-
+import uuid
 
 class Shop(models.Model):
     """Shop model for sellers"""
+    shop_code = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     seller = models.OneToOneField(User, on_delete=models.CASCADE, related_name='shop',
                                  limit_choices_to={'role': 'seller'})
     name = models.CharField(max_length=200, unique=True)

@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Shop, ShopReview, ShopService
 from .serializers import (
@@ -27,9 +28,14 @@ class ShopViewSet(viewsets.ModelViewSet):
             return ShopCreateUpdateSerializer
         return ShopListSerializer
 
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy', 'my_shop']:
+            return [IsAuthenticated()]
+        return [AllowAny()]
+
     def perform_create(self, serializer):
         if self.request.user.role != 'seller':
-            return Response({'error': 'Only sellers can create shops'}, status=status.HTTP_403_FORBIDDEN)
+            raise PermissionDenied('Only sellers can create shops.')
         serializer.save(seller=self.request.user)
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])

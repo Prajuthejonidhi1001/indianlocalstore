@@ -17,7 +17,7 @@ import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProfileScreen({ navigation }) {
-  const { user, logout, updateUser, isLoggedIn } = useAuth();
+  const { user, logout, updateUser, isAuthenticated } = useAuth();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -61,7 +61,7 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
-  if (!isLoggedIn) {
+  if (!isAuthenticated) {
      return (
       <View style={styles.container}>
         <View style={styles.guestContent}>
@@ -151,6 +151,18 @@ export default function ProfileScreen({ navigation }) {
 
           {/* Quick Links */}
           <View style={styles.quickLinks}>
+            {user?.role === 'seller' && (
+              <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('SellerDashboard')}>
+                <View style={styles.linkLeft}>
+                  <View style={[styles.linkIcon, { backgroundColor: 'rgba(46, 204, 113, 0.1)' }]}>
+                    <Ionicons name="storefront" size={20} color={COLORS.success} />
+                  </View>
+                  <Text style={styles.linkText}>Seller Dashboard</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            )}
+
             <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('Orders')}>
               <View style={styles.linkLeft}>
                 <View style={[styles.linkIcon, { backgroundColor: 'rgba(255,182,39,0.1)' }]}>

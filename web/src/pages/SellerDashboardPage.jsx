@@ -20,6 +20,7 @@ export default function SellerDashboardPage() {
   // Product Form
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState({ name: '', description: '', price: '', discount_price: '', stock: '', category: '' });
+  const [productImage, setProductImage] = useState(null);
   const [categories, setCategories] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
 
@@ -27,20 +28,22 @@ export default function SellerDashboardPage() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch seller's shop
-        const shopRes = await shopAPI.getShops({ seller: user.id });
-        if (shopRes.data.results?.length > 0) {
-          const myShop = shopRes.data.results[0];
-          setShop(myShop);
-          setShopForm(myShop);
+        // Always load categories for the product form
+        const catRes = await productAPI.getCategories();
+        setCategories(catRes.data.results || catRes.data);
 
-          // Fetch shop products
-          const prodRes = await productAPI.getProducts({ seller: myShop.id });
+        // Fetch seller's own shop via dedicated endpoint
+        try {
+          const shopRes = await shopAPI.getMyShop();
+          setShop(shopRes.data);
+          setShopForm(shopRes.data);
+
+          // Fetch products belonging to this seller (seller FK = user.id)
+          const prodRes = await productAPI.getProducts({ seller: user.id });
           setProducts(prodRes.data.results || prodRes.data);
-
-          // Need categories for product form
-          const catRes = await productAPI.getCategories();
-          setCategories(catRes.data.results || catRes.data);
+        } catch (shopErr) {
+          // 404 means seller has no shop yet — that's fine
+          if (shopErr.response?.status !== 404) console.error(shopErr);
         }
       } catch (err) {
         console.error(err);
@@ -76,19 +79,25 @@ export default function SellerDashboardPage() {
     setSavingProduct(true);
     try {
       if (!shop) { toast.error('Please complete shop setup first'); return; }
+      if (!productImage) { toast.error('Product image is extremely mandatory!'); setSavingProduct(false); return; }
       
-      const res = await productAPI.createProduct({
-        ...productForm,
-        seller: shop.id
+      const formData = new FormData();
+      Object.keys(productForm).forEach(key => {
+        if (productForm[key]) formData.append(key, productForm[key]);
       });
+      formData.append('image', productImage);
+      
+      const res = await productAPI.createProduct(formData);
       
       setProducts([res.data, ...products]);
       setShowProductModal(false);
       setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', category: '' });
-      toast.success('Product added successfully');
+      setProductImage(null);
+      toast.success('Product dynamically uploaded to the cloud');
       
-    } catch {
-      toast.error('Failed to add product');
+    } catch(err) {
+      console.error(err);
+      toast.error('Failed to add product API payload');
     } finally {
       setSavingProduct(false);
     }
@@ -259,6 +268,10 @@ export default function SellerDashboardPage() {
                     <option value="">Select Category</option>
                     {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
+                </div>
+                <div className="form-group mb-3">
+                  <label className="form-label">Product Image *</label>
+                  <input type="file" className="form-input" accept="image/*" required onChange={e => setProductImage(e.target.files[0])} style={{ padding: '0.6rem' }} />
                 </div>
                 <div className="form-row mb-3">
                   <div className="form-group">

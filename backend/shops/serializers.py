@@ -22,7 +22,7 @@ class ShopListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shop
-        fields = ['id', 'name', 'logo', 'city', 'rating', 'reviews_count', 
+        fields = ['id', 'shop_code', 'name', 'logo', 'city', 'rating', 'reviews_count', 
                   'verification_status', 'distance']
 
     def get_distance(self, obj):
@@ -49,15 +49,17 @@ class ShopDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shop
-        fields = ['id', 'name', 'description', 'logo', 'banner', 'address', 'city', 
+        fields = ['id', 'shop_code', 'name', 'description', 'logo', 'banner', 'address', 'city', 
                   'state', 'pincode', 'phone', 'email', 'rating', 'reviews_count',
                   'opening_time', 'closing_time', 'verification_status', 'seller',
                   'shop_reviews', 'services', 'created_at']
 
 
 class ShopCreateUpdateSerializer(serializers.ModelSerializer):
+    shop_code = serializers.UUIDField(read_only=True)
+
     class Meta:
         model = Shop
-        fields = ['name', 'description', 'logo', 'banner', 'latitude', 'longitude',
+        fields = ['id', 'shop_code', 'name', 'description', 'logo', 'banner', 'latitude', 'longitude',
                   'address', 'city', 'state', 'pincode', 'phone', 'email',
                   'opening_time', 'closing_time']

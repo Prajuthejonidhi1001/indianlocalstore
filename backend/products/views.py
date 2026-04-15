@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Category, SubCategory, Product, ProductReview
 from .serializers import (
@@ -29,12 +30,16 @@ class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
 class ProductViewSet(viewsets.ModelViewSet):
     """Product listing and management"""
     queryset = Product.objects.filter(is_active=True)
-    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['category', 'seller']
     search_fields = ['name', 'description']
     ordering_fields = ['price', 'rating', 'created_at']
     ordering = ['-created_at']
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [IsAuthenticated()]
+        return [AllowAny()]
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
