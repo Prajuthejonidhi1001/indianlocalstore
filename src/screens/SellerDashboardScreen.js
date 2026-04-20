@@ -9,9 +9,11 @@ import {
   TextInput,
   Alert,
   Modal,
-  Platform
+  Platform,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useAuth } from '../context/AuthContext';
 import { shopAPI, productAPI } from '../utils/api';
@@ -31,6 +33,7 @@ export default function SellerDashboardScreen({ navigation }) {
   // Product Form
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '', category: '' });
+  const [productImage, setProductImage] = useState(null);
   const [savingProduct, setSavingProduct] = useState(false);
 
   useEffect(() => {
@@ -40,20 +43,26 @@ export default function SellerDashboardScreen({ navigation }) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const shopRes = await shopAPI.getShops({ seller: user.id });
-      
-      let myShop = null;
-      if (shopRes.data.results?.length > 0) {
-        myShop = shopRes.data.results[0];
-        setShop(myShop);
-        setShopForm(myShop);
-
-        const prodRes = await productAPI.getProducts({ seller: myShop.id });
-        setProducts(prodRes.data.results || prodRes.data);
-      }
-      
+      // Always load categories
       const catRes = await productAPI.getCategories();
       setCategories(catRes.data.results || catRes.data);
+
+      // Fetch seller's own shop via dedicated endpoint
+      try {
+        const shopRes = await shopAPI.getMyShop();
+        const shopData = shopRes.data;
+        setShop(shopData);
+        setShopForm(shopData);
+
+        // Fetch products belonging to this seller using seller_id
+        if (shopData.seller_id) {
+          const prodRes = await productAPI.getProducts({ seller: shopData.seller_id });
+          setProducts(prodRes.data.results || prodRes.data);
+        }
+      } catch (shopErr) {
+        // 404 means seller has no shop yet
+        if (shopErr.response?.status !== 404) console.error(shopErr);
+      }
     } catch (err) {
       console.error('Error fetching dashboard data:', err);
     } finally {
@@ -80,24 +89,55 @@ export default function SellerDashboardScreen({ navigation }) {
     }
   };
 
+  const pickProductImage = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert('Permission Denied', 'Camera roll permission is required to upload product images.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setProductImage(result.assets[0]);
+    }
+  };
+
   const handleSaveProduct = async () => {
     if (!shop) return Alert.alert('Error', 'Complete shop setup first');
     if (!productForm.name || !productForm.price || !productForm.category) return Alert.alert('Error', 'Name, price, and category are required');
+    if (!productImage) return Alert.alert('Error', 'Product image is required');
 
     setSavingProduct(true);
     try {
-      const payload = {
-        ...productForm,
-        seller: shop.id
-      };
-      const res = await productAPI.createProduct(payload);
+      const formData = new FormData();
+      Object.keys(productForm).forEach(key => {
+        if (productForm[key]) formData.append(key, productForm[key]);
+      });
+      // Append image as multipart file
+      const uri = productImage.uri;
+      const filename = uri.split('/').pop();
+      const ext = filename.split('.').pop();
+      formData.append('image', {
+        uri,
+        name: filename,
+        type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
+      });
+
+      const res = await productAPI.createProduct(formData);
       setProducts([res.data, ...products]);
       setShowProductModal(false);
       setProductForm({ name: '', description: '', price: '', stock: '', category: '' });
+      setProductImage(null);
       Alert.alert('Success', 'Product added successfully');
     } catch (err) {
       console.error('Error saving product:', err.response?.data || err);
-      Alert.alert('Error', err.response?.data?.name?.[0] || 'Failed to add product');
+      const msg = err.response?.data;
+      const firstKey = msg ? Object.keys(msg)[0] : null;
+      Alert.alert('Error', firstKey ? `${firstKey}: ${Array.isArray(msg[firstKey]) ? msg[firstKey][0] : msg[firstKey]}` : 'Failed to add product');
     } finally {
       setSavingProduct(false);
     }
@@ -176,6 +216,15 @@ export default function SellerDashboardScreen({ navigation }) {
               <TextInput style={[styles.input, {height: 60}]} multiline value={shopForm.address} onChangeText={t => setShopForm({...shopForm, address: t})} />
             </View>
 
+            <View style={styles.idCard}>
+              <View style={styles.idCardHeader}>
+                <Ionicons name="finger-print" size={16} color={COLORS.primary} />
+                <Text style={styles.idCardTitle}>Professional Identity</Text>
+              </View>
+              <Text style={styles.idCardValue} numberOfLines={1}>{shop?.shop_code || 'Unassigned'}</Text>
+              <Text style={styles.idCardFooter}>Unique identifier for your business on the network</Text>
+            </View>
+
             <TouchableOpacity style={styles.primaryBtn} onPress={handleSaveShop} disabled={savingShop}>
               {savingShop ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryBtnText}>Save Shop Details</Text>}
             </TouchableOpacity>
@@ -238,9 +287,38 @@ export default function SellerDashboardScreen({ navigation }) {
             </View>
 
             <View style={styles.field}>
-               <Text style={styles.label}>Category ID *</Text>
-                {/* For simplicity we use a simple input for Category ID, though ideally it should be a Picker */}
-               <TextInput style={styles.input} placeholder="Enter category ID (e.g. 1)" placeholderTextColor={COLORS.textDim} keyboardType="number-pad" value={productForm.category} onChangeText={t => setProductForm({...productForm, category: t})} />
+              <Text style={styles.label}>Category *</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom: 5}}>
+                {categories.map(c => (
+                  <TouchableOpacity
+                    key={c.id}
+                    onPress={() => setProductForm({...productForm, category: String(c.id)})}
+                    style={[
+                      styles.categoryChip,
+                      productForm.category === String(c.id) && styles.categoryChipActive
+                    ]}
+                  >
+                    <Text style={[
+                      styles.categoryChipText,
+                      productForm.category === String(c.id) && styles.categoryChipTextActive
+                    ]}>{c.name}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Product Image *</Text>
+              <TouchableOpacity style={styles.imagePicker} onPress={pickProductImage}>
+                {productImage ? (
+                  <Image source={{ uri: productImage.uri }} style={styles.imagePreview} />
+                ) : (
+                  <View style={styles.imagePickerPlaceholder}>
+                    <Ionicons name="camera-outline" size={32} color={COLORS.textMuted} />
+                    <Text style={styles.imagePickerText}>Tap to select image</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
             </View>
             
             <View style={styles.row}>
@@ -316,5 +394,24 @@ const styles = StyleSheet.create({
   modalContainer: { flex: 1, backgroundColor: COLORS.background },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: Platform.OS === 'ios' ? 20 : 40, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   modalTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text },
-  modalScroll: { padding: 20 }
+  modalScroll: { padding: 20 },
+
+  // Category chip selector
+  categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: COLORS.elevated, borderWidth: 1.5, borderColor: COLORS.border, marginRight: 8 },
+  categoryChipActive: { backgroundColor: 'rgba(255,107,53,0.15)', borderColor: COLORS.primary },
+  categoryChipText: { fontSize: 13, fontWeight: '600', color: COLORS.textMuted },
+  categoryChipTextActive: { color: COLORS.primary },
+
+  // Image picker
+  imagePicker: { borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md, borderStyle: 'dashed', overflow: 'hidden' },
+  imagePickerPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingVertical: 30 },
+  imagePickerText: { color: COLORS.textMuted, marginTop: 8, fontSize: 13 },
+  imagePreview: { width: '100%', height: 200, resizeMode: 'cover' },
+
+  // ID Card
+  idCard: { backgroundColor: COLORS.elevated, borderRadius: RADIUS.md, padding: 15, marginBottom: 20, borderWidth: 1, borderColor: COLORS.border },
+  idCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  idCardTitle: { color: COLORS.primary, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  idCardValue: { color: COLORS.text, fontSize: 14, fontWeight: '700', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
+  idCardFooter: { color: COLORS.textDim, fontSize: 10, marginTop: 4, fontStyle: 'italic' },
 });

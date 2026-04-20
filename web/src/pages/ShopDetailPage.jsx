@@ -11,16 +11,18 @@ export default function ShopDetailPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    setLoading(true);
     const fetchAll = async () => {
       try {
-        const [shopRes, prodRes] = await Promise.all([
-          shopAPI.getShopDetail(id),
-          productAPI.getProducts({ seller: id }) // Assuming products are filtered by seller ID
-        ]);
-        setShop(shopRes.data);
-        setProducts(prodRes.data.results || prodRes.data);
+        // First fetch shop details to get the correct seller_id
+        const shopRes = await shopAPI.getShopDetail(id);
+        const shopData = shopRes.data;
+        setShop(shopData);
+
+        // Fetch products using the shop owner's User ID (seller_id)
+        if (shopData.seller_id) {
+          const prodRes = await productAPI.getProducts({ seller: shopData.seller_id });
+          setProducts(prodRes.data.results || prodRes.data);
+        }
       } catch (err) {
         console.error(err);
       } finally {

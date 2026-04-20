@@ -19,11 +19,12 @@ class ShopServiceSerializer(serializers.ModelSerializer):
 
 class ShopListSerializer(serializers.ModelSerializer):
     distance = serializers.SerializerMethodField()
+    seller_id = serializers.IntegerField(source='seller.id', read_only=True)
 
     class Meta:
         model = Shop
         fields = ['id', 'shop_code', 'name', 'logo', 'city', 'rating', 'reviews_count', 
-                  'verification_status', 'distance']
+                  'verification_status', 'distance', 'seller_id']
 
     def get_distance(self, obj):
         request = self.context.get('request')
@@ -44,6 +45,7 @@ class ShopListSerializer(serializers.ModelSerializer):
 
 class ShopDetailSerializer(serializers.ModelSerializer):
     seller = serializers.StringRelatedField(read_only=True)
+    seller_id = serializers.IntegerField(source='seller.id', read_only=True)
     shop_reviews = ShopReviewSerializer(many=True, read_only=True)
     services = ShopServiceSerializer(many=True, read_only=True)
 
@@ -51,7 +53,7 @@ class ShopDetailSerializer(serializers.ModelSerializer):
         model = Shop
         fields = ['id', 'shop_code', 'name', 'description', 'logo', 'banner', 'address', 'city', 
                   'state', 'pincode', 'phone', 'email', 'rating', 'reviews_count',
-                  'opening_time', 'closing_time', 'verification_status', 'seller',
+                  'opening_time', 'closing_time', 'verification_status', 'seller', 'seller_id',
                   'shop_reviews', 'services', 'created_at']
 
 
