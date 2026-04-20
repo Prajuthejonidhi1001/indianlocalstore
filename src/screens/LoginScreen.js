@@ -17,7 +17,8 @@ export default function LoginScreen({ navigation }) {
   const [focusedInput, setFocusedInput] = useState(null);
   
   const { login, loading } = useAuth();
-  
+  const passwordRef = useRef(null);
+
   // -- Hyper Unique Animation Engines --
   const cardScale = useRef(new Animated.Value(0.8)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
@@ -128,6 +129,9 @@ export default function LoginScreen({ navigation }) {
                   placeholder="Username" value={username} onChangeText={setUsername} 
                   style={styles.input} autoCapitalize="none" placeholderTextColor={COLORS.borderStrong}
                   onFocus={() => setFocusedInput('username')} onBlur={() => setFocusedInput(null)}
+                  returnKeyType="next"
+                  onSubmitEditing={() => passwordRef.current?.focus()}
+                  blurOnSubmit={false}
                 />
               </View>
             </Animated.View>
@@ -136,9 +140,12 @@ export default function LoginScreen({ navigation }) {
               <View style={[styles.inputContainer, focusedInput === 'password' && styles.inputFocused]}>
                 <Ionicons name="finger-print" size={20} color={focusedInput === 'password' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
                 <TextInput 
+                  ref={passwordRef}
                   placeholder="Secure Password" value={password} onChangeText={setPassword} 
                   style={styles.input} secureTextEntry={!showPass} placeholderTextColor={COLORS.borderStrong}
                   onFocus={() => setFocusedInput('password')} onBlur={() => setFocusedInput(null)}
+                  returnKeyType="done"
+                  onSubmitEditing={handleLogin}
                 />
                 <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
                   <Ionicons name={showPass ? 'eye-off' : 'eye'} size={22} color={showPass ? '#FF6B00' : COLORS.textMuted} />

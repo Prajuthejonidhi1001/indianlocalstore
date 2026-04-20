@@ -16,8 +16,9 @@ const { width } = Dimensions.get('window');
 export default function RegisterScreen({ navigation }) {
   const { register, login } = useAuth();
   const [loading, setLoading] = useState(false);
-  const [showPw, setShowPw] = useState(false);
+  const [showPass, setShowPass] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
+  const passwordRef = useRef(null);
   
   // -- Hyper Unique Animation Engines --
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -270,9 +271,11 @@ export default function RegisterScreen({ navigation }) {
               <View style={[styles.inputContainer, focusedInput === 'password' && styles.inputFocused]}>
                 <Ionicons name="finger-print" size={20} color={focusedInput === 'password' ? '#00D4FF' : COLORS.textMuted} style={styles.icon} />
                 <TextInput 
+                  ref={passwordRef}
                   placeholder="Password (Min 8 chars)" value={form.password} onChangeText={handlePasswordChange}
                   style={styles.input} secureTextEntry={!showPass} placeholderTextColor={COLORS.borderStrong}
                   onFocus={() => setFocusedInput('password')} onBlur={() => setFocusedInput(null)} autoCapitalize="none"
+                  returnKeyType="done"
                 />
                 <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
                   <Ionicons name={showPass ? 'eye-off' : 'eye'} size={22} color={showPass ? '#00D4FF' : COLORS.textMuted} />
