@@ -23,9 +23,6 @@ export default function LoginScreen({ navigation }) {
   const cardScale = useRef(new Animated.Value(0.8)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
   const logoRot = useRef(new Animated.Value(0)).current;
-  const inputLeft = useRef(new Animated.Value(-width)).current;
-  const inputRight = useRef(new Animated.Value(width)).current;
-  const btnUp = useRef(new Animated.Value(100)).current;
   const blobShape = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
@@ -37,14 +34,7 @@ export default function LoginScreen({ navigation }) {
       Animated.timing(cardOpacity, { toValue: 1, duration: 600, useNativeDriver: true })
     ]).start();
 
-    // 2. Stagger the inputs flying in from opposite dimensions
-    Animated.stagger(200, [
-      Animated.spring(inputLeft, { toValue: 0, friction: 6, tension: 50, useNativeDriver: true }),
-      Animated.spring(inputRight, { toValue: 0, friction: 6, tension: 50, useNativeDriver: true }),
-      Animated.spring(btnUp, { toValue: 0, friction: 5, tension: 40, useNativeDriver: true }),
-    ]).start();
-
-    // 3. Ambient Liquid Background Morphing
+    // 2. Ambient Liquid Background Morphing
     Animated.loop(
       Animated.sequence([
         Animated.timing(blobShape, { toValue: 1, duration: 4000, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
@@ -52,7 +42,7 @@ export default function LoginScreen({ navigation }) {
       ])
     ).start();
 
-    // 4. Logo 3D Flip
+    // 3. Logo 3D Flip
     Animated.loop(
       Animated.timing(logoRot, { toValue: 1, duration: 6000, easing: Easing.linear, useNativeDriver: true })
     ).start();
@@ -122,44 +112,39 @@ export default function LoginScreen({ navigation }) {
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Unlock your local marketplace</Text>
 
-            <Animated.View style={{ transform: [{ translateX: inputLeft }] }}>
-              <View style={[styles.inputContainer, focusedInput === 'username' && styles.inputFocused]}>
-                <Ionicons name="person" size={20} color={focusedInput === 'username' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
-                <TextInput 
-                  placeholder="Username" value={username} onChangeText={setUsername} 
-                  style={styles.input} autoCapitalize="none" placeholderTextColor={COLORS.borderStrong}
-                  onFocus={() => setFocusedInput('username')} onBlur={() => setFocusedInput(null)}
-                  returnKeyType="next"
-                  onSubmitEditing={() => passwordRef.current?.focus()}
-                  blurOnSubmit={false}
-                />
-              </View>
-            </Animated.View>
+            {/* Username & Password — plain Views for correct touch targeting */}
+            <View style={[styles.inputContainer, focusedInput === 'username' && styles.inputFocused]}>
+              <Ionicons name="person" size={20} color={focusedInput === 'username' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+              <TextInput 
+                placeholder="Username" value={username} onChangeText={setUsername} 
+                style={styles.input} autoCapitalize="none" placeholderTextColor={COLORS.borderStrong}
+                onFocus={() => setFocusedInput('username')} onBlur={() => setFocusedInput(null)}
+                returnKeyType="next"
+                onSubmitEditing={() => passwordRef.current?.focus()}
+                blurOnSubmit={false}
+              />
+            </View>
 
-            <Animated.View style={{ transform: [{ translateX: inputRight }] }}>
-              <View style={[styles.inputContainer, focusedInput === 'password' && styles.inputFocused]}>
-                <Ionicons name="finger-print" size={20} color={focusedInput === 'password' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
-                <TextInput 
-                  ref={passwordRef}
-                  placeholder="Secure Password" value={password} onChangeText={setPassword} 
-                  style={styles.input} secureTextEntry={!showPass} placeholderTextColor={COLORS.borderStrong}
-                  onFocus={() => setFocusedInput('password')} onBlur={() => setFocusedInput(null)}
-                  returnKeyType="done"
-                  onSubmitEditing={handleLogin}
-                />
-                <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
-                  <Ionicons name={showPass ? 'eye-off' : 'eye'} size={22} color={showPass ? '#FF6B00' : COLORS.textMuted} />
-                </TouchableOpacity>
-              </View>
-            </Animated.View>
-
-            <Animated.View style={{ transform: [{ translateY: btnUp }] }}>
-              <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading} activeOpacity={0.85}>
-                <View style={styles.btnHologram} />
-                <Text style={styles.loginBtnText}>{loading ? 'Authenticating...' : 'Sign In Now'}</Text>
-                {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
+            <View style={[styles.inputContainer, focusedInput === 'password' && styles.inputFocused]}>
+              <Ionicons name="finger-print" size={20} color={focusedInput === 'password' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+              <TextInput 
+                ref={passwordRef}
+                placeholder="Secure Password" value={password} onChangeText={setPassword} 
+                style={styles.input} secureTextEntry={!showPass} placeholderTextColor={COLORS.borderStrong}
+                onFocus={() => setFocusedInput('password')} onBlur={() => setFocusedInput(null)}
+                returnKeyType="done"
+                onSubmitEditing={handleLogin}
+              />
+              <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
+                <Ionicons name={showPass ? 'eye-off' : 'eye'} size={22} color={showPass ? '#FF6B00' : COLORS.textMuted} />
               </TouchableOpacity>
-            </Animated.View>
+            </View>
+
+            <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading} activeOpacity={0.85}>
+              <View style={styles.btnHologram} />
+              <Text style={styles.loginBtnText}>{loading ? 'Authenticating...' : 'Sign In Now'}</Text>
+              {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
+            </TouchableOpacity>
 
             <Animated.View style={[styles.footer, { opacity: cardOpacity }]}>
               <Text style={styles.footerText}>New to IndianLocalStore? </Text>
