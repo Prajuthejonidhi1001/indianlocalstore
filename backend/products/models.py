@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import User
+from django.core.exceptions import ValidationError
 
 
 class Category(models.Model):
@@ -84,3 +85,22 @@ class ProductReview(models.Model):
 
     def __str__(self):
         return f"{self.product.name} - {self.rating}⭐"
+
+
+class ProductImage(models.Model):
+    """Additional images for a product (max 5 per product)"""
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='images')
+    image = models.ImageField(upload_to='products/gallery/')
+    order = models.PositiveSmallIntegerField(default=0)
+
+    class Meta:
+        ordering = ['order']
+
+    def clean(self):
+        if self.pk is None:  # new image being added
+            count = ProductImage.objects.filter(product=self.product).count()
+            if count >= 5:
+                raise ValidationError('A product can have at most 5 images.')
+
+    def __str__(self):
+        return f"Image {self.order} for {self.product.name}"

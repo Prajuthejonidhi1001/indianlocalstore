@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import PermissionDenied
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Category, SubCategory, Product, ProductReview
+from .models import Category, SubCategory, Product, ProductReview, ProductImage
 from .serializers import (
     CategorySerializer, SubCategorySerializer, ProductListSerializer,
     ProductDetailSerializer, ProductCreateUpdateSerializer, ProductReviewSerializer
@@ -31,7 +31,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     """Product listing and management"""
     queryset = Product.objects.filter(is_active=True)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'seller']
+    filterset_fields = ['category', 'subcategory', 'seller']
     search_fields = ['name', 'description']
     ordering_fields = ['price', 'rating', 'created_at']
     ordering = ['-created_at']
@@ -49,7 +49,11 @@ class ProductViewSet(viewsets.ModelViewSet):
         return ProductListSerializer
 
     def perform_create(self, serializer):
-        serializer.save(seller=self.request.user)
+        product = serializer.save(seller=self.request.user)
+        # Save additional uploaded images (up to 5 total)
+        images = self.request.FILES.getlist('images')
+        for i, img in enumerate(images[:5]):
+            ProductImage.objects.create(product=product, image=img, order=i)
 
     def get_queryset(self):
         if self.request.user.is_authenticated and self.request.user.role == 'seller':

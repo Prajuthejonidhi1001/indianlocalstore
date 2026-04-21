@@ -32,8 +32,9 @@ export default function SellerDashboardScreen({ navigation }) {
 
   // Product Form
   const [showProductModal, setShowProductModal] = useState(false);
-  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '', category: '' });
-  const [productImage, setProductImage] = useState(null);
+  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '', category: '', subcategory: '' });
+  const [productImages, setProductImages] = useState([]); // up to 5
+  const [subcategories, setSubcategories] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
 
   useEffect(() => {
@@ -89,27 +90,47 @@ export default function SellerDashboardScreen({ navigation }) {
     }
   };
 
+  const handleCategoryChange = async (catId) => {
+    setProductForm(f => ({ ...f, category: String(catId), subcategory: '' }));
+    setSubcategories([]);
+    if (catId) {
+      try {
+        const res = await productAPI.getSubCategories(catId);
+        setSubcategories(res.data.results || res.data);
+      } catch {}
+    }
+  };
+
   const pickProductImage = async () => {
+    if (productImages.length >= 5) {
+      Alert.alert('Limit Reached', 'Maximum 5 images allowed per product.');
+      return;
+    }
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Camera roll permission is required to upload product images.');
+      Alert.alert('Permission Denied', 'Camera roll access is required.');
       return;
     }
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
+      allowsMultipleSelection: true,
+      selectionLimit: 5 - productImages.length,
       quality: 0.8,
     });
     if (!result.canceled) {
-      setProductImage(result.assets[0]);
+      const newImgs = result.assets.slice(0, 5 - productImages.length);
+      setProductImages(prev => [...prev, ...newImgs].slice(0, 5));
     }
+  };
+
+  const removeProductImage = (index) => {
+    setProductImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveProduct = async () => {
     if (!shop) return Alert.alert('Error', 'Complete shop setup first');
     if (!productForm.name || !productForm.price || !productForm.category) return Alert.alert('Error', 'Name, price, and category are required');
-    if (!productImage) return Alert.alert('Error', 'Product image is required');
+    if (productImages.length === 0) return Alert.alert('Error', 'At least 1 product image is required');
 
     setSavingProduct(true);
     try {
@@ -117,21 +138,22 @@ export default function SellerDashboardScreen({ navigation }) {
       Object.keys(productForm).forEach(key => {
         if (productForm[key]) formData.append(key, productForm[key]);
       });
-      // Append image as multipart file
-      const uri = productImage.uri;
-      const filename = uri.split('/').pop();
-      const ext = filename.split('.').pop();
-      formData.append('image', {
-        uri,
-        name: filename,
-        type: `image/${ext === 'jpg' ? 'jpeg' : ext}`,
-      });
+      // First image = main image field
+      const makeFileObj = (asset) => {
+        const uri = asset.uri;
+        const filename = uri.split('/').pop();
+        const ext = filename.split('.').pop();
+        return { uri, name: filename, type: `image/${ext === 'jpg' ? 'jpeg' : ext}` };
+      };
+      formData.append('image', makeFileObj(productImages[0]));
+      productImages.slice(1).forEach(asset => formData.append('images', makeFileObj(asset)));
 
       const res = await productAPI.createProduct(formData);
       setProducts([res.data, ...products]);
       setShowProductModal(false);
-      setProductForm({ name: '', description: '', price: '', stock: '', category: '' });
-      setProductImage(null);
+      setProductForm({ name: '', description: '', price: '', stock: '', category: '', subcategory: '' });
+      setProductImages([]);
+      setSubcategories([]);
       Alert.alert('Success', 'Product added successfully');
     } catch (err) {
       console.error('Error saving product:', err.response?.data || err);
@@ -292,7 +314,7 @@ export default function SellerDashboardScreen({ navigation }) {
                 {categories.map(c => (
                   <TouchableOpacity
                     key={c.id}
-                    onPress={() => setProductForm({...productForm, category: String(c.id)})}
+                    onPress={() => handleCategoryChange(c.id)}
                     style={[
                       styles.categoryChip,
                       productForm.category === String(c.id) && styles.categoryChipActive
@@ -307,18 +329,48 @@ export default function SellerDashboardScreen({ navigation }) {
               </ScrollView>
             </View>
 
+            {subcategories.length > 0 && (
+              <View style={styles.field}>
+                <Text style={styles.label}>Sub-Category</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom: 5}}>
+                  {subcategories.map(s => (
+                    <TouchableOpacity
+                      key={s.id}
+                      onPress={() => setProductForm(f => ({ ...f, subcategory: String(s.id) }))}
+                      style={[
+                        styles.categoryChip,
+                        productForm.subcategory === String(s.id) && styles.categoryChipActive
+                      ]}
+                    >
+                      <Text style={[
+                        styles.categoryChipText,
+                        productForm.subcategory === String(s.id) && styles.categoryChipTextActive
+                      ]}>{s.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
             <View style={styles.field}>
-              <Text style={styles.label}>Product Image *</Text>
-              <TouchableOpacity style={styles.imagePicker} onPress={pickProductImage}>
-                {productImage ? (
-                  <Image source={{ uri: productImage.uri }} style={styles.imagePreview} />
-                ) : (
-                  <View style={styles.imagePickerPlaceholder}>
-                    <Ionicons name="camera-outline" size={32} color={COLORS.textMuted} />
-                    <Text style={styles.imagePickerText}>Tap to select image</Text>
+              <Text style={styles.label}>Product Images * (1–5)</Text>
+              <View style={styles.imageGrid}>
+                {productImages.map((img, idx) => (
+                  <View key={idx} style={styles.imageThumbWrap}>
+                    <Image source={{ uri: img.uri }} style={styles.imageThumb} />
+                    {idx === 0 && <View style={styles.mainBadge}><Text style={styles.mainBadgeText}>MAIN</Text></View>}
+                    <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeProductImage(idx)}>
+                      <Ionicons name="close-circle" size={20} color="#E74C3C" />
+                    </TouchableOpacity>
                   </View>
+                ))}
+                {productImages.length < 5 && (
+                  <TouchableOpacity style={styles.addImageTile} onPress={pickProductImage}>
+                    <Ionicons name="camera-outline" size={28} color={COLORS.textMuted} />
+                    <Text style={styles.addImageTileText}>{productImages.length === 0 ? 'Add Image' : 'Add More'}</Text>
+                  </TouchableOpacity>
                 )}
-              </TouchableOpacity>
+              </View>
             </View>
             
             <View style={styles.row}>
@@ -402,11 +454,21 @@ const styles = StyleSheet.create({
   categoryChipText: { fontSize: 13, fontWeight: '600', color: COLORS.textMuted },
   categoryChipTextActive: { color: COLORS.primary },
 
-  // Image picker
+  // Image picker (legacy, kept for reference)
   imagePicker: { borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md, borderStyle: 'dashed', overflow: 'hidden' },
   imagePickerPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingVertical: 30 },
   imagePickerText: { color: COLORS.textMuted, marginTop: 8, fontSize: 13 },
   imagePreview: { width: '100%', height: 200, resizeMode: 'cover' },
+
+  // Multi-image grid
+  imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  imageThumbWrap: { width: 80, height: 80, borderRadius: RADIUS.md, overflow: 'hidden', position: 'relative' },
+  imageThumb: { width: '100%', height: '100%', resizeMode: 'cover' },
+  mainBadge: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(46,204,113,0.85)', paddingVertical: 2, alignItems: 'center' },
+  mainBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
+  removeImgBtn: { position: 'absolute', top: 2, right: 2 },
+  addImageTile: { width: 80, height: 80, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.elevated },
+  addImageTileText: { color: COLORS.textMuted, fontSize: 10, marginTop: 4, fontWeight: '600' },
 
   // ID Card
   idCard: { backgroundColor: COLORS.elevated, borderRadius: RADIUS.md, padding: 15, marginBottom: 20, borderWidth: 1, borderColor: COLORS.border },

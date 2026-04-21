@@ -19,9 +19,10 @@ export default function SellerDashboardPage() {
 
   // Product Form
   const [showProductModal, setShowProductModal] = useState(false);
-  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', discount_price: '', stock: '', category: '' });
-  const [productImage, setProductImage] = useState(null);
+  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', discount_price: '', stock: '', category: '', subcategory: '' });
+  const [productImages, setProductImages] = useState([]); // up to 5
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
 
   useEffect(() => {
@@ -74,30 +75,50 @@ export default function SellerDashboardPage() {
     }
   };
 
+  const handleCategoryChange = async (catId) => {
+    setProductForm(f => ({ ...f, category: catId, subcategory: '' }));
+    setSubcategories([]);
+    if (catId) {
+      try {
+        const res = await productAPI.getSubCategories(catId);
+        setSubcategories(res.data.results || res.data);
+      } catch {}
+    }
+  };
+
+  const handleImageChange = (e) => {
+    const files = Array.from(e.target.files).slice(0, 5);
+    setProductImages(files);
+  };
+
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     setSavingProduct(true);
     try {
       if (!shop) { toast.error('Please complete shop setup first'); return; }
-      if (!productImage) { toast.error('Product image is extremely mandatory!'); setSavingProduct(false); return; }
+      if (productImages.length === 0) { toast.error('At least 1 product image is required'); setSavingProduct(false); return; }
       
       const formData = new FormData();
       Object.keys(productForm).forEach(key => {
         if (productForm[key]) formData.append(key, productForm[key]);
       });
-      formData.append('image', productImage);
+      // First image is the main `image` field
+      formData.append('image', productImages[0]);
+      // Additional images go as `images` array
+      productImages.slice(1).forEach(img => formData.append('images', img));
       
       const res = await productAPI.createProduct(formData);
-      
       setProducts([res.data, ...products]);
       setShowProductModal(false);
-      setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', category: '' });
-      setProductImage(null);
-      toast.success('Product dynamically uploaded to the cloud');
-      
+      setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', category: '', subcategory: '' });
+      setProductImages([]);
+      setSubcategories([]);
+      toast.success('Product added successfully!');
     } catch(err) {
-      console.error(err);
-      toast.error('Failed to add product API payload');
+      console.error(err?.response?.data || err);
+      const data = err?.response?.data;
+      const msg = data ? Object.values(data)[0]?.[0] || JSON.stringify(data) : 'Failed to add product';
+      toast.error(msg);
     } finally {
       setSavingProduct(false);
     }
@@ -249,48 +270,91 @@ export default function SellerDashboardPage() {
           </div>
         </div>
 
-        {/* Add Product Modal (Simplified) */}
+        {/* Add Product Modal */}
         {showProductModal && (
           <div className="modal-overlay">
-            <div className="modal-content card max-w-md">
+            <div className="modal-content card" style={{ maxWidth: '540px', maxHeight: '90vh', overflowY: 'auto' }}>
               <div className="modal-header">
                 <h3>Add New Product</h3>
                 <button className="modal-close" onClick={() => setShowProductModal(false)}><X size={20}/></button>
               </div>
               <form onSubmit={handleSaveProduct} id="add-product-form">
                 <div className="form-group mb-3">
-                  <label className="form-label">Product Name</label>
+                  <label className="form-label">Product Name *</label>
                   <input type="text" className="form-input" required value={productForm.name} onChange={e => setProductForm({...productForm, name: e.target.value})} />
                 </div>
-                <div className="form-group mb-3">
-                  <label className="form-label">Category</label>
-                  <select className="form-input" required value={productForm.category} onChange={e => setProductForm({...productForm, category: e.target.value})}>
-                    <option value="">Select Category</option>
-                    {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group mb-3">
-                  <label className="form-label">Product Image *</label>
-                  <input type="file" className="form-input" accept="image/*" required onChange={e => setProductImage(e.target.files[0])} style={{ padding: '0.6rem' }} />
-                </div>
+
+                {/* Category + Subcategory */}
                 <div className="form-row mb-3">
                   <div className="form-group">
-                    <label className="form-label">Price (₹)</label>
+                    <label className="form-label">Category *</label>
+                    <select className="form-input" required value={productForm.category} onChange={e => handleCategoryChange(e.target.value)}>
+                      <option value="">Select Category</option>
+                      {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Sub-Category</label>
+                    <select className="form-input" value={productForm.subcategory} onChange={e => setProductForm({...productForm, subcategory: e.target.value})} disabled={subcategories.length === 0}>
+                      <option value="">{subcategories.length === 0 ? 'Select category first' : 'Select Sub-Category'}</option>
+                      {subcategories.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Multi-image upload */}
+                <div className="form-group mb-3">
+                  <label className="form-label">Product Images * (1–5 images)</label>
+                  <input
+                    type="file"
+                    className="form-input"
+                    accept="image/*"
+                    multiple
+                    required
+                    onChange={handleImageChange}
+                    style={{ padding: '0.6rem' }}
+                    id="product-images-input"
+                  />
+                  {productImages.length > 0 && (
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '10px', flexWrap: 'wrap' }}>
+                      {productImages.map((img, i) => (
+                        <div key={i} style={{ position: 'relative' }}>
+                          <img
+                            src={URL.createObjectURL(img)}
+                            alt={`preview-${i}`}
+                            style={{ width: 72, height: 72, objectFit: 'cover', borderRadius: 8, border: '2px solid var(--border)' }}
+                          />
+                          {i === 0 && (
+                            <span style={{ position: 'absolute', bottom: 2, left: 2, fontSize: 9, background: 'var(--primary)', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>Main</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="form-row mb-3">
+                  <div className="form-group">
+                    <label className="form-label">Price (₹) *</label>
                     <input type="number" step="0.01" className="form-input" required value={productForm.price} onChange={e => setProductForm({...productForm, price: e.target.value})} />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Stock Qty</label>
-                    <input type="number" className="form-input" required value={productForm.stock} onChange={e => setProductForm({...productForm, stock: e.target.value})} />
+                    <label className="form-label">Discount Price (₹)</label>
+                    <input type="number" step="0.01" className="form-input" value={productForm.discount_price} onChange={e => setProductForm({...productForm, discount_price: e.target.value})} />
                   </div>
                 </div>
+                <div className="form-group mb-3">
+                  <label className="form-label">Stock Qty *</label>
+                  <input type="number" className="form-input" required value={productForm.stock} onChange={e => setProductForm({...productForm, stock: e.target.value})} />
+                </div>
                 <div className="form-group mb-4">
-                  <label className="form-label">Description</label>
+                  <label className="form-label">Description *</label>
                   <textarea className="form-input" rows={3} required value={productForm.description} onChange={e => setProductForm({...productForm, description: e.target.value})} />
                 </div>
                 <div className="modal-actions">
                   <button type="button" className="btn btn-ghost" onClick={() => setShowProductModal(false)}>Cancel</button>
-                  <button type="submit" className="btn btn-primary" disabled={savingProduct}>
-                    {savingProduct ? 'Adding...' : 'Add Product'}
+                  <button type="submit" className="btn btn-primary" disabled={savingProduct} id="submit-product-btn">
+                    {savingProduct ? 'Adding...' : <><Plus size={16}/> Add Product</>}
                   </button>
                 </div>
               </form>
