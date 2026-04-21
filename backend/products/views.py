@@ -51,7 +51,8 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @transaction.atomic
     def perform_create(self, serializer):
-        product = serializer.save(seller=self.request.user)
+        # Force is_active=True so new products are immediately visible in shops
+        product = serializer.save(seller=self.request.user, is_active=True)
         # Save additional uploaded images (up to 5 total)
         images = self.request.FILES.getlist('images')
         for i, img in enumerate(images[:5]):

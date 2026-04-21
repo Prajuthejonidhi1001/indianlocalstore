@@ -68,4 +68,6 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['category', 'subcategory', 'name', 'description', 'price',
-                  'discount_price', 'stock', 'image', 'is_active']
+                  'discount_price', 'stock', 'image']
+        # is_active is intentionally excluded — new products are always active
+        # Sellers can deactivate via a separate admin/edit flow
