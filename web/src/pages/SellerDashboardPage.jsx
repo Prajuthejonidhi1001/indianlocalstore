@@ -39,8 +39,8 @@ export default function SellerDashboardPage() {
           setShop(shopRes.data);
           setShopForm(shopRes.data);
 
-          // Fetch products belonging to this seller (seller FK = user.id)
-          const prodRes = await productAPI.getProducts({ seller: user.id });
+          // Fetch seller's own products via authenticated endpoint
+          const prodRes = await productAPI.getMyProducts();
           setProducts(prodRes.data.results || prodRes.data);
         } catch (shopErr) {
           // 404 means seller has no shop yet — that's fine
@@ -107,13 +107,15 @@ export default function SellerDashboardPage() {
       // Additional images go as `images` array
       productImages.slice(1).forEach(img => formData.append('images', img));
       
-      const res = await productAPI.createProduct(formData);
-      setProducts([res.data, ...products]);
+      await productAPI.createProduct(formData);
+      // Refetch from API — definitive server state
+      const freshProducts = await productAPI.getMyProducts();
+      setProducts(freshProducts.data.results || freshProducts.data);
       setShowProductModal(false);
       setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', category: '', subcategory: '' });
       setProductImages([]);
       setSubcategories([]);
-      toast.success('Product added successfully!');
+      toast.success('✅ Product added! Now visible in your shop.');
     } catch(err) {
       console.error(err?.response?.data || err);
       const data = err?.response?.data;

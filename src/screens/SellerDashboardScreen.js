@@ -55,13 +55,10 @@ export default function SellerDashboardScreen({ navigation }) {
         setShop(shopData);
         setShopForm(shopData);
 
-        // Fetch products belonging to this seller using seller_id
-        if (shopData.seller_id) {
-          const prodRes = await productAPI.getProducts({ seller: shopData.seller_id });
-          setProducts(prodRes.data.results || prodRes.data);
-        }
+        // Fetch MY products — authenticated endpoint, no seller_id dependency
+        const prodRes = await productAPI.getMyProducts();
+        setProducts(prodRes.data.results || prodRes.data);
       } catch (shopErr) {
-        // 404 means seller has no shop yet
         if (shopErr.response?.status !== 404) console.error(shopErr);
       }
     } catch (err) {
@@ -148,13 +145,15 @@ export default function SellerDashboardScreen({ navigation }) {
       formData.append('image', makeFileObj(productImages[0]));
       productImages.slice(1).forEach(asset => formData.append('images', makeFileObj(asset)));
 
-      const res = await productAPI.createProduct(formData);
-      setProducts([res.data, ...products]);
+      await productAPI.createProduct(formData);
+      // Refetch from API to get the definitive server state
+      const freshProducts = await productAPI.getMyProducts();
+      setProducts(freshProducts.data.results || freshProducts.data);
       setShowProductModal(false);
       setProductForm({ name: '', description: '', price: '', stock: '', category: '', subcategory: '' });
       setProductImages([]);
       setSubcategories([]);
-      Alert.alert('Success', 'Product added successfully');
+      Alert.alert('Success', '✅ Product added! It is now visible in your shop.');
     } catch (err) {
       console.error('Error saving product:', err.response?.data || err);
       const msg = err.response?.data;

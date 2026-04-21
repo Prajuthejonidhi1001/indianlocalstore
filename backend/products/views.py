@@ -96,12 +96,12 @@ class ProductViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def my_products(self, request):
-        """Get seller's products"""
+        """Get ALL seller's products (including inactive/drafts)"""
         if request.user.role != 'seller':
             return Response({'error': 'Only sellers can view this'}, status=status.HTTP_403_FORBIDDEN)
         
-        products = Product.objects.filter(seller=request.user)
-        serializer = self.get_serializer(products, many=True)
+        products = Product.objects.filter(seller=request.user).order_by('-created_at')
+        serializer = ProductListSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
