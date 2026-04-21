@@ -274,14 +274,14 @@ export default function SellerDashboardScreen({ navigation }) {
                 <Text style={styles.emptyText}>No products found.</Text>
               </View>
             ) : (
-              products.map(p => (
-                <View key={p.id} style={styles.productRow}>
+              products.map((p, idx) => (
+                <View key={p.id ? String(p.id) : `${p.name}-${idx}`} style={styles.productRow}>
                   <View style={styles.productInfo}>
                     <Text style={styles.productName}>{p.name}</Text>
                     <Text style={styles.productStats}>₹{p.price} • {p.stock} in stock</Text>
                   </View>
-                  <View style={[styles.statusBadge, { backgroundColor: p.is_active ? 'rgba(46,204,113,0.1)' : 'rgba(255,107,53,0.1)' }]}>
-                    <Text style={[styles.statusText, { color: p.is_active ? COLORS.green : COLORS.primary }]}>{p.is_active ? 'ACTIVE' : 'DRAFT'}</Text>
+                  <View style={[styles.statusBadge, { backgroundColor: p.is_active !== false ? 'rgba(46,204,113,0.1)' : 'rgba(255,107,53,0.1)' }]}>
+                    <Text style={[styles.statusText, { color: p.is_active !== false ? COLORS.green : COLORS.primary }]}>{p.is_active !== false ? 'ACTIVE' : 'DRAFT'}</Text>
                   </View>
                 </View>
               ))

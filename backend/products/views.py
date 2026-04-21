@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import PermissionDenied
+from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
 from .models import Category, SubCategory, Product, ProductReview, ProductImage
 from .serializers import (
@@ -48,6 +49,7 @@ class ProductViewSet(viewsets.ModelViewSet):
             return ProductCreateUpdateSerializer
         return ProductListSerializer
 
+    @transaction.atomic
     def perform_create(self, serializer):
         product = serializer.save(seller=self.request.user)
         # Save additional uploaded images (up to 5 total)
@@ -55,11 +57,32 @@ class ProductViewSet(viewsets.ModelViewSet):
         for i, img in enumerate(images[:5]):
             ProductImage.objects.create(product=product, image=img, order=i)
 
+    def create(self, request, *args, **kwargs):
+        """Override to return full ProductListSerializer data after creation"""
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        # Return full data with id, seller_name etc
+        full_serializer = ProductListSerializer(serializer.instance, context={'request': request})
+        headers = self.get_success_headers(full_serializer.data)
+        return Response(full_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
     def get_queryset(self):
+        qs = super().get_queryset()
+        # Allow direct shop-based filtering — backend resolves Shop→seller→Products
+        shop_id = self.request.query_params.get('shop')
+        if shop_id:
+            from shops.models import Shop
+            try:
+                shop = Shop.objects.get(id=shop_id)
+                return qs.filter(seller=shop.seller)
+            except Shop.DoesNotExist:
+                return qs.none()
+        # seller filter (by user id) handled automatically by DjangoFilterBackend
         if self.request.user.is_authenticated and self.request.user.role == 'seller':
             if self.request.query_params.get('my_products'):
                 return Product.objects.filter(seller=self.request.user)
-        return super().get_queryset()
+        return qs
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def add_review(self, request, pk=None):

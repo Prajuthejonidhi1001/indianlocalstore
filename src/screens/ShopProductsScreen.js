@@ -21,16 +21,13 @@ export default function ShopProductsScreen({ route, navigation }) {
   const fetchShopData = async () => {
     try {
       setLoading(true);
-      // First fetch shop details
-      const shopRes = await shopAPI.getShopDetail(shopId);
-      const shopData = shopRes.data;
-      setShop(shopData);
-
-      // Now fetch products using the seller's user ID
-      if (shopData.seller_id) {
-        const prodRes = await productAPI.getProducts({ seller: shopData.seller_id });
-        setProducts(prodRes.data.results || prodRes.data);
-      }
+      // Parallel fetch — backend resolves shop->seller->products via ?shop=id
+      const [shopRes, prodRes] = await Promise.all([
+        shopAPI.getShopDetail(shopId),
+        productAPI.getProducts({ shop: shopId }),
+      ]);
+      setShop(shopRes.data);
+      setProducts(prodRes.data.results || prodRes.data);
     } catch (error) {
       console.error('Error fetching shop detail:', error);
     } finally {
