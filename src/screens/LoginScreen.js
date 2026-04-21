@@ -88,14 +88,10 @@ export default function LoginScreen({ navigation }) {
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
           
-          <Animated.View style={[styles.card, { 
-            opacity: cardOpacity, 
-            transform: [
-              { scale: cardScale }, 
-              { translateX: shakeAnim },
-              { perspective: 1000 }
-            ] 
-          }]}>
+          {/* Opacity-only outer wrapper — scale/perspective transforms break touch targets */}
+          <Animated.View style={[styles.card, { opacity: cardOpacity }]}>
+            {/* Error shake applies only here, briefly, on auth failure */}
+            <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
             <View style={styles.headerRow}>
               <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                 <Ionicons name="arrow-back" size={24} color="#FFF" />
@@ -152,6 +148,7 @@ export default function LoginScreen({ navigation }) {
                 <Text style={styles.footerAction}>Join Free</Text>
               </TouchableOpacity>
             </Animated.View>
+            </Animated.View>
           </Animated.View>
 
         </ScrollView>
@@ -173,7 +170,7 @@ const styles = StyleSheet.create({
   title: { fontSize: 32, fontWeight: '900', color: '#FFF', textAlign: 'center', marginBottom: 8, letterSpacing: 0.5 },
   subtitle: { fontSize: 15, color: '#8b9bb4', textAlign: 'center', marginBottom: 36, letterSpacing: 0.5 },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 16, paddingHorizontal: 16, height: 60, marginBottom: 20, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.05)' },
-  inputFocused: { borderColor: '#FF6B00', backgroundColor: 'rgba(255, 107, 0, 0.05)', transform: [{ scale: 1.02 }] },
+  inputFocused: { borderColor: '#FF6B00', backgroundColor: 'rgba(255, 107, 0, 0.05)' },
   icon: { marginRight: 14 },
   input: { flex: 1, color: '#FFF', fontSize: 17, height: '100%', fontWeight: '500' },
   eyeBtn: { padding: 8 },
