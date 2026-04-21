@@ -229,10 +229,8 @@ export default function RegisterScreen({ navigation }) {
       
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-          <Animated.View style={[styles.card, { 
-            opacity: fadeAnim, 
-            transform: [{ translateY: slideAnim }, { translateX: shakeAnim }, { perspective: 1000 }] 
-          }]}>
+          <Animated.View style={[styles.card, { opacity: fadeAnim }]}>
+            <Animated.View style={{ transform: [{ translateY: slideAnim }, { translateX: shakeAnim }] }}>
             
             <View style={styles.header}>
               <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -351,7 +349,7 @@ export default function RegisterScreen({ navigation }) {
                 </TouchableOpacity>
               </View>
             </Animated.View>
-
+          </Animated.View>
           </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -377,7 +375,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', marginBottom: 16, alignItems: 'center' },
   flexHalf: { flex: 1 },
   inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 16, paddingHorizontal: 16, height: 60, marginBottom: 16, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.05)' },
-  inputFocused: { borderColor: '#00D4FF', backgroundColor: 'rgba(0, 212, 255, 0.05)', transform: [{ scale: 1.02 }] },
+  inputFocused: { borderColor: '#00D4FF', backgroundColor: 'rgba(0, 212, 255, 0.05)' },
   icon: { marginRight: 14 },
   input: { flex: 1, color: '#FFF', fontSize: 16, height: '100%', fontWeight: '500' },
   eyeBtn: { padding: 8 },
