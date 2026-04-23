@@ -11,9 +11,9 @@ export default function ShopDetailPage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  useEffect(() => {
     const fetchAll = async () => {
       try {
-        // Fetch shop and products in parallel — backend resolves shop->seller->products
         const [shopRes, prodRes] = await Promise.all([
           shopAPI.getShopDetail(id),
           productAPI.getProducts({ shop: id }),

@@ -43,7 +43,7 @@ function AppRoutes() {
       <Navbar />
       <main>
         <Routes>
-          <Route path="/" element={isAuthenticated ? <Navigate to="/home" replace /> : <Navigate to="/login" replace />} />
+          <Route path="/" element={isAuthenticated ? <Navigate to="/home" replace /> : <LandingPage />} />
           <Route path="/login" element={isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage />} />
           <Route path="/register" element={isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage />} />
           <Route path="/products" element={<ProductsPage />} />
