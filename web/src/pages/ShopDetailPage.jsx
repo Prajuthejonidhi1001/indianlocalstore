@@ -72,6 +72,12 @@ export default function ShopDetailPage() {
                   </div>
                 )}
               </div>
+              {shop.shop_code && (
+                <div className="shop-id-badge">
+                  <Shield size={12} />
+                  <span>Shop ID: #{shop.id} &middot; {String(shop.shop_code).slice(0, 8).toUpperCase()}</span>
+                </div>
+              )}
             </div>
           </div>
         </div>

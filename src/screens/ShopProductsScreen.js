@@ -97,7 +97,11 @@ export default function ShopProductsScreen({ route, navigation }) {
               <Text style={styles.badgeText}>Map</Text>
             </TouchableOpacity>
           </View>
-          
+          {/* Shop unique ID */}
+          <View style={styles.shopIdRow}>
+            <Ionicons name="barcode-outline" size={13} color={COLORS.textMuted} />
+            <Text style={styles.shopIdText}>Shop ID: #{shop.id} · {String(shop.shop_code || '').slice(0, 8).toUpperCase()}</Text>
+          </View>
           <Text style={styles.description}>{shop.description || 'Welcome to our shop! We provide the best quality products for our local community.'}</Text>
           <View style={styles.locationRow}>
             <Ionicons name="map-outline" size={16} color={COLORS.textMuted} />
@@ -109,16 +113,37 @@ export default function ShopProductsScreen({ route, navigation }) {
           <Text style={styles.sectionTitle}>Product Catalog</Text>
           {products.length > 0 ? (
             products.map((item) => (
-              <TouchableOpacity key={item.id} style={styles.productCard}>
-                <Image source={{ uri: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80' }} style={styles.productImage} />
+              <TouchableOpacity
+                key={item.id}
+                style={styles.productCard}
+                onPress={() => navigation.navigate('ProductDetail', { product: item })}
+                activeOpacity={0.85}
+              >
+                <TouchableOpacity
+                  onPress={() => navigation.navigate('ProductDetail', { product: item })}
+                  activeOpacity={0.9}
+                >
+                  <Image
+                    source={{ uri: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80' }}
+                    style={styles.productImage}
+                  />
+                </TouchableOpacity>
                 <View style={styles.productDetails}>
                   <Text style={styles.productName}>{item.name}</Text>
                   <Text style={styles.productCategory}>{item.category_name}</Text>
                   <View style={styles.priceRow}>
                     <Text style={styles.price}>₹{item.price}</Text>
-                    <TouchableOpacity style={styles.addBtn} onPress={() => addToCart(item.id)}>
-                      <Ionicons name="cart-outline" size={18} color="#fff" />
-                    </TouchableOpacity>
+                    <View style={styles.productActions}>
+                      <TouchableOpacity
+                        style={styles.detailBtn}
+                        onPress={() => navigation.navigate('ProductDetail', { product: item })}
+                      >
+                        <Text style={styles.detailBtnText}>View</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.addBtn} onPress={() => addToCart(item.id)}>
+                        <Ionicons name="cart-outline" size={16} color="#fff" />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </View>
               </TouchableOpacity>
@@ -193,6 +218,11 @@ const styles = StyleSheet.create({
   priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   price: { color: COLORS.primary, fontSize: 18, fontWeight: '800' },
   addBtn: { backgroundColor: COLORS.primary, width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  productActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
+  detailBtn: { backgroundColor: 'rgba(255,107,53,0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,107,53,0.3)' },
+  detailBtnText: { color: COLORS.primary, fontSize: 12, fontWeight: '700' },
+  shopIdRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, backgroundColor: 'rgba(255,255,255,0.03)', padding: 8, borderRadius: 8 },
+  shopIdText: { color: COLORS.textMuted, fontSize: 11, fontWeight: '600', fontFamily: 'monospace' },
   
   emptyText: { color: COLORS.textMuted, textAlign: 'center', marginTop: 30 },
   errorText: { color: COLORS.text, fontSize: 18, marginBottom: 20 },

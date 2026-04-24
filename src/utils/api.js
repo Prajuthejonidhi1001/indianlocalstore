@@ -73,6 +73,12 @@ export const authAPI = {
   getSellers: () => api.get('/users/sellers/'),
 };
 
+// ========== User API (password reset etc.) ==========
+export const userAPI = {
+  forgotPassword: (identifier) => api.post('/users/forgot_password/', { username: identifier }),
+  resetPassword: (reset_token, new_password) => api.post('/users/reset_password/', { reset_token, new_password }),
+};
+
 // ========== Product API ==========
 export const productAPI = {
   getCategories: () => api.get('/products/categories/'),
@@ -88,7 +94,7 @@ export const productAPI = {
   }),
   deleteProduct: (id) => api.delete(`/products/products/${id}/`),
   addProductReview: (productId, data) => api.post(`/products/products/${productId}/add_review/`, data),
-  getMyProducts: () => api.get('/products/products/?my_products=true'),
+  getMyProducts: () => api.get('/products/products/my_products/'),
 };
 
 // ========== Shop API ==========

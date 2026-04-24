@@ -15,6 +15,8 @@ import LoginScreen from '../screens/LoginScreen';
 import RegisterScreen from '../screens/RegisterScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import LocationPickerScreen from '../screens/LocationPickerScreen';
+import ProductDetailScreen from '../screens/ProductDetailScreen';
+import ForgotPasswordScreen from '../screens/ForgotPasswordScreen';
 
 // E-Commerce Screens
 import CartScreen from '../screens/CartScreen';
@@ -35,6 +37,7 @@ function HomeStack() {
       <Stack.Screen name="SectorDetail" component={SectorDetailScreen} />
       <Stack.Screen name="Subcategory" component={SubcategoryScreen} />
       <Stack.Screen name="ShopProducts" component={ShopProductsScreen} />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     </Stack.Navigator>
   );
 }
@@ -46,6 +49,7 @@ function CategoriesStack() {
       <Stack.Screen name="SectorDetail" component={SectorDetailScreen} />
       <Stack.Screen name="Subcategory" component={SubcategoryScreen} />
       <Stack.Screen name="ShopProducts" component={ShopProductsScreen} />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     </Stack.Navigator>
   );
 }
@@ -107,6 +111,7 @@ export default function AppNavigator() {
         <>
           <RootStack.Screen name="Login" component={LoginScreen} />
           <RootStack.Screen name="Register" component={RegisterScreen} />
+          <RootStack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </>
       ) : (
         <>
@@ -117,6 +122,7 @@ export default function AppNavigator() {
           <RootStack.Screen name="Checkout" component={CheckoutScreen} />
           <RootStack.Screen name="Orders" component={OrdersScreen} />
           <RootStack.Screen name="SellerDashboard" component={SellerDashboardScreen} />
+          <RootStack.Screen name="ProductDetail" component={ProductDetailScreen} />
         </>
       )}
     </RootStack.Navigator>

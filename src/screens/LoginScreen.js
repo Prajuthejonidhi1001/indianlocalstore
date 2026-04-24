@@ -143,6 +143,12 @@ export default function LoginScreen({ navigation }) {
             </TouchableOpacity>
 
             <Animated.View style={[styles.footer, { opacity: cardOpacity }]}>
+              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgotBtn}>
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </Animated.View>
+
+            <Animated.View style={[styles.footer, { opacity: cardOpacity }]}>
               <Text style={styles.footerText}>New to IndianLocalStore? </Text>
               <TouchableOpacity onPress={() => navigation.navigate('Register')}>
                 <Text style={styles.footerAction}>Join Free</Text>
@@ -177,7 +183,9 @@ const styles = StyleSheet.create({
   loginBtn: { height: 60, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12, backgroundColor: '#FF6B00', overflow: 'hidden' },
   btnHologram: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.1)' },
   loginBtnText: { color: '#FFF', fontSize: 17, fontWeight: '800', marginRight: 10, letterSpacing: 0.5 },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 32 },
+  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
   footerText: { color: '#8b9bb4', fontSize: 15 },
-  footerAction: { color: '#00D4FF', fontSize: 15, fontWeight: '800' }
+  footerAction: { color: '#00D4FF', fontSize: 15, fontWeight: '800' },
+  forgotBtn: { alignItems: 'center', paddingVertical: 4 },
+  forgotText: { color: 'rgba(255,107,53,0.8)', fontSize: 14, fontWeight: '700' },
 });

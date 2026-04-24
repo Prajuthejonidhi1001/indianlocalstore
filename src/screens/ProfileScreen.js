@@ -154,8 +154,8 @@ export default function ProfileScreen({ navigation }) {
             {user?.role === 'seller' && (
               <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('SellerDashboard')}>
                 <View style={styles.linkLeft}>
-                  <View style={[styles.linkIcon, { backgroundColor: 'rgba(46, 204, 113, 0.1)' }]}>
-                    <Ionicons name="storefront" size={20} color={COLORS.success} />
+                  <View style={[styles.linkIcon, { backgroundColor: 'rgba(0,230,118,0.1)' }]}>
+                    <Ionicons name="storefront" size={20} color="#00E676" />
                   </View>
                   <Text style={styles.linkText}>Seller Dashboard</Text>
                 </View>
@@ -173,17 +173,15 @@ export default function ProfileScreen({ navigation }) {
               <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
             </TouchableOpacity>
 
-            {user.role === 'seller' && (
-              <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('SellerDashboard')}>
-                <View style={styles.linkLeft}>
-                  <View style={[styles.linkIcon, { backgroundColor: 'rgba(46,204,113,0.1)' }]}>
-                    <Ionicons name="storefront" size={20} color={COLORS.green} />
-                  </View>
-                  <Text style={styles.linkText}>Seller Dashboard</Text>
+            <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('Cart')}>
+              <View style={styles.linkLeft}>
+                <View style={[styles.linkIcon, { backgroundColor: 'rgba(255,107,53,0.1)' }]}>
+                  <Ionicons name="cart" size={20} color={COLORS.primary} />
                 </View>
-                <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
-              </TouchableOpacity>
-            )}
+                <Text style={styles.linkText}>My Cart</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+            </TouchableOpacity>
           </View>
 
           {/* Details Form Sections */}

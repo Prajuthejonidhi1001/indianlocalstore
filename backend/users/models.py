@@ -21,6 +21,7 @@ class User(AbstractUser):
     pincode = models.CharField(max_length=10, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    password_reset_token = models.CharField(max_length=128, blank=True, default='')
 
     # Override related_name for groups and permissions to avoid clash
     groups = models.ManyToManyField(
