@@ -6,6 +6,7 @@ import {
   ScrollView, 
   TouchableOpacity, 
   ActivityIndicator,
+  Alert,
   FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -15,6 +16,7 @@ import { orderAPI } from '../utils/api';
 export default function OrdersScreen({ navigation }) {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState(null);
 
   useEffect(() => {
     fetchOrders();
@@ -30,6 +32,28 @@ export default function OrdersScreen({ navigation }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleCancelOrder = (orderId) => {
+    Alert.alert(
+      'Cancel Order',
+      'Are you sure you want to cancel this order?',
+      [
+        { text: 'No', style: 'cancel' },
+        { text: 'Yes, Cancel', style: 'destructive', onPress: async () => {
+          setCancellingId(orderId);
+          try {
+            await orderAPI.cancelOrder(orderId);
+            Alert.alert('Cancelled', 'Your order has been cancelled.');
+            fetchOrders();
+          } catch (err) {
+            Alert.alert('Error', err.response?.data?.error || 'Failed to cancel order');
+          } finally {
+            setCancellingId(null);
+          }
+        }}
+      ]
+    );
   };
 
   const getStatusColor = (status) => {
@@ -69,6 +93,20 @@ export default function OrdersScreen({ navigation }) {
         <Text style={styles.totalLabel}>Total Amount</Text>
         <Text style={styles.totalValue}>₹{item.total_amount}</Text>
       </View>
+
+      {/* Cancel button for pending/confirmed orders */}
+      {['pending', 'confirmed'].includes(item.order_status) && (
+        <TouchableOpacity
+          style={styles.cancelBtn}
+          onPress={() => handleCancelOrder(item.id)}
+          disabled={cancellingId === item.id}
+        >
+          {cancellingId === item.id
+            ? <ActivityIndicator size="small" color="#E74C3C" />
+            : <Text style={styles.cancelBtnText}>Cancel Order</Text>
+          }
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -139,6 +177,10 @@ const styles = StyleSheet.create({
   orderFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 5 },
   totalLabel: { color: COLORS.text, fontSize: 16, fontWeight: '700' },
   totalValue: { color: COLORS.primary, fontSize: 20, fontWeight: '800' },
+
+  // Cancel order button
+  cancelBtn: { marginTop: 12, paddingVertical: 12, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: 'rgba(231,76,60,0.4)', backgroundColor: 'rgba(231,76,60,0.06)', alignItems: 'center' },
+  cancelBtnText: { color: '#E74C3C', fontWeight: '700', fontSize: 14 },
 
   emptyContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40, marginTop: -50 },
   emptyTitle: { fontSize: 22, fontWeight: '800', color: COLORS.text, marginTop: 15, marginBottom: 5 },

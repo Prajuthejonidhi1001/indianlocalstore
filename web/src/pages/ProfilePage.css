@@ -46,6 +46,43 @@
   text-align: left;
 }
 
+/* Quick links — hide while editing */
+.profile-quick-links {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  grid-column: 1 / -1;
+  margin-top: -0.5rem;
+}
+.pql-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.9rem 1.25rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.18s ease;
+}
+.pql-btn:hover {
+  border-color: var(--saffron);
+  background: rgba(255,107,53,0.05);
+  color: var(--saffron);
+}
+.pql-btn.pql-seller {
+  border-color: rgba(0,230,118,0.25);
+  background: rgba(0,230,118,0.04);
+}
+.pql-btn.pql-seller:hover {
+  border-color: #00E676;
+  color: #00E676;
+  background: rgba(0,230,118,0.08);
+}
+
 .profile-form-card { padding: 2rem; }
 .form-card-title {
   font-size: 1.15rem;
@@ -67,4 +104,6 @@
 
 @media (max-width: 768px) {
   .profile-layout { grid-template-columns: 1fr; }
+  .profile-quick-links { flex-direction: row; flex-wrap: wrap; }
+  .pql-btn { flex: 1; min-width: 140px; justify-content: center; }
 }

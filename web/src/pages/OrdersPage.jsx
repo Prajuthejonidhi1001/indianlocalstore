@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Package, Clock, CheckCircle2, ChevronRight, Search } from 'lucide-react';
+import { Package, Clock, ChevronRight, Search, XCircle } from 'lucide-react';
 import { orderAPI } from '../api';
+import toast from 'react-hot-toast';
 import './OrdersPage.css';
 
 const STATUS_COLORS = {
@@ -16,6 +17,7 @@ export default function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
 
   useEffect(() => {
     orderAPI.getMyOrders()
@@ -30,6 +32,26 @@ export default function OrdersPage() {
       setSelectedOrder(res.data);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!selectedOrder) return;
+    setCancelling(true);
+    try {
+      await orderAPI.cancelOrder(selectedOrder.id);
+      toast.success('Order cancelled successfully');
+      // Refresh orders list and detail
+      const [listRes, detailRes] = await Promise.all([
+        orderAPI.getMyOrders(),
+        orderAPI.getOrderDetail(selectedOrder.id),
+      ]);
+      setOrders(listRes.data.results || listRes.data);
+      setSelectedOrder(detailRes.data);
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Failed to cancel order');
+    } finally {
+      setCancelling(false);
     }
   };
 
@@ -123,6 +145,19 @@ export default function OrdersPage() {
                     <div className="divider" style={{margin: '0.75rem 0'}} />
                     <div className="summary-row summary-total"><span>Total</span><span>₹{selectedOrder.final_amount}</span></div>
                   </div>
+
+                  {/* Cancel Order — only if pending */}
+                  {['pending', 'confirmed'].includes(selectedOrder.order_status) && (
+                    <button
+                      className="btn-cancel-order"
+                      onClick={handleCancelOrder}
+                      disabled={cancelling}
+                      id="cancel-order-btn"
+                    >
+                      <XCircle size={16} />
+                      {cancelling ? 'Cancelling...' : 'Cancel Order'}
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div className="empty-selection card">

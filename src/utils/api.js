@@ -130,6 +130,7 @@ export const orderAPI = {
   createOrder: (data) => api.post('/orders/orders/', data),
   getMyOrders: () => api.get('/orders/orders/my_orders/'),
   getOrderDetail: (id) => api.get(`/orders/orders/${id}/`),
+  cancelOrder: (id) => api.post(`/orders/orders/${id}/cancel/`),
   createPayment: (orderId) => api.post(`/orders/orders/${orderId}/create_payment/`),
   verifyPayment: (orderId, data) => api.post(`/orders/orders/${orderId}/verify_payment/`, data),
 };

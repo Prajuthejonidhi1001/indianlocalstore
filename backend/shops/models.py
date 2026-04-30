@@ -2,6 +2,7 @@ from django.db import models
 from users.models import User
 import uuid
 
+
 class Shop(models.Model):
     """Shop model for sellers"""
     shop_code = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
@@ -11,7 +12,7 @@ class Shop(models.Model):
     description = models.TextField(blank=True)
     logo = models.ImageField(upload_to='shop_logos/', null=True, blank=True)
     banner = models.ImageField(upload_to='shop_banners/', null=True, blank=True)
-    
+
     # Location
     latitude = models.FloatField()
     longitude = models.FloatField()
@@ -19,24 +20,28 @@ class Shop(models.Model):
     city = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
     pincode = models.CharField(max_length=10)
-    
+
     # Contact
     phone = models.CharField(max_length=15)
     email = models.EmailField()
-    
+
     # Shop details
     rating = models.FloatField(default=0)
     reviews_count = models.IntegerField(default=0)
     opening_time = models.TimeField(null=True, blank=True)
     closing_time = models.TimeField(null=True, blank=True)
-    
+
+    # Status toggles
     is_active = models.BooleanField(default=True)
+    is_open = models.BooleanField(default=True)
+    online_delivery_enabled = models.BooleanField(default=False)
+
     verification_status = models.CharField(
         max_length=20,
         choices=[('unverified', 'Unverified'), ('verified', 'Verified'), ('rejected', 'Rejected')],
         default='unverified'
     )
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

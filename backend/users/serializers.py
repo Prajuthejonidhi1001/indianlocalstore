@@ -31,9 +31,14 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         password2 = data.pop('password2', None)
         if password2 and data['password'] != password2:
             raise serializers.ValidationError("Passwords don't match")
-        
-        # Enforce Amazon-level Security Rules!
+
+        # Convert empty phone to None so unique constraint allows multiple users with no phone
+        if 'phone' in data and not data['phone']:
+            data['phone'] = None
+
         password = data['password']
+        if len(password) < 8:
+            raise serializers.ValidationError({"password": ["Password must be at least 8 characters."]})
         if not re.search(r'[A-Z]', password):
             raise serializers.ValidationError({"password": ["Password must contain at least one uppercase letter."]})
         if not re.search(r'[a-z]', password):
@@ -43,14 +48,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if not re.search(r'[^A-Za-z0-9]', password):
             raise serializers.ValidationError({"password": ["Password must contain at least one special character."]})
 
-        try:
-            validate_password(password)
-        except ValidationError as e:
-            raise serializers.ValidationError({"password": list(e.messages)})
-            
         return data
 
     def create(self, validated_data):
+        # Ensure empty phone becomes None (not "") to avoid unique constraint collision
+        if 'phone' in validated_data and not validated_data['phone']:
+            validated_data['phone'] = None
         user = User.objects.create_user(**validated_data)
         return user
 

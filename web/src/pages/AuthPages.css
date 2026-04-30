@@ -498,3 +498,84 @@
   transition: color 0.2s;
 }
 .btn-ghost:hover { color: var(--text); }
+
+/* ── Seller Registration Section ─────────────────── */
+.reg-seller-section {
+  background: rgba(255,107,53,0.04);
+  border: 1px solid rgba(255,107,53,0.18);
+  border-radius: 18px;
+  padding: 1.25rem 1.25rem 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+.reg-seller-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #FF6B00;
+  margin-bottom: -0.25rem;
+}
+
+/* ── Category chip grid ── */
+.reg-cat-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+.reg-cat-chip {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.04);
+  color: #a0aec0;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.reg-cat-chip:hover {
+  border-color: rgba(255,107,53,0.5);
+  color: #fff;
+  background: rgba(255,107,53,0.08);
+}
+.reg-cat-chip.selected {
+  border-color: #FF6B00;
+  background: rgba(255,107,53,0.18);
+  color: #fff;
+  box-shadow: 0 0 0 3px rgba(255,107,53,0.15);
+}
+.reg-cat-chip-sm {
+  padding: 6px 12px;
+  font-size: 0.78rem;
+}
+
+/* ── Location detect button ── */
+.reg-location-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 0.85rem;
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  color: #a0aec0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-top: -0.25rem;
+  margin-bottom: 0.5rem;
+}
+.reg-location-btn:hover {
+  border-color: rgba(255,107,53,0.4);
+  color: #fff;
+}

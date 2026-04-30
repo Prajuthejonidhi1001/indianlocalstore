@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, MapPin, Phone, Edit2, Check, X } from 'lucide-react';
+import { User, Mail, Phone, Edit2, Check, X, LayoutDashboard, Package, ShoppingCart } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import './ProfilePage.css';
@@ -78,6 +79,22 @@ export default function ProfilePage() {
               <div className="pa-item"><Phone size={14} /> {user.phone || 'Not provided'}</div>
             </div>
           </div>
+
+          {/* Quick Links — hidden while editing profile */}
+          {!editing && (
+            <div className="profile-quick-links">
+              <Link to="/orders" className="pql-btn" id="profile-orders-link">
+                <Package size={18} />
+                <span>My Orders</span>
+              </Link>
+              {user?.role === 'seller' && (
+                <Link to="/seller" className="pql-btn pql-seller" id="profile-seller-link">
+                  <LayoutDashboard size={18} />
+                  <span>Seller Dashboard</span>
+                </Link>
+              )}
+            </div>
+          )}
 
           {/* Details Form Card */}
           <div className="card profile-form-card">

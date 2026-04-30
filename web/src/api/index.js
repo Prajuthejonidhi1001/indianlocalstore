@@ -91,6 +91,7 @@ export const orderAPI = {
   createOrder: (data) => api.post('/orders/orders/', data),
   getMyOrders: () => api.get('/orders/orders/my_orders/'),
   getOrderDetail: (id) => api.get(`/orders/orders/${id}/`),
+  cancelOrder: (id) => api.post(`/orders/orders/${id}/cancel/`),
 };
 
 export default api;

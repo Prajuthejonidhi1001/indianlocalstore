@@ -23,19 +23,25 @@ export default function SellerDashboardScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Shop Form
-  const [shopForm, setShopForm] = useState({ name: '', description: '', phone: '', email: '', address: '', city: '', state: '', pincode: '' });
+  const [shopForm, setShopForm] = useState({ name: '', description: '', phone: '', email: '', address: '', city: '', state: '', pincode: '', is_open: true, online_delivery_enabled: false });
   const [savingShop, setSavingShop] = useState(false);
 
-  // Product Form
+  // Product Form — no category/subcat
   const [showProductModal, setShowProductModal] = useState(false);
-  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '', category: '', subcategory: '' });
-  const [productImages, setProductImages] = useState([]); // up to 5
-  const [subcategories, setSubcategories] = useState([]);
+  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '' });
+  const [productImages, setProductImages] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
+
+  // Categories tab
+  const [allCategories, setAllCategories] = useState([]);
+  const [allSubcats, setAllSubcats] = useState({});
+  const [selectedCats, setSelectedCats] = useState([]);
+  const [selectedSubcats, setSelectedSubcats] = useState([]);
+  const [catsLocked, setCatsLocked] = useState(false);
+  const [savingCats, setSavingCats] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -44,18 +50,24 @@ export default function SellerDashboardScreen({ navigation }) {
   const fetchData = async () => {
     try {
       setLoading(true);
-      // Always load categories
       const catRes = await productAPI.getCategories();
-      setCategories(catRes.data.results || catRes.data);
+      const cats = catRes.data.results || catRes.data;
+      setAllCategories(cats);
 
-      // Fetch seller's own shop via dedicated endpoint
       try {
         const shopRes = await shopAPI.getMyShop();
         const shopData = shopRes.data;
         setShop(shopData);
-        setShopForm(shopData);
+        setShopForm({ ...shopData, is_open: shopData.is_open ?? true, online_delivery_enabled: shopData.online_delivery_enabled || false });
 
-        // Fetch MY products — authenticated endpoint, no seller_id dependency
+        if (shopData.categories?.length > 0) {
+          setSelectedCats(shopData.categories.map(c => c.id || c));
+          setCatsLocked(true);
+        }
+        if (shopData.subcategories?.length > 0) {
+          setSelectedSubcats(shopData.subcategories.map(s => s.id || s));
+        }
+
         const prodRes = await productAPI.getMyProducts();
         setProducts(prodRes.data.results || prodRes.data);
       } catch (shopErr) {
@@ -87,14 +99,43 @@ export default function SellerDashboardScreen({ navigation }) {
     }
   };
 
-  const handleCategoryChange = async (catId) => {
-    setProductForm(f => ({ ...f, category: String(catId), subcategory: '' }));
-    setSubcategories([]);
-    if (catId) {
+  const handleCatToggle = async (catId) => {
+    if (catsLocked) return;
+    const newSel = selectedCats.includes(catId)
+      ? selectedCats.filter(id => id !== catId)
+      : [...selectedCats, catId];
+    setSelectedCats(newSel);
+    if (!allSubcats[catId]) {
       try {
         const res = await productAPI.getSubCategories(catId);
-        setSubcategories(res.data.results || res.data);
+        setAllSubcats(prev => ({ ...prev, [catId]: res.data.results || res.data }));
       } catch {}
+    }
+    if (selectedCats.includes(catId)) {
+      const toRemove = (allSubcats[catId] || []).map(s => s.id);
+      setSelectedSubcats(prev => prev.filter(id => !toRemove.includes(id)));
+    }
+  };
+
+  const handleSubcatToggle = (subcatId) => {
+    if (catsLocked) return;
+    setSelectedSubcats(prev =>
+      prev.includes(subcatId) ? prev.filter(id => id !== subcatId) : [...prev, subcatId]
+    );
+  };
+
+  const handleSaveCats = async () => {
+    if (!shop) return Alert.alert('Error', 'Complete shop setup first');
+    if (selectedCats.length === 0) return Alert.alert('Error', 'Select at least one category');
+    setSavingCats(true);
+    try {
+      await shopAPI.updateShop(shop.id, { categories: selectedCats, subcategories: selectedSubcats });
+      setCatsLocked(true);
+      Alert.alert('Saved', 'Categories locked. This selection cannot be changed.');
+    } catch {
+      Alert.alert('Error', 'Failed to save categories');
+    } finally {
+      setSavingCats(false);
     }
   };
 
@@ -126,7 +167,7 @@ export default function SellerDashboardScreen({ navigation }) {
 
   const handleSaveProduct = async () => {
     if (!shop) return Alert.alert('Error', 'Complete shop setup first');
-    if (!productForm.name || !productForm.price || !productForm.category) return Alert.alert('Error', 'Name, price, and category are required');
+    if (!productForm.name || !productForm.price) return Alert.alert('Error', 'Name and price are required');
     if (productImages.length === 0) return Alert.alert('Error', 'At least 1 product image is required');
 
     setSavingProduct(true);
@@ -146,13 +187,11 @@ export default function SellerDashboardScreen({ navigation }) {
       productImages.slice(1).forEach(asset => formData.append('images', makeFileObj(asset)));
 
       await productAPI.createProduct(formData);
-      // Refetch from API to get the definitive server state
       const freshProducts = await productAPI.getMyProducts();
       setProducts(freshProducts.data.results || freshProducts.data);
       setShowProductModal(false);
-      setProductForm({ name: '', description: '', price: '', stock: '', category: '', subcategory: '' });
+      setProductForm({ name: '', description: '', price: '', stock: '' });
       setProductImages([]);
-      setSubcategories([]);
       Alert.alert('Success', '✅ Product added! It is now visible in your shop.');
     } catch (err) {
       console.error('Error saving product:', err.response?.data || err);
@@ -187,15 +226,14 @@ export default function SellerDashboardScreen({ navigation }) {
 
       {/* Tabs */}
       <View style={styles.tabContainer}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'overview' && styles.tabActive]}
           onPress={() => setActiveTab('overview')}
         >
           <Ionicons name="storefront" size={18} color={activeTab === 'overview' ? COLORS.primary : COLORS.textMuted} />
-          <Text style={[styles.tabText, activeTab === 'overview' && styles.tabTextActive]}>Shop Details</Text>
+          <Text style={[styles.tabText, activeTab === 'overview' && styles.tabTextActive]}>Shop</Text>
         </TouchableOpacity>
-        
-        <TouchableOpacity 
+        <TouchableOpacity
           style={[styles.tab, activeTab === 'products' && styles.tabActive]}
           onPress={() => setActiveTab('products')}
         >
@@ -206,49 +244,144 @@ export default function SellerDashboardScreen({ navigation }) {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
         
-        {/* SHOP SETTINGS TAB */}
         {activeTab === 'overview' && (
           <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Shop Information</Text>
-            
-            <View style={styles.field}>
-              <Text style={styles.label}>Shop Name</Text>
-              <TextInput style={styles.input} value={shopForm.name} onChangeText={t => setShopForm({...shopForm, name: t})} />
+            <Text style={styles.sectionTitle}>Shop Settings</Text>
+
+            {/* ── Toggles at TOP ── */}
+            <View style={styles.togglesRow}>
+              <View style={styles.toggleCard}>
+                <View style={styles.toggleCardInfo}>
+                  <Text style={styles.toggleCardIcon}>{shopForm.is_open ? '🟢' : '🔴'}</Text>
+                  <View>
+                    <Text style={styles.toggleCardLabel}>Shop Status</Text>
+                    <Text style={styles.toggleCardSub}>{shopForm.is_open ? 'Open' : 'Closed'}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[styles.toggleTrack, shopForm.is_open && styles.toggleTrackOn]}
+                  onPress={() => setShopForm(f => ({ ...f, is_open: !f.is_open }))}
+                >
+                  <View style={[styles.toggleThumb, shopForm.is_open && styles.toggleThumbOn]} />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.toggleCard}>
+                <View style={styles.toggleCardInfo}>
+                  <Ionicons name="bicycle" size={18} color={COLORS.primary} />
+                  <View>
+                    <Text style={styles.toggleCardLabel}>Delivery</Text>
+                    <Text style={styles.toggleCardSub}>{shopForm.online_delivery_enabled ? 'On' : 'Off'}</Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[styles.toggleTrack, shopForm.online_delivery_enabled && styles.toggleTrackOn]}
+                  onPress={() => setShopForm(f => ({ ...f, online_delivery_enabled: !f.online_delivery_enabled }))}
+                >
+                  <View style={[styles.toggleThumb, shopForm.online_delivery_enabled && styles.toggleThumbOn]} />
+                </TouchableOpacity>
+              </View>
             </View>
-            
+
+            {/* ── Shop Details Form ── */}
+            <View style={styles.field}>
+              <Text style={styles.label}>Shop Name *</Text>
+              <TextInput style={styles.input} value={shopForm.name} placeholder="My Local Shop" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, name: t})} />
+            </View>
+
             <View style={styles.field}>
               <Text style={styles.label}>Description</Text>
-              <TextInput style={[styles.input, {height: 80, textAlignVertical: 'top'}]} multiline value={shopForm.description} onChangeText={t => setShopForm({...shopForm, description: t})} />
+              <TextInput style={[styles.input, {height: 80, textAlignVertical: 'top'}]} multiline value={shopForm.description} placeholder="Tell customers about your shop" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, description: t})} />
             </View>
-            
+
             <View style={styles.row}>
               <View style={[styles.field, {flex: 1, marginRight: 10}]}>
                 <Text style={styles.label}>Phone</Text>
-                <TextInput style={styles.input} keyboardType="phone-pad" value={shopForm.phone} onChangeText={t => setShopForm({...shopForm, phone: t})} />
+                <TextInput style={styles.input} keyboardType="phone-pad" value={shopForm.phone} placeholder="98765 43210" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, phone: t})} />
               </View>
               <View style={[styles.field, {flex: 1}]}>
-                <Text style={styles.label}>City/Area</Text>
-                <TextInput style={styles.input} value={shopForm.city} onChangeText={t => setShopForm({...shopForm, city: t})} />
+                <Text style={styles.label}>City / Area</Text>
+                <TextInput style={styles.input} value={shopForm.city} placeholder="Bangalore" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, city: t})} />
               </View>
             </View>
-            
+
             <View style={styles.field}>
               <Text style={styles.label}>Full Address</Text>
-              <TextInput style={[styles.input, {height: 60}]} multiline value={shopForm.address} onChangeText={t => setShopForm({...shopForm, address: t})} />
+              <TextInput style={[styles.input, {height: 60}]} multiline value={shopForm.address} placeholder="Street, area, landmark" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, address: t})} />
             </View>
 
-            <View style={styles.idCard}>
-              <View style={styles.idCardHeader}>
-                <Ionicons name="finger-print" size={16} color={COLORS.primary} />
-                <Text style={styles.idCardTitle}>Professional Identity</Text>
+            {/* Shop ID badge — shown after shop is created */}
+            {shop?.shop_code && (
+              <View style={styles.idCard}>
+                <View style={styles.idCardHeader}>
+                  <Ionicons name="finger-print" size={16} color={COLORS.primary} />
+                  <Text style={styles.idCardTitle}>Shop ID</Text>
+                </View>
+                <Text style={styles.idCardValue} numberOfLines={1}>{shop.shop_code}</Text>
               </View>
-              <Text style={styles.idCardValue} numberOfLines={1}>{shop?.shop_code || 'Unassigned'}</Text>
-              <Text style={styles.idCardFooter}>Unique identifier for your business on the network</Text>
-            </View>
+            )}
 
             <TouchableOpacity style={styles.primaryBtn} onPress={handleSaveShop} disabled={savingShop}>
-              {savingShop ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryBtnText}>Save Shop Details</Text>}
+              {savingShop
+                ? <ActivityIndicator color="#fff" />
+                : <Text style={styles.primaryBtnText}>{shop ? 'Update Shop' : 'Create Shop'}</Text>
+              }
             </TouchableOpacity>
+          </View>
+        )}
+
+        {/* PRODUCTS TAB - continues below */}
+        {/* CATEGORIES TAB */}
+        {activeTab === 'categories' && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Shop Categories</Text>
+            {catsLocked ? (
+              <View style={styles.lockedBanner}>
+                <Ionicons name="lock-closed" size={16} color="#E74C3C" />
+                <Text style={styles.lockedText}>Categories locked — contact support to change.</Text>
+              </View>
+            ) : (
+              <View style={styles.unlockNotice}>
+                <Ionicons name="information-circle" size={16} color={COLORS.primary} />
+                <Text style={styles.unlockText}>Select your shop categories carefully. You can only choose <Text style={{fontWeight:'800'}}>once</Text>.</Text>
+              </View>
+            )}
+            {allCategories.map(cat => {
+              const isSel = selectedCats.includes(cat.id);
+              return (
+                <View key={cat.id} style={[styles.catBlock, isSel && styles.catBlockSelected]}>
+                  <TouchableOpacity
+                    style={styles.catBtn}
+                    onPress={() => handleCatToggle(cat.id)}
+                    disabled={catsLocked}
+                  >
+                    <View style={[styles.catCheck, isSel && styles.catCheckOn]}>
+                      {isSel && <Ionicons name="checkmark" size={12} color="#fff" />}
+                    </View>
+                    <Text style={[styles.catBtnText, isSel && { color: COLORS.primary }]}>{cat.name}</Text>
+                  </TouchableOpacity>
+                  {isSel && allSubcats[cat.id] && allSubcats[cat.id].length > 0 && (
+                    <View style={styles.subcatRow}>
+                      {allSubcats[cat.id].map(sub => (
+                        <TouchableOpacity
+                          key={sub.id}
+                          style={[styles.subcatChip, selectedSubcats.includes(sub.id) && styles.subcatChipOn]}
+                          onPress={() => handleSubcatToggle(sub.id)}
+                          disabled={catsLocked}
+                        >
+                          <Text style={[styles.subcatChipText, selectedSubcats.includes(sub.id) && { color: COLORS.primary }]}>{sub.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+            {!catsLocked && (
+              <TouchableOpacity style={[styles.primaryBtn, { marginTop: 20 }]} onPress={handleSaveCats} disabled={savingCats || selectedCats.length === 0}>
+                {savingCats ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryBtnText}>🔒 Lock & Save Categories</Text>}
+              </TouchableOpacity>
+            )}
           </View>
         )}
 
@@ -306,50 +439,6 @@ export default function SellerDashboardScreen({ navigation }) {
               <Text style={styles.label}>Product Name *</Text>
               <TextInput style={styles.input} value={productForm.name} onChangeText={t => setProductForm({...productForm, name: t})} />
             </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Category *</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom: 5}}>
-                {categories.map(c => (
-                  <TouchableOpacity
-                    key={c.id}
-                    onPress={() => handleCategoryChange(c.id)}
-                    style={[
-                      styles.categoryChip,
-                      productForm.category === String(c.id) && styles.categoryChipActive
-                    ]}
-                  >
-                    <Text style={[
-                      styles.categoryChipText,
-                      productForm.category === String(c.id) && styles.categoryChipTextActive
-                    ]}>{c.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-
-            {subcategories.length > 0 && (
-              <View style={styles.field}>
-                <Text style={styles.label}>Sub-Category</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{marginBottom: 5}}>
-                  {subcategories.map(s => (
-                    <TouchableOpacity
-                      key={s.id}
-                      onPress={() => setProductForm(f => ({ ...f, subcategory: String(s.id) }))}
-                      style={[
-                        styles.categoryChip,
-                        productForm.subcategory === String(s.id) && styles.categoryChipActive
-                      ]}
-                    >
-                      <Text style={[
-                        styles.categoryChipText,
-                        productForm.subcategory === String(s.id) && styles.categoryChipTextActive
-                      ]}>{s.name}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
 
             <View style={styles.field}>
               <Text style={styles.label}>Product Images * (1–5)</Text>
@@ -447,17 +536,33 @@ const styles = StyleSheet.create({
   modalTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text },
   modalScroll: { padding: 20 },
 
-  // Category chip selector
-  categoryChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: COLORS.elevated, borderWidth: 1.5, borderColor: COLORS.border, marginRight: 8 },
-  categoryChipActive: { backgroundColor: 'rgba(255,107,53,0.15)', borderColor: COLORS.primary },
-  categoryChipText: { fontSize: 13, fontWeight: '600', color: COLORS.textMuted },
-  categoryChipTextActive: { color: COLORS.primary },
+  // Toggles row
+  togglesRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  toggleCard: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.elevated, borderRadius: RADIUS.md, padding: 12, borderWidth: 1, borderColor: COLORS.border },
+  toggleCardInfo: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  toggleCardIcon: { fontSize: 16 },
+  toggleCardLabel: { color: COLORS.text, fontWeight: '700', fontSize: 13 },
+  toggleCardSub: { color: COLORS.textMuted, fontSize: 11 },
+  toggleTrack: { width: 44, height: 24, borderRadius: 12, backgroundColor: COLORS.border, justifyContent: 'center', paddingHorizontal: 2 },
+  toggleTrackOn: { backgroundColor: COLORS.primary },
+  toggleThumb: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#fff' },
+  toggleThumbOn: { alignSelf: 'flex-end' },
 
-  // Image picker (legacy, kept for reference)
-  imagePicker: { borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md, borderStyle: 'dashed', overflow: 'hidden' },
-  imagePickerPlaceholder: { alignItems: 'center', justifyContent: 'center', paddingVertical: 30 },
-  imagePickerText: { color: COLORS.textMuted, marginTop: 8, fontSize: 13 },
-  imagePreview: { width: '100%', height: 200, resizeMode: 'cover' },
+  // Categories tab
+  lockedBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(231,76,60,0.08)', borderRadius: RADIUS.md, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(231,76,60,0.2)' },
+  lockedText: { color: '#E74C3C', fontSize: 13, fontWeight: '600', flex: 1 },
+  unlockNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: 'rgba(255,107,53,0.06)', borderRadius: RADIUS.md, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,107,53,0.2)' },
+  unlockText: { color: COLORS.primary, fontSize: 13, flex: 1 },
+  catBlock: { backgroundColor: COLORS.elevated, borderRadius: RADIUS.md, marginBottom: 10, borderWidth: 1.5, borderColor: COLORS.border, overflow: 'hidden' },
+  catBlockSelected: { borderColor: COLORS.primary, backgroundColor: 'rgba(255,107,53,0.05)' },
+  catBtn: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 10 },
+  catCheck: { width: 20, height: 20, borderRadius: 10, backgroundColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
+  catCheckOn: { backgroundColor: COLORS.primary },
+  catBtnText: { fontSize: 15, fontWeight: '700', color: COLORS.text },
+  subcatRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingBottom: 12, borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 10 },
+  subcatChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: 'transparent' },
+  subcatChipOn: { borderColor: COLORS.primary, backgroundColor: 'rgba(255,107,53,0.1)' },
+  subcatChipText: { fontSize: 12, fontWeight: '600', color: COLORS.textMuted },
 
   // Multi-image grid
   imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },

@@ -149,40 +149,42 @@ export default function ProfileScreen({ navigation }) {
             </View>
           </View>
 
-          {/* Quick Links */}
-          <View style={styles.quickLinks}>
-            {user?.role === 'seller' && (
-              <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('SellerDashboard')}>
-                <View style={styles.linkLeft}>
-                  <View style={[styles.linkIcon, { backgroundColor: 'rgba(0,230,118,0.1)' }]}>
-                    <Ionicons name="storefront" size={20} color="#00E676" />
+          {/* Quick Links — hide while editing */}
+          {!editing && (
+            <View style={styles.quickLinks}>
+              {user?.role === 'seller' && (
+                <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('SellerDashboard')}>
+                  <View style={styles.linkLeft}>
+                    <View style={[styles.linkIcon, { backgroundColor: 'rgba(0,230,118,0.1)' }]}>
+                      <Ionicons name="storefront" size={20} color="#00E676" />
+                    </View>
+                    <Text style={styles.linkText}>Seller Dashboard</Text>
                   </View>
-                  <Text style={styles.linkText}>Seller Dashboard</Text>
+                  <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('Orders')}>
+                <View style={styles.linkLeft}>
+                  <View style={[styles.linkIcon, { backgroundColor: 'rgba(255,182,39,0.1)' }]}>
+                    <Ionicons name="receipt" size={20} color={COLORS.secondary} />
+                  </View>
+                  <Text style={styles.linkText}>My Orders</Text>
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
               </TouchableOpacity>
-            )}
 
-            <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('Orders')}>
-              <View style={styles.linkLeft}>
-                <View style={[styles.linkIcon, { backgroundColor: 'rgba(255,182,39,0.1)' }]}>
-                  <Ionicons name="receipt" size={20} color={COLORS.secondary} />
+              <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('Cart')}>
+                <View style={styles.linkLeft}>
+                  <View style={[styles.linkIcon, { backgroundColor: 'rgba(255,107,53,0.1)' }]}>
+                    <Ionicons name="cart" size={20} color={COLORS.primary} />
+                  </View>
+                  <Text style={styles.linkText}>My Cart</Text>
                 </View>
-                <Text style={styles.linkText}>My Orders</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('Cart')}>
-              <View style={styles.linkLeft}>
-                <View style={[styles.linkIcon, { backgroundColor: 'rgba(255,107,53,0.1)' }]}>
-                  <Ionicons name="cart" size={20} color={COLORS.primary} />
-                </View>
-                <Text style={styles.linkText}>My Cart</Text>
-              </View>
-              <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
-            </TouchableOpacity>
-          </View>
+                <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Details Form Sections */}
           <View style={styles.formSection}>

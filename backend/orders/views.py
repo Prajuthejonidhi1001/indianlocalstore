@@ -176,3 +176,15 @@ class OrderViewSet(viewsets.ModelViewSet):
         orders = Order.objects.filter(user=request.user)
         serializer = self.get_serializer(orders, many=True)
         return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        order = self.get_object()
+        if order.order_status not in ['pending', 'confirmed']:
+            return Response(
+                {'error': 'Only pending or confirmed orders can be cancelled.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        order.order_status = 'cancelled'
+        order.save()
+        return Response({'message': 'Order cancelled successfully.'}, status=status.HTTP_200_OK)

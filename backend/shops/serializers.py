@@ -23,8 +23,8 @@ class ShopListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shop
-        fields = ['id', 'shop_code', 'name', 'logo', 'city', 'rating', 'reviews_count', 
-                  'verification_status', 'distance', 'seller_id']
+        fields = ['id', 'shop_code', 'name', 'logo', 'city', 'rating', 'reviews_count',
+                  'verification_status', 'distance', 'seller_id', 'is_open', 'online_delivery_enabled']
 
     def get_distance(self, obj):
         request = self.context.get('request')
@@ -32,7 +32,6 @@ class ShopListSerializer(serializers.ModelSerializer):
             from math import radians, cos, sin, asin, sqrt
             lat1, lon1 = request.user.latitude, request.user.longitude
             lat2, lon2 = obj.latitude, obj.longitude
-            
             lon1, lat1, lon2, lat2 = map(radians, [lon1, lat1, lon2, lat2])
             dlon = lon2 - lon1
             dlat = lat2 - lat1
@@ -51,9 +50,10 @@ class ShopDetailSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Shop
-        fields = ['id', 'shop_code', 'name', 'description', 'logo', 'banner', 'address', 'city', 
+        fields = ['id', 'shop_code', 'name', 'description', 'logo', 'banner', 'address', 'city',
                   'state', 'pincode', 'phone', 'email', 'rating', 'reviews_count',
                   'opening_time', 'closing_time', 'verification_status', 'seller', 'seller_id',
+                  'is_open', 'online_delivery_enabled',
                   'shop_reviews', 'services', 'created_at']
 
 
@@ -64,4 +64,4 @@ class ShopCreateUpdateSerializer(serializers.ModelSerializer):
         model = Shop
         fields = ['id', 'shop_code', 'name', 'description', 'logo', 'banner', 'latitude', 'longitude',
                   'address', 'city', 'state', 'pincode', 'phone', 'email',
-                  'opening_time', 'closing_time']
+                  'opening_time', 'closing_time', 'is_open', 'online_delivery_enabled']
