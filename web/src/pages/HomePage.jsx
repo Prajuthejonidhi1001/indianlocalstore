@@ -1,18 +1,51 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, MapPin, Star, ArrowRight, Navigation, Grid } from 'lucide-react';
+import { ShoppingBag, MapPin, Star, ArrowRight, Navigation, Grid, TrendingUp, Clock, Zap, ChevronRight } from 'lucide-react';
 import { productAPI, shopAPI } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
 import './HomePage.css';
 
 const CAT_EMOJIS = {
-  'Vegetables': '🥬', 'Fruits': '🍎', 'Dairy': '🥛',
-  'Spices': '🌿', 'Grains': '🌾', 'Snacks': '🥜',
-  'Meat': '🍖', 'Beverages': '🧃', 'Bakery': '🍞',
-  'Personal Care': '🧴', 'Home & Living': '🏠', 'Electronics': '📱',
-  'Clothing': '👕', 'Stationery': '📚', 'Pharmacy': '💊',
+  'Vegetables': '🥬', 'Fruits': '🍎', 'Dairy': '🥛', 'Spices': '🌿',
+  'Grains': '🌾', 'Snacks': '🥜', 'Meat': '🍖', 'Beverages': '🧃',
+  'Bakery': '🍞', 'Personal Care': '🧴', 'Home & Living': '🏠',
+  'Electronics': '📱', 'Clothing': '👕', 'Pharmacy': '💊',
+  'Fashion': '👗', 'Agriculture': '🌱', 'Automobile': '🚗',
+  'Construction': '🏗️', 'Furniture': '🪑', 'Furnitures': '🪑',
+  'Mart': '🏪', 'Traders': '📦', 'Event Management': '🎉',
+  'Second Hand Vehicles': '🚙',
 };
+
+const CAT_GRADIENTS = [
+  'linear-gradient(135deg,#FF6B35,#FF8C42)',
+  'linear-gradient(135deg,#5521FF,#7C3AED)',
+  'linear-gradient(135deg,#00C896,#00A878)',
+  'linear-gradient(135deg,#FFB627,#FF9500)',
+  'linear-gradient(135deg,#E91E8C,#C2185B)',
+  'linear-gradient(135deg,#00B4D8,#0077B6)',
+  'linear-gradient(135deg,#FF4757,#E84393)',
+  'linear-gradient(135deg,#2ED573,#1E9E56)',
+  'linear-gradient(135deg,#FFA502,#FF6348)',
+  'linear-gradient(135deg,#747D8C,#2F3542)',
+];
+
+function ShopSkeleton() {
+  return (
+    <div className="shop-card-skeleton card">
+      <div className="sks-banner shimmer" />
+      <div className="sks-body">
+        <div className="sks-row">
+          <div className="sks-avatar shimmer" />
+          <div className="sks-lines">
+            <div className="sks-line shimmer" style={{ width: '70%' }} />
+            <div className="sks-line shimmer" style={{ width: '40%', height: '10px', marginTop: '6px' }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function HomePage() {
   const { user } = useAuth();
@@ -23,6 +56,15 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [locating, setLocating] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [greeting, setGreeting] = useState('');
+  const catScrollRef = useRef(null);
+
+  useEffect(() => {
+    const h = new Date().getHours();
+    if (h < 12) setGreeting('Good Morning');
+    else if (h < 17) setGreeting('Good Afternoon');
+    else setGreeting('Good Evening');
+  }, []);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -43,10 +85,6 @@ export default function HomePage() {
     fetchAll();
   }, [location?.district]);
 
-  const handleCategoryClick = (cat) => {
-    setSelectedCategory(cat.id === selectedCategory ? null : cat.id);
-  };
-
   const handleLocateMe = () => {
     if (!navigator.geolocation) return;
     setLocating(true);
@@ -57,7 +95,7 @@ export default function HomePage() {
           setShops(res.data.results || res.data);
         } catch { setShops([]); } finally { setLocating(false); }
       },
-      () => { setLocating(false); alert('Could not get your location.'); }
+      () => { setLocating(false); }
     );
   };
 
@@ -65,128 +103,207 @@ export default function HomePage() {
     ? shops.filter(s => s.category === selectedCategory || s.categories?.includes(selectedCategory))
     : shops;
 
-  if (loading) return <div className="loading-center"><div className="spinner" /></div>;
-
   return (
     <div className="page animate-in">
-      {/* Welcome Banner */}
-      <div className="home-banner">
-        <div className="container home-banner-inner">
-          <div>
+      {/* ── WELCOME HERO ── */}
+      <div className="home-hero">
+        <div className="home-hero-orb home-orb-1" />
+        <div className="home-hero-orb home-orb-2" />
+        <div className="container home-hero-inner">
+          <div className="home-hero-text">
+            <p className="home-time-label">
+              <Clock size={13} /> {greeting}
+            </p>
             <h1 className="home-greeting">
               Namaste, <span className="gradient-text">{user?.first_name || user?.username || 'Guest'}!</span> 🙏
             </h1>
             <p className="home-greeting-sub">
-              {location
-                ? `Discover local shops near ${location.name}`
-                : 'Discover local shops near you'}
+              {location ? `Exploring local shops near ${location.name}` : 'Discover amazing local shops near you'}
             </p>
           </div>
-          <button
-            className="btn btn-primary"
-            onClick={handleLocateMe}
-            disabled={locating}
-          >
-            <Navigation size={16} /> {locating ? 'Finding...' : 'Use My Location'}
-          </button>
+          <div className="home-hero-actions">
+            <button className="btn btn-primary" onClick={handleLocateMe} disabled={locating} id="locate-me-btn">
+              <Navigation size={15} /> {locating ? 'Locating...' : 'Near Me'}
+            </button>
+            <Link to="/products" className="btn btn-secondary" id="browse-products-btn">
+              <ShoppingBag size={15} /> Browse
+            </Link>
+          </div>
+        </div>
+
+        {/* Quick stats bar */}
+        <div className="home-stats-bar">
+          <div className="container home-stats-inner">
+            {[
+              { icon: '🏪', label: 'Local Shops', value: '500+' },
+              { icon: '📦', label: 'Products', value: '10K+' },
+              { icon: '⭐', label: 'Avg Rating', value: '4.8' },
+              { icon: '🚀', label: 'Fast Delivery', value: '< 30 min' },
+            ].map((s, i) => (
+              <div key={i} className="home-stat-item">
+                <span className="hs-icon">{s.icon}</span>
+                <div>
+                  <div className="hs-value">{s.value}</div>
+                  <div className="hs-label">{s.label}</div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 
       <div className="container">
-        {/* Categories */}
+        {/* ── CATEGORIES ── */}
         <section className="section-sm">
-          <div className="section-header flex-between">
+          <div className="home-section-header">
             <div>
-              <div className="section-label"><ShoppingBag size={13} /> Categories</div>
-              <h2 className="section-title" style={{ fontSize: '1.5rem' }}>Browse by Category</h2>
+              <div className="section-label"><ShoppingBag size={12} /> Categories</div>
+              <h2 className="home-section-title">What are you looking for?</h2>
             </div>
-            <Link to="/categories" className="btn btn-ghost btn-sm" id="all-categories-link">
-              View all <ArrowRight size={14} />
+            <Link to="/categories" className="home-view-all" id="all-categories-link">
+              All <ChevronRight size={14} />
             </Link>
           </div>
 
-          {/* Category pill filters */}
-          <div style={{ display: 'flex', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.75rem', scrollbarWidth: 'none' }}>
+          {/* Scrollable category pills */}
+          <div className="cat-scroll-row" ref={catScrollRef}>
             <button
+              className={`cat-pill-btn ${!selectedCategory ? 'active' : ''}`}
               onClick={() => setSelectedCategory(null)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                padding: '0.45rem 1rem', borderRadius: '999px', border: '1.5px solid',
-                cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.2s',
-                borderColor: !selectedCategory ? 'var(--primary-color)' : 'var(--border-color)',
-                background: !selectedCategory ? 'var(--primary-color)' : 'transparent',
-                color: !selectedCategory ? '#fff' : 'var(--text-gray)',
-              }}
             >
-              <Grid size={13} /> All
+              <Grid size={14} /> All
             </button>
-            {categories.map(cat => (
+            {categories.map((cat, i) => (
               <button
                 key={cat.id}
-                onClick={() => handleCategoryClick(cat)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                  padding: '0.45rem 1rem', borderRadius: '999px', border: '1.5px solid',
-                  cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', transition: 'all 0.2s',
-                  borderColor: selectedCategory === cat.id ? 'var(--primary-color)' : 'var(--border-color)',
-                  background: selectedCategory === cat.id ? 'var(--primary-color)' : 'transparent',
-                  color: selectedCategory === cat.id ? '#fff' : 'var(--text-light)',
-                }}
+                className={`cat-pill-btn ${selectedCategory === cat.id ? 'active' : ''}`}
+                onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
               >
                 {cat.icon
-                  ? <img src={cat.icon} alt="" style={{ width: 16, height: 16, borderRadius: '4px', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: '1rem' }}>{CAT_EMOJIS[cat.name] || '🛍️'}</span>
+                  ? <img src={cat.icon} alt={cat.name} className="cat-pill-img" />
+                  : <span>{CAT_EMOJIS[cat.name] || '🛍️'}</span>
                 }
                 {cat.name}
               </button>
             ))}
           </div>
+
+          {/* Category icon grid */}
+          <div className="home-cat-grid">
+            {categories.slice(0, 10).map((cat, i) => (
+              <Link
+                to={`/categories`}
+                key={cat.id}
+                className="home-cat-card"
+                id={`home-cat-${cat.id}`}
+              >
+                <div className="home-cat-icon" style={{ background: CAT_GRADIENTS[i % CAT_GRADIENTS.length] }}>
+                  {cat.icon
+                    ? <img src={cat.icon} alt={cat.name} className="home-cat-img" />
+                    : <span className="home-cat-emoji">{CAT_EMOJIS[cat.name] || '🛍️'}</span>
+                  }
+                </div>
+                <span className="home-cat-name">{cat.name}</span>
+              </Link>
+            ))}
+          </div>
         </section>
 
-        {/* Nearby Shops */}
+        {/* ── NEARBY SHOPS ── */}
         <section className="section-sm">
-          <div className="section-header flex-between">
+          <div className="home-section-header">
             <div>
-              <div className="section-label"><MapPin size={13} /> Shops</div>
-              <h2 className="section-title" style={{ fontSize: '1.5rem' }}>
-                {location ? `Local Shops near ${location.name}` : 'Local Shops'}
+              <div className="section-label"><MapPin size={12} /> Shops</div>
+              <h2 className="home-section-title">
+                {location ? `Near ${location.name}` : 'Local Shops'}
               </h2>
             </div>
-            <Link to="/shops" className="btn btn-ghost btn-sm" id="all-shops-link">
-              View all <ArrowRight size={14} />
+            <Link to="/shops" className="home-view-all" id="all-shops-link">
+              All <ChevronRight size={14} />
             </Link>
           </div>
-          {filteredShops.length === 0 ? (
+
+          {loading ? (
+            <div className="shops-grid">
+              {[...Array(6)].map((_, i) => <ShopSkeleton key={i} />)}
+            </div>
+          ) : filteredShops.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">🏪</div>
-              <h3>No shops registered yet</h3>
+              <h3>No shops yet</h3>
               <p>Be the first seller in your area!</p>
+              <Link to="/seller" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+                Open a Shop
+              </Link>
             </div>
           ) : (
             <div className="shops-grid">
               {filteredShops.map(shop => (
-                <Link to={`/shops/${shop.id}`} key={shop.id} className="shop-card card" id={`shop-${shop.id}`}>
-                  <div className="shop-header">
-                    <div className="shop-avatar">{shop.name[0]}</div>
-                    <div>
-                      <h4 className="shop-name">{shop.name}</h4>
-                      <p className="shop-city"><MapPin size={12} /> {shop.city}</p>
+                <Link to={`/shops/${shop.id}`} key={shop.id} className="shop-card-premium card" id={`shop-${shop.id}`}>
+                  {/* Banner */}
+                  <div className="scp-banner" style={{
+                    background: shop.logo
+                      ? `url(${shop.logo}) center/cover`
+                      : `linear-gradient(135deg, ${CAT_GRADIENTS[shop.id % CAT_GRADIENTS.length].split(',')[1]?.trim() || '#FF6B35'}, #0A0D14)`
+                  }}>
+                    <div className="scp-banner-overlay" />
+                    <span className={`scp-status ${shop.is_open ? 'open' : 'closed'}`}>
+                      <span className="scp-dot" /> {shop.is_open ? 'Open' : 'Closed'}
+                    </span>
+                    {shop.verification_status === 'verified' && (
+                      <span className="scp-verified">✓ Verified</span>
+                    )}
+                  </div>
+
+                  {/* Info */}
+                  <div className="scp-body">
+                    <div className="scp-avatar" style={{ background: CAT_GRADIENTS[shop.id % CAT_GRADIENTS.length] }}>
+                      {shop.logo
+                        ? <img src={shop.logo} alt={shop.name} />
+                        : <span>{shop.name[0]}</span>
+                      }
                     </div>
-                    <div className="shop-rating">
-                      <Star size={13} fill="currentColor" color="var(--gold)" />
+                    <div className="scp-info">
+                      <h4 className="scp-name">{shop.name}</h4>
+                      <p className="scp-city"><MapPin size={11} /> {shop.city}</p>
+                    </div>
+                    <div className="scp-rating">
+                      <Star size={12} fill="currentColor" />
                       <span>{shop.rating?.toFixed(1) || '0.0'}</span>
                     </div>
                   </div>
+
                   {shop.description && (
-                    <p className="shop-desc">{shop.description.slice(0, 80)}...</p>
+                    <p className="scp-desc">{shop.description.slice(0, 75)}...</p>
                   )}
-                  <span className={`badge ${shop.verification_status === 'verified' ? 'badge-green' : 'badge-orange'}`}>
-                    {shop.verification_status}
-                  </span>
+
+                  <div className="scp-footer">
+                    <span className="scp-cta">View Shop <ArrowRight size={13} /></span>
+                  </div>
                 </Link>
               ))}
             </div>
           )}
+        </section>
+
+        {/* ── TRENDING BANNER ── */}
+        <section className="section-sm">
+          <div className="home-promo-banner">
+            <div className="hpb-orb" />
+            <div className="hpb-content">
+              <div className="section-label"><TrendingUp size={12} /> Trending</div>
+              <h3>Fresh Products from<br />Local Sellers Every Day</h3>
+              <p>Browse thousands of products from verified local shops near you.</p>
+              <Link to="/products" className="btn btn-primary" id="trending-products-btn">
+                Explore Products <ArrowRight size={15} />
+              </Link>
+            </div>
+            <div className="hpb-emojis" aria-hidden="true">
+              {['🥬', '🍎', '🥛', '🌿', '📱', '👗'].map((e, i) => (
+                <span key={i} className="hpb-emoji" style={{ '--delay': `${i * 0.4}s` }}>{e}</span>
+              ))}
+            </div>
+          </div>
         </section>
       </div>
     </div>
