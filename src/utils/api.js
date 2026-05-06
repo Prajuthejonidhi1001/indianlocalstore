@@ -68,6 +68,7 @@ export const authAPI = {
   register: (data) => api.post('/users/register/', data),
   login: (email, password) => api.post('/users/token/', { username: email, password }),
   refreshToken: (refresh_token) => api.post('/users/token/refresh/', { refresh: refresh_token }),
+  logout: (refresh_token) => api.post('/users/logout/', { refresh: refresh_token }),
   getProfile: () => api.get('/users/me/'),
   updateProfile: (data) => api.put('/users/update_profile/', data),
   getSellers: () => api.get('/users/sellers/'),

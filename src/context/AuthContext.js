@@ -64,6 +64,10 @@ export const AuthProvider = ({ children }) => {
   };
 
   const logout = async () => {
+    const refresh = await AsyncStorage.getItem('refresh_token');
+    if (refresh) {
+      try { await authAPI.logout(refresh); } catch { /* still clear locally */ }
+    }
     await AsyncStorage.removeItem('access_token');
     await AsyncStorage.removeItem('refresh_token');
     setUser(null);

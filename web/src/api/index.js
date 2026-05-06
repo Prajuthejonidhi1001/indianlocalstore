@@ -48,9 +48,12 @@ export const authAPI = {
   register: (data) => api.post('/users/register/', data),
   login: (username, password) => api.post('/users/token/', { username, password }),
   refreshToken: (refresh) => api.post('/users/token/refresh/', { refresh }),
+  logout: (refresh) => api.post('/users/logout/', { refresh }),
   getProfile: () => api.get('/users/me/'),
   updateProfile: (data) => api.put('/users/update_profile/', data),
   getSellers: () => api.get('/users/sellers/'),
+  forgotPassword: (identifier) => api.post('/users/forgot_password/', { username: identifier }),
+  resetPassword: (reset_token, new_password) => api.post('/users/reset_password/', { reset_token, new_password }),
 };
 
 // ── Products ──────────────────────────────────────────

@@ -36,7 +36,12 @@ export function AuthProvider({ children }) {
     return data;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    // Blacklist refresh token server-side
+    const refresh = localStorage.getItem('refresh_token');
+    if (refresh) {
+      try { await authAPI.logout(refresh); } catch { /* ignore — still clear locally */ }
+    }
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     setUser(null);

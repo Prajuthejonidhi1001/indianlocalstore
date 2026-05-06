@@ -42,7 +42,8 @@
         "NSCameraUsageDescription": "This app needs camera access to upload product photos",
         "NSLocationWhenInUseUsageDescription": "This app needs access to your location to show nearby shops",
         "NSPhotoLibraryUsageDescription": "This app needs access to your photo library to upload product images",
-        "NSPhotoLibraryAddOnlyUsageDescription": "This app needs to save photos to your library"
+        "NSPhotoLibraryAddOnlyUsageDescription": "This app needs to save photos to your library",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "web": {
