@@ -28,6 +28,8 @@ export default function SellerDashboardPage() {
   });
   const [productImages, setProductImages] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
+  const [allCategories, setAllCategories] = useState([]);
+
 
   useEffect(() => {
     const fetchData = async () => {
