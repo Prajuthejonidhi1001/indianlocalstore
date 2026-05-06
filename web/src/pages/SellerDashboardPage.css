@@ -197,6 +197,7 @@
   .toggles-row { grid-template-columns: 1fr; }
 }
 
+.delivery-toggle-card {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -205,6 +206,7 @@
   border-radius: var(--radius-md);
   padding: 1rem 1.25rem;
 }
+
 .delivery-toggle-info {
   display: flex;
   align-items: center;
