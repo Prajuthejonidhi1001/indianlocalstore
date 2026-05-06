@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ShoppingBag, MapPin, Star, ArrowRight, Zap, Shield, Clock, Truck, ChevronDown } from 'lucide-react';
+import { productAPI } from '../api';
 import './LandingPage.css';
 
 const features = [
@@ -10,15 +11,20 @@ const features = [
   { icon: <Star size={22} />, title: 'Genuine Ratings', desc: 'Real reviews from real customers. Shop with total confidence.' },
 ];
 
-const categories = [
-  { emoji: '🥬', name: 'Vegetables', color: '#00E676' },
-  { emoji: '🍎', name: 'Fruits', color: '#FF1744' },
-  { emoji: '🥛', name: 'Dairy', color: '#2196F3' },
-  { emoji: '🌿', name: 'Spices', color: '#FF6B35' },
-  { emoji: '🍚', name: 'Grains', color: '#F39C12' },
-  { emoji: '🧴', name: 'Care', color: '#AB47BC' },
-  { emoji: '🏠', name: 'Home', color: '#00BCD4' },
-  { emoji: '🥜', name: 'Snacks', color: '#FFB627' },
+const CAT_EMOJIS = {
+  'Vegetables':'🥬','Fruits':'🍎','Dairy':'🥛','Spices':'🌿',
+  'Grains':'🌾','Snacks':'🥜','Meat':'🍖','Beverages':'🧃',
+  'Bakery':'🍞','Personal Care':'🧴','Home & Living':'🏠',
+  'Electronics':'📱','Clothing':'👕','Pharmacy':'💊',
+  'Fashion':'👗','Agriculture':'🌱','Automobile':'🚗',
+  'Construction':'🏗️','Furniture':'🪑','Furnitures':'🪑',
+  'Mart':'🏪','Traders':'📦','Event Management':'🎉',
+  'Second Hand Vehicles':'🚙',
+};
+
+const CAT_COLORS = [
+  '#FF6B35','#5521FF','#00C896','#FFB627','#E91E8C',
+  '#00B4D8','#FF4757','#2ED573','#FFA502','#747D8C',
 ];
 
 const stats = [
@@ -29,6 +35,13 @@ const stats = [
 ];
 
 export default function LandingPage() {
+  const [categories, setCategories] = useState([]);
+
+  useEffect(() => {
+    productAPI.getCategories()
+      .then(r => setCategories(r.data.results || r.data))
+      .catch(() => {});
+  }, []);
   const revealRefs = useRef([]);
 
   useEffect(() => {
@@ -184,9 +197,16 @@ export default function LandingPage() {
         <div className="ticker">
           {[...Array(2)].map((_, repeat) => (
             <span key={repeat} className="ticker-inner">
-              {['🥬 Vegetables', '🍎 Fruits', '🥛 Dairy', '🌿 Spices', '🍚 Grains', '🧴 Personal Care', '🏠 Home & Living', '🥜 Snacks', '📱 Electronics', '💊 Pharmacy'].map((item, i) => (
-                <span key={i} className="ticker-item">{item}</span>
-              ))}
+              {categories.length > 0
+                ? categories.map((cat, i) => (
+                    <span key={i} className="ticker-item">
+                      {CAT_EMOJIS[cat.name] || '🛍️'} {cat.name}
+                    </span>
+                  ))
+                : ['🛍️ Local Products', '🏪 Nearby Shops', '🌟 Top Sellers', '📦 Fresh Stock'].map((item, i) => (
+                    <span key={i} className="ticker-item">{item}</span>
+                  ))
+              }
             </span>
           ))}
         </div>
@@ -202,21 +222,34 @@ export default function LandingPage() {
           </div>
 
           <div className="cat-grid">
-            {categories.map((cat, i) => (
+            {categories.slice(0, 10).map((cat, i) => (
               <Link
-                to={`/products?search=${cat.name}`}
-                key={i}
+                to={`/categories`}
+                key={cat.id}
                 className="cat-bubble reveal"
                 ref={addRef}
-                style={{ transitionDelay: `${i * 0.07}s`, '--cat-color': cat.color }}
-                id={`cat-bubble-${i}`}
+                style={{ transitionDelay: `${i * 0.07}s`, '--cat-color': CAT_COLORS[i % CAT_COLORS.length] }}
+                id={`cat-bubble-${cat.id}`}
               >
                 <div className="cat-bubble-inner">
-                  <div className="cat-bubble-emoji">{cat.emoji}</div>
+                  {cat.icon
+                    ? <img src={cat.icon} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                    : <div className="cat-bubble-emoji">{CAT_EMOJIS[cat.name] || '🛍️'}</div>
+                  }
                 </div>
                 <span className="cat-bubble-name">{cat.name}</span>
               </Link>
             ))}
+            {categories.length === 0 && (
+              [...Array(8)].map((_, i) => (
+                <div key={i} className="cat-bubble" style={{ opacity: 0.4 }}>
+                  <div className="cat-bubble-inner" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                    <div className="cat-bubble-emoji">🛍️</div>
+                  </div>
+                  <span className="cat-bubble-name">Loading...</span>
+                </div>
+              ))
+            )}
           </div>
         </div>
       </section>
