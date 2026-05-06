@@ -144,6 +144,17 @@ export default function RegisterPage() {
         shopData.append('description', `${form.shopName} in ${form.taluk}, ${form.district}`);
         if (shopPhoto) shopData.append('logo', shopPhoto);
         await shopAPI.createShop(shopData);
+        // Save default category for dashboard to use when adding products
+        if (form.category) {
+          localStorage.setItem('seller_default_category', form.category);
+          const catName = categories.find(c => String(c.id) === form.category)?.name || '';
+          localStorage.setItem('seller_default_category_name', catName);
+        }
+        if (form.subcategory) {
+          localStorage.setItem('seller_default_subcategory', form.subcategory);
+          const subName = subcategories.find(s => String(s.id) === form.subcategory)?.name || '';
+          localStorage.setItem('seller_default_subcategory_name', subName);
+        }
         toast.success('Account & Shop created! Welcome aboard.');
         navigate('/seller');
       } else {

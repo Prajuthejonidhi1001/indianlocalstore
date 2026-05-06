@@ -32,6 +32,12 @@ export default function SellerDashboardPage() {
   const [allCategories, setAllCategories] = useState([]);
   const [productSubcats, setProductSubcats] = useState([]);
 
+  // Default category saved during seller signup
+  const defaultCatId   = localStorage.getItem('seller_default_category') || '';
+  const defaultCatName = localStorage.getItem('seller_default_category_name') || '';
+  const defaultSubId   = localStorage.getItem('seller_default_subcategory') || '';
+  const defaultSubName = localStorage.getItem('seller_default_subcategory_name') || '';
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -114,14 +120,20 @@ export default function SellerDashboardPage() {
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     if (!shop) { toast.error('Please complete shop setup first'); return; }
-    if (!productForm.category) { toast.error('Please select a product category'); return; }
     if (productImages.length === 0) { toast.error('At least 1 product image is required'); return; }
     setSavingProduct(true);
     try {
       const formData = new FormData();
-      Object.keys(productForm).forEach(key => {
-        if (productForm[key]) formData.append(key, productForm[key]);
-      });
+      formData.append('name', productForm.name);
+      formData.append('description', productForm.description);
+      formData.append('price', productForm.price);
+      if (productForm.discount_price) formData.append('discount_price', productForm.discount_price);
+      formData.append('stock', productForm.stock);
+      // Use default category from signup (stored in localStorage)
+      const catId = defaultCatId || productForm.category;
+      const subId = defaultSubId || productForm.subcategory;
+      if (catId) formData.append('category', catId);
+      if (subId) formData.append('subcategory', subId);
       formData.append('image', productImages[0]);
       productImages.slice(1).forEach(img => formData.append('images', img));
 
@@ -142,7 +154,7 @@ export default function SellerDashboardPage() {
     }
   };
 
-  // When product category changes, load subcategories
+  // Only needed if seller wants to manually pick category (fallback)
   const handleProductCatChange = async (catId) => {
     setProductForm(f => ({ ...f, category: catId, subcategory: '' }));
     setProductSubcats([]);
@@ -216,7 +228,23 @@ export default function SellerDashboardPage() {
                 </div>
                 <form onSubmit={handleSaveShop} className="ds-form">
 
-                  {/* Two toggles at TOP */}
+                  {/* Default category info banner */}
+                {(defaultCatName) && (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '0.75rem',
+                    background: 'rgba(255,107,53,0.06)', border: '1px solid rgba(255,107,53,0.2)',
+                    borderRadius: 'var(--radius-md)', padding: '0.75rem 1rem', marginBottom: '1.5rem',
+                    fontSize: '0.88rem', color: 'var(--saffron)'
+                  }}>
+                    <span style={{ fontSize: '1.2rem' }}>🏷️</span>
+                    <div>
+                      <strong>Shop Category:</strong> {defaultCatName}
+                      {defaultSubName && <span style={{ color: 'var(--text-muted)', marginLeft: 8 }}>› {defaultSubName}</span>}
+                      <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: 2 }}>All your products are listed under this category</div>
+                    </div>
+                  </div>
+                )}
+
                   <div className="toggles-row mb-4">
                     <div className="toggle-card">
                       <div className="toggle-card-info">
@@ -345,32 +373,45 @@ export default function SellerDashboardPage() {
                 <button className="modal-close" onClick={() => setShowProductModal(false)}><X size={20} /></button>
               </div>
               <form onSubmit={handleSaveProduct} id="add-product-form">
+
+                {/* Category info banner — auto-inherited from signup */}
+                {defaultCatName ? (
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '0.6rem',
+                    background: 'rgba(255,107,53,0.06)', border: '1px solid rgba(255,107,53,0.2)',
+                    borderRadius: 'var(--radius-md)', padding: '0.6rem 1rem', marginBottom: '1rem',
+                    fontSize: '0.82rem', color: 'var(--saffron)'
+                  }}>
+                    <span>🏷️</span>
+                    <span>Listed under <strong>{defaultCatName}</strong>{defaultSubName ? ` › ${defaultSubName}` : ''}</span>
+                  </div>
+                ) : (
+                  <div className="form-row mb-3">
+                    <div className="form-group">
+                      <label className="form-label">Category *</label>
+                      <select className="form-input" required value={productForm.category}
+                        onChange={e => handleProductCatChange(e.target.value)}
+                        style={{ backgroundColor: 'var(--bg-elevated)' }}>
+                        <option value="">Select Category</option>
+                        {allCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Subcategory <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                      <select className="form-input" value={productForm.subcategory}
+                        onChange={e => setProductForm({ ...productForm, subcategory: e.target.value })}
+                        disabled={productSubcats.length === 0}
+                        style={{ backgroundColor: 'var(--bg-elevated)', opacity: productSubcats.length === 0 ? 0.5 : 1 }}>
+                        <option value="">Select Subcategory</option>
+                        {productSubcats.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                      </select>
+                    </div>
+                  </div>
+                )}
+
                 <div className="form-group mb-3">
                   <label className="form-label">Product Name *</label>
                   <input type="text" className="form-input" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} />
-                </div>
-
-                {/* Category & Subcategory */}
-                <div className="form-row mb-3">
-                  <div className="form-group">
-                    <label className="form-label">Category *</label>
-                    <select className="form-input" required value={productForm.category}
-                      onChange={e => handleProductCatChange(e.target.value)}
-                      style={{ backgroundColor: 'var(--bg-elevated)' }}>
-                      <option value="">Select Category</option>
-                      {allCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Subcategory <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
-                    <select className="form-input" value={productForm.subcategory}
-                      onChange={e => setProductForm({ ...productForm, subcategory: e.target.value })}
-                      disabled={productSubcats.length === 0}
-                      style={{ backgroundColor: 'var(--bg-elevated)', opacity: productSubcats.length === 0 ? 0.5 : 1 }}>
-                      <option value="">Select Subcategory</option>
-                      {productSubcats.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                    </select>
-                  </div>
                 </div>
 
                 <div className="form-group mb-3">
