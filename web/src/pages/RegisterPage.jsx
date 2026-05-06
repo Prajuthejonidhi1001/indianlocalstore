@@ -176,15 +176,33 @@ export default function RegisterPage() {
         <h2 className="auth-title">Create Account</h2>
         <p className="auth-subtitle">Join thousands of local shoppers & sellers</p>
 
-        {/* Role Selector — at the TOP */}
-        <div className="role-selector" style={{ marginBottom: '1.5rem' }}>
-          <button type="button" className={`role-btn ${form.role === 'customer' ? 'active' : ''}`}
-            onClick={() => setForm({ ...form, role: 'customer' })} id="role-customer">
-            <User size={18} /> Customer
+        {/* Role Selector — large cards */}
+        <div className="role-card-grid" style={{ marginBottom: '1.5rem' }}>
+          <button
+            type="button"
+            className={`role-card ${form.role === 'customer' ? 'active' : ''}`}
+            onClick={() => setForm({ ...form, role: 'customer' })}
+            id="role-customer"
+          >
+            <div className="role-card-icon">🛒</div>
+            <div className="role-card-body">
+              <div className="role-card-title">Customer</div>
+              <div className="role-card-desc">Browse shops & buy products</div>
+            </div>
+            {form.role === 'customer' && <div className="role-card-check">✓</div>}
           </button>
-          <button type="button" className={`role-btn ${form.role === 'seller' ? 'active' : ''}`}
-            onClick={() => setForm({ ...form, role: 'seller' })} id="role-seller">
-            <ShoppingBag size={18} /> Seller
+          <button
+            type="button"
+            className={`role-card ${form.role === 'seller' ? 'active' : ''}`}
+            onClick={() => setForm({ ...form, role: 'seller' })}
+            id="role-seller"
+          >
+            <div className="role-card-icon">🏪</div>
+            <div className="role-card-body">
+              <div className="role-card-title">Seller</div>
+              <div className="role-card-desc">List your shop & sell products</div>
+            </div>
+            {form.role === 'seller' && <div className="role-card-check">✓</div>}
           </button>
         </div>
 

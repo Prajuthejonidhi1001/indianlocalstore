@@ -533,4 +533,92 @@ select.form-input {
   .auth-card.auth-card-wide { max-width: 100%; }
   .form-row { grid-template-columns: 1fr; }
   .reg-cat-chip { font-size: 0.78rem; padding: 0.35rem 0.7rem; }
+  .role-card-grid { grid-template-columns: 1fr; }
 }
+
+/* ── Role Card Grid (new large card style) ──────────────────────── */
+.role-card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.role-card {
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1rem 1.125rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--border-default);
+  background: var(--bg-elevated);
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-body);
+  text-align: left;
+  position: relative;
+}
+.role-card:hover {
+  border-color: rgba(255,107,53,0.4);
+  background: rgba(255,107,53,0.03);
+}
+.role-card.active {
+  border-color: var(--saffron);
+  background: rgba(255,107,53,0.07);
+  box-shadow: 0 0 0 3px rgba(255,107,53,0.12);
+}
+.role-card-icon {
+  font-size: 2rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+.role-card-body { flex: 1; }
+.role-card-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.role-card-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.3;
+}
+.role-card.active .role-card-title { color: var(--saffron); }
+.role-card-check {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: var(--saffron);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ── Utility classes used by SellerDashboardPage ────────────────── */
+.mb-0 { margin-bottom: 0 !important; }
+.mb-2 { margin-bottom: 0.5rem !important; }
+.mb-3 { margin-bottom: 1rem !important; }
+.mb-4 { margin-bottom: 1.5rem !important; }
+.mt-3 { margin-top: 1rem !important; }
+.mt-4 { margin-top: 1.5rem !important; }
+.flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.btn-sm {
+  padding: 0.45rem 0.9rem;
+  font-size: 0.82rem;
+}
+.btn-ghost {
+  background: none;
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+}
+.btn-ghost:hover {
+  border-color: var(--saffron);
+  color: var(--saffron);
+}
+

@@ -21,14 +21,16 @@ export default function SellerDashboardPage() {
   });
   const [savingShop, setSavingShop] = useState(false);
 
-  // Product Form — no category/subcategory
+  // Product Form
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState({
     name: '', description: '', price: '', discount_price: '', stock: '',
+    category: '', subcategory: '',
   });
   const [productImages, setProductImages] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
   const [allCategories, setAllCategories] = useState([]);
+  const [productSubcats, setProductSubcats] = useState([]);
 
 
   useEffect(() => {
@@ -112,6 +114,7 @@ export default function SellerDashboardPage() {
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     if (!shop) { toast.error('Please complete shop setup first'); return; }
+    if (!productForm.category) { toast.error('Please select a product category'); return; }
     if (productImages.length === 0) { toast.error('At least 1 product image is required'); return; }
     setSavingProduct(true);
     try {
@@ -126,8 +129,9 @@ export default function SellerDashboardPage() {
       const freshProducts = await productAPI.getMyProducts();
       setProducts(freshProducts.data.results || freshProducts.data);
       setShowProductModal(false);
-      setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '' });
+      setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', category: '', subcategory: '' });
       setProductImages([]);
+      setProductSubcats([]);
       toast.success('✅ Product added!');
     } catch (err) {
       const data = err?.response?.data;
@@ -135,6 +139,18 @@ export default function SellerDashboardPage() {
       toast.error(msg);
     } finally {
       setSavingProduct(false);
+    }
+  };
+
+  // When product category changes, load subcategories
+  const handleProductCatChange = async (catId) => {
+    setProductForm(f => ({ ...f, category: catId, subcategory: '' }));
+    setProductSubcats([]);
+    if (catId) {
+      try {
+        const r = await productAPI.getSubCategories(catId);
+        setProductSubcats(r.data.results || r.data);
+      } catch {}
     }
   };
 
@@ -333,6 +349,30 @@ export default function SellerDashboardPage() {
                   <label className="form-label">Product Name *</label>
                   <input type="text" className="form-input" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} />
                 </div>
+
+                {/* Category & Subcategory */}
+                <div className="form-row mb-3">
+                  <div className="form-group">
+                    <label className="form-label">Category *</label>
+                    <select className="form-input" required value={productForm.category}
+                      onChange={e => handleProductCatChange(e.target.value)}
+                      style={{ backgroundColor: 'var(--bg-elevated)' }}>
+                      <option value="">Select Category</option>
+                      {allCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Subcategory <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
+                    <select className="form-input" value={productForm.subcategory}
+                      onChange={e => setProductForm({ ...productForm, subcategory: e.target.value })}
+                      disabled={productSubcats.length === 0}
+                      style={{ backgroundColor: 'var(--bg-elevated)', opacity: productSubcats.length === 0 ? 0.5 : 1 }}>
+                      <option value="">Select Subcategory</option>
+                      {productSubcats.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                </div>
+
                 <div className="form-group mb-3">
                   <label className="form-label">Images * (1–5, square preferred)</label>
                   <input type="file" className="form-input" accept="image/*" multiple required onChange={handleImageChange} style={{ padding: '0.6rem' }} id="product-images-input" />
