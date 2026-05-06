@@ -37,7 +37,12 @@ export default function CategoriesScreen({ navigation }) {
     try {
       setLoading(true);
       const res = await productAPI.getCategories();
-      setCategories(res.data.results || res.data);
+      const cats = res.data.results || res.data;
+      setCategories(cats);
+      // Auto-expand all categories
+      const expanded = {};
+      cats.forEach(c => { expanded[c.id] = true; });
+      setExpandedCats(expanded);
     } catch (e) {
       console.error('Fetch categories error:', e);
     } finally {
@@ -49,6 +54,7 @@ export default function CategoriesScreen({ navigation }) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setExpandedCats(prev => ({ ...prev, [id]: !prev[id] }));
   };
+
 
   const renderCategory = (cat, index) => {
     const isExpanded = expandedCats[cat.id];
