@@ -374,41 +374,6 @@ export default function SellerDashboardPage() {
               </div>
               <form onSubmit={handleSaveProduct} id="add-product-form">
 
-                {/* Category info banner — auto-inherited from signup */}
-                {defaultCatName ? (
-                  <div style={{
-                    display: 'flex', alignItems: 'center', gap: '0.6rem',
-                    background: 'rgba(255,107,53,0.06)', border: '1px solid rgba(255,107,53,0.2)',
-                    borderRadius: 'var(--radius-md)', padding: '0.6rem 1rem', marginBottom: '1rem',
-                    fontSize: '0.82rem', color: 'var(--saffron)'
-                  }}>
-                    <span>🏷️</span>
-                    <span>Listed under <strong>{defaultCatName}</strong>{defaultSubName ? ` › ${defaultSubName}` : ''}</span>
-                  </div>
-                ) : (
-                  <div className="form-row mb-3">
-                    <div className="form-group">
-                      <label className="form-label">Category *</label>
-                      <select className="form-input" required value={productForm.category}
-                        onChange={e => handleProductCatChange(e.target.value)}
-                        style={{ backgroundColor: 'var(--bg-elevated)' }}>
-                        <option value="">Select Category</option>
-                        {allCategories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-                      </select>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">Subcategory <span style={{ color: 'var(--text-muted)', fontWeight: 400 }}>(optional)</span></label>
-                      <select className="form-input" value={productForm.subcategory}
-                        onChange={e => setProductForm({ ...productForm, subcategory: e.target.value })}
-                        disabled={productSubcats.length === 0}
-                        style={{ backgroundColor: 'var(--bg-elevated)', opacity: productSubcats.length === 0 ? 0.5 : 1 }}>
-                        <option value="">Select Subcategory</option>
-                        {productSubcats.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
-                    </div>
-                  </div>
-                )}
-
                 <div className="form-group mb-3">
                   <label className="form-label">Product Name *</label>
                   <input type="text" className="form-input" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} />
