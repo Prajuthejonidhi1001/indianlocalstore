@@ -2,7 +2,7 @@
   "expo": {
     "name": "IndianLocalStore",
     "slug": "indianlocalstore",
-    "version": "1.2.0",
+    "version": "1.3.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
     "scheme": "indianlocalstore",
@@ -23,7 +23,7 @@
     ],
     "android": {
       "package": "com.indianlocalstore.app",
-      "versionCode": 3,
+      "versionCode": 4,
       "minSdkVersion": 24,
       "targetSdkVersion": 34,
       "adaptiveIcon": {
