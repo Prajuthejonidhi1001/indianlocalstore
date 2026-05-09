@@ -16,6 +16,8 @@ export default function RegisterScreen({ navigation }) {
   const { register, login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [showConfirmPass, setShowConfirmPass] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [focusedInput, setFocusedInput] = useState(null);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
@@ -133,7 +135,10 @@ export default function RegisterScreen({ navigation }) {
       triggerShake(); return Alert.alert('Missing Fields', 'Please fill all basic details.');
     }
     if (form.password.length < 8) {
-      triggerShake(); return Alert.alert('Weak Password', 'Min 8 characters.');
+      triggerShake(); return Alert.alert('Weak Password', 'Minimum 8 characters required.');
+    }
+    if (form.password !== confirmPassword) {
+      triggerShake(); return Alert.alert('Password Mismatch', 'Passwords do not match. Please try again.');
     }
     if (form.role === 'seller' && (!form.shopName || !form.shopAddress || !form.pincode || !form.state)) {
       triggerShake(); return Alert.alert('Missing Info', 'Fill all shop details.');
@@ -231,23 +236,27 @@ export default function RegisterScreen({ navigation }) {
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Shop & sell locally</Text>
 
-            {/* ── Role Toggle — AT THE TOP ── */}
-            <View style={styles.roleRow}>
+            {/* ── Role Selector — large cards ── */}
+            <View style={styles.roleCardRow}>
               <TouchableOpacity
-                style={[styles.roleBtn, form.role === 'customer' && styles.roleBtnActive]}
+                style={[styles.roleCard, form.role === 'customer' && styles.roleCardActiveCustomer]}
                 onPress={() => setForm({ ...form, role: 'customer' })}
                 activeOpacity={0.8}
               >
-                <Ionicons name="person" size={16} color={form.role === 'customer' ? '#fff' : COLORS.textMuted} />
-                <Text style={[styles.roleText, form.role === 'customer' && styles.roleTextActive]}>Customer</Text>
+                <Text style={styles.roleCardEmoji}>🛒</Text>
+                <Text style={[styles.roleCardTitle, form.role === 'customer' && { color: '#fff' }]}>Customer</Text>
+                <Text style={styles.roleCardDesc}>Browse & buy</Text>
+                {form.role === 'customer' && <View style={styles.roleCardCheck}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
               </TouchableOpacity>
               <TouchableOpacity
-                style={[styles.roleBtn, form.role === 'seller' && styles.roleBtnActiveSeller]}
+                style={[styles.roleCard, form.role === 'seller' && styles.roleCardActiveSeller]}
                 onPress={() => setForm({ ...form, role: 'seller' })}
                 activeOpacity={0.8}
               >
-                <Ionicons name="cart" size={16} color={form.role === 'seller' ? '#fff' : COLORS.textMuted} />
-                <Text style={[styles.roleText, form.role === 'seller' && styles.roleTextActive]}>Seller</Text>
+                <Text style={styles.roleCardEmoji}>🏪</Text>
+                <Text style={[styles.roleCardTitle, form.role === 'seller' && { color: '#FF6B00' }]}>Seller</Text>
+                <Text style={styles.roleCardDesc}>List & sell</Text>
+                {form.role === 'seller' && <View style={[styles.roleCardCheck, { backgroundColor: '#FF6B00' }]}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
               </TouchableOpacity>
             </View>
 
@@ -264,13 +273,43 @@ export default function RegisterScreen({ navigation }) {
             {renderInput('at-outline', 'Username', form.username, 'username')}
             {renderInput('mail-outline', 'Email', form.email, 'email', false, 'email-address')}
             {renderInput('call-outline', 'Phone', form.phone, 'phone', false, 'phone-pad')}
-            {renderInput('lock-closed-outline', 'Password (min 8)', form.password, 'password', true)}
+            {renderInput('lock-closed-outline', 'Password (min 8 chars)', form.password, 'password', true)}
 
             {form.password.length > 0 && (
               <View style={styles.strengthBar}>
                 <View style={[styles.strengthFill, { width: `${(passwordStrength / 4) * 100}%`, backgroundColor: strengthColor }]} />
                 <Text style={[styles.strengthLabel, { color: strengthColor }]}>{strengthLabel}</Text>
               </View>
+            )}
+
+            {/* Confirm Password */}
+            <View style={[styles.inputRow, focusedInput === 'confirmPassword' && styles.inputRowFocused,
+              confirmPassword.length > 0 && confirmPassword !== form.password && { borderColor: '#E74C3C' },
+              confirmPassword.length > 0 && confirmPassword === form.password && { borderColor: '#2ECC71' },
+            ]}>
+              <Ionicons name="shield-checkmark-outline" size={18}
+                color={confirmPassword.length > 0 ? (confirmPassword === form.password ? '#2ECC71' : '#E74C3C') : (focusedInput === 'confirmPassword' ? '#FF6B00' : COLORS.textMuted)}
+                style={{ marginRight: 10 }} />
+              <TextInput
+                placeholder="Confirm Password"
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                style={styles.inputText}
+                secureTextEntry={!showConfirmPass}
+                placeholderTextColor={COLORS.textMuted}
+                autoCapitalize="none"
+                onFocus={() => setFocusedInput('confirmPassword')}
+                onBlur={() => setFocusedInput(null)}
+              />
+              <TouchableOpacity onPress={() => setShowConfirmPass(!showConfirmPass)}>
+                <Ionicons name={showConfirmPass ? 'eye-off' : 'eye'} size={20} color={COLORS.textMuted} />
+              </TouchableOpacity>
+            </View>
+            {confirmPassword.length > 0 && (
+              <Text style={{ fontSize: 12, fontWeight: '700', marginTop: -8, marginBottom: 10, textAlign: 'right',
+                color: confirmPassword === form.password ? '#2ECC71' : '#E74C3C' }}>
+                {confirmPassword === form.password ? '✓ Passwords match' : '✗ Passwords do not match'}
+              </Text>
             )}
 
             {/* ── Seller Section ── */}
@@ -404,13 +443,15 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '900', color: '#fff', marginBottom: 4 },
   subtitle: { fontSize: 14, color: '#8b9bb4', marginBottom: 22 },
 
-  // Role Row — clean, at top
-  roleRow: { flexDirection: 'row', backgroundColor: 'rgba(0,0,0,0.4)', borderRadius: 14, padding: 4, marginBottom: 22, gap: 4 },
-  roleBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12, borderRadius: 11, gap: 6 },
-  roleBtnActive: { backgroundColor: 'rgba(255,255,255,0.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)' },
-  roleBtnActiveSeller: { backgroundColor: 'rgba(255,107,53,0.2)', borderWidth: 1, borderColor: '#FF6B00' },
-  roleText: { color: COLORS.textMuted, fontWeight: '700', fontSize: 14 },
-  roleTextActive: { color: '#fff' },
+  // Role Cards
+  roleCardRow: { flexDirection: 'row', gap: 12, marginBottom: 22 },
+  roleCard: { flex: 1, alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)', position: 'relative' },
+  roleCardActiveCustomer: { borderColor: 'rgba(255,255,255,0.35)', backgroundColor: 'rgba(255,255,255,0.08)' },
+  roleCardActiveSeller: { borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.1)' },
+  roleCardEmoji: { fontSize: 28, marginBottom: 6 },
+  roleCardTitle: { fontSize: 15, fontWeight: '800', color: COLORS.textMuted, marginBottom: 2 },
+  roleCardDesc: { fontSize: 11, color: COLORS.textMuted, textAlign: 'center' },
+  roleCardCheck: { position: 'absolute', top: 8, right: 8, width: 20, height: 20, borderRadius: 10, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
 
   row: { flexDirection: 'row', marginBottom: 0 },
   half: { flex: 1 },

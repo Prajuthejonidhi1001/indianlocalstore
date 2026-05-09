@@ -20,6 +20,8 @@ export default function RegisterPage() {
 
   const [shopPhoto, setShopPhoto] = useState(null);
   const [showPw, setShowPw] = useState(false);
+  const [showConfirmPw, setShowConfirmPw] = useState(false);
+  const [confirmPw, setConfirmPw] = useState('');
   const [loading, setLoading] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState(0);
   const [locating, setLocating] = useState(false);
@@ -118,7 +120,8 @@ export default function RegisterPage() {
     if (form.role === 'seller' && !form.category) {
       return toast.error("Please select your shop category");
     }
-    if (form.password.length < 6) return toast.error('Password must be at least 6 characters');
+    if (form.password.length < 8) return toast.error('Password must be at least 8 characters');
+    if (form.password !== confirmPw) return toast.error('Passwords do not match');
 
     setLoading(true);
     try {
@@ -269,6 +272,32 @@ export default function RegisterPage() {
               </>
             )}
           </div>
+
+          {/* Confirm Password */}
+          <div className="form-group">
+            <label className="form-label" htmlFor="reg-confirm-password">Confirm Password *</label>
+            <div className="input-with-icon">
+              <input
+                id="reg-confirm-password"
+                type={showConfirmPw ? 'text' : 'password'}
+                className="form-input"
+                placeholder="Re-enter your password"
+                value={confirmPw}
+                onChange={e => setConfirmPw(e.target.value)}
+                style={confirmPw.length > 0 ? { borderColor: confirmPw === form.password ? '#2ECC71' : '#E74C3C' } : {}}
+              />
+              <button type="button" className="pw-toggle" onClick={() => setShowConfirmPw(!showConfirmPw)}>
+                {showConfirmPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            {confirmPw.length > 0 && (
+              <div style={{ fontSize: 12, textAlign: 'right', marginTop: 4, fontWeight: 700,
+                color: confirmPw === form.password ? '#2ECC71' : '#E74C3C' }}>
+                {confirmPw === form.password ? 'Passwords match' : 'Passwords do not match'}
+              </div>
+            )}
+          </div>
+
 
           {/* ── Seller Fields ── */}
           {form.role === 'seller' && (
