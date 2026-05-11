@@ -43,7 +43,14 @@ const stats = [
 ];
 
 export default function LandingPage() {
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([
+    { id: 'f1', name: 'Agriculture' },
+    { id: 'f2', name: 'Automobile' },
+    { id: 'f3', name: 'Construction' },
+    { id: 'f4', name: 'Electronics' },
+    { id: 'f5', name: 'Fashion' },
+    { id: 'f6', name: 'Mart' },
+  ]);
 
   useEffect(() => {
     productAPI.getCategories()

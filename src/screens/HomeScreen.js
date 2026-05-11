@@ -197,7 +197,14 @@ function AnimatedCatPill({ item, isActive, onPress, index }) {
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
   const { location, setLocation } = useLocation();
-  const [categories, setCategories] = useState([]);
+  const [categories, setCategories] = useState([
+    { id: '1', name: 'Agriculture' },
+    { id: '2', name: 'Automobile' },
+    { id: '3', name: 'Construction' },
+    { id: '4', name: 'Electronics' },
+    { id: '5', name: 'Fashion' },
+    { id: '6', name: 'Mart' },
+  ]);
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [locating, setLocating] = useState(false);
