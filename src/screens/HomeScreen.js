@@ -16,19 +16,33 @@ import * as Location from 'expo-location';
 const { width, height } = Dimensions.get('window');
 
 const CAT_EMOJIS = {
-  'Vegetables': '🥬', 'Fruits': '🍎', 'Dairy': '🥛',
-  'Spices': '🌿', 'Grains': '🌾', 'Snacks': '🥜',
-  'Meat': '🍖', 'Beverages': '🧃', 'Bakery': '🍞',
-  'Personal Care': '🧴', 'Home & Living': '🏠', 'Electronics': '📱',
-  'Clothing': '👕', 'Stationery': '📚', 'Pharmacy': '💊',
+  'Agriculture':        '🌾',
+  'Automobile':         '🚗',
+  'Construction':       '🏗️',
+  'Electronics':        '📱',
+  'Event Management':   '🎉',
+  'Fashion':            '👗',
+  'Furnitures':         '🪑',
+  'Mart':               '🏪',
+  'Second Hand Vehicles':'🚙',
+  'Traders':            '📦',
+  // fallback extras
+  'Food':               '🍽️',
+  'Clothing':           '👕',
+  'Electronics & Gadgets':'💻',
 };
 
 const CAT_COLORS = {
-  'Vegetables': '#00E676', 'Fruits': '#FF1744', 'Dairy': '#2196F3',
-  'Spices': '#FF6B35', 'Grains': '#F39C12', 'Snacks': '#FFB627',
-  'Meat': '#E91E63', 'Beverages': '#00BCD4', 'Bakery': '#795548',
-  'Personal Care': '#AB47BC', 'Home & Living': '#00ACC1',
-  'Electronics': '#3F51B5', 'Clothing': '#FF7043', 'Stationery': '#4CAF50', 'Pharmacy': '#F44336',
+  'Agriculture':        '#2ECC71',
+  'Automobile':         '#3498DB',
+  'Construction':       '#E67E22',
+  'Electronics':        '#9B59B6',
+  'Event Management':   '#E91E8C',
+  'Fashion':            '#FF6B35',
+  'Furnitures':         '#795548',
+  'Mart':               '#00BCD4',
+  'Second Hand Vehicles':'#F39C12',
+  'Traders':            '#1ABC9C',
 };
 
 // Animated shop card wrapper

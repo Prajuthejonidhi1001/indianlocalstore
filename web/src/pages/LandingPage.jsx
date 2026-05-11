@@ -12,14 +12,22 @@ const features = [
 ];
 
 const CAT_EMOJIS = {
-  'Vegetables':'🥬','Fruits':'🍎','Dairy':'🥛','Spices':'🌿',
-  'Grains':'🌾','Snacks':'🥜','Meat':'🍖','Beverages':'🧃',
-  'Bakery':'🍞','Personal Care':'🧴','Home & Living':'🏠',
-  'Electronics':'📱','Clothing':'👕','Pharmacy':'💊',
-  'Fashion':'👗','Agriculture':'🌱','Automobile':'🚗',
-  'Construction':'🏗️','Furniture':'🪑','Furnitures':'🪑',
-  'Mart':'🏪','Traders':'📦','Event Management':'🎉',
-  'Second Hand Vehicles':'🚙',
+  'Agriculture':          '🌾',
+  'Automobile':           '🚗',
+  'Construction':         '🏗️',
+  'Electronics':          '📱',
+  'Event Management':     '🎉',
+  'Fashion':              '👗',
+  'Furnitures':           '🪑',
+  'Mart':                 '🏪',
+  'Second Hand Vehicles': '🚙',
+  'Traders':              '📦',
+  // fallback for any extra categories
+  'Food':       '🍽️',
+  'Clothing':   '👕',
+  'Pharmacy':   '💊',
+  'Vegetables': '🥬',
+  'Fruits':     '🍎',
 };
 
 const CAT_COLORS = [
