@@ -64,16 +64,28 @@
   gap: 2rem;
   align-items: start;
 }
-.checkout-form-card {
+.checkout-card {
   padding: 2rem;
   border-radius: var(--radius-xl);
 }
-.checkout-form-card h3 {
-  font-size: 1.1rem;
-  font-weight: 800;
+.checkout-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
   margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
+  padding-bottom: 1rem;
   border-bottom: 1px solid var(--border-subtle);
+}
+.checkout-card-header h3 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  margin: 0;
+}
+.ch-icon {
+  color: var(--saffron);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 .form-section { margin-bottom: 1.5rem; }
 .form-section-title {

@@ -102,24 +102,28 @@ export default function CheckoutPage() {
                   <h3>Payment Method</h3>
                 </div>
                 <div className="checkout-card-body">
-                  <label className={`payment-method ${form.payment_method === 'cod' ? 'active' : ''}`}>
-                    <input type="radio" name="payment" value="cod" checked={form.payment_method === 'cod'} onChange={e => setForm({...form, payment_method: e.target.value})} />
-                    <div className="pm-info">
-                      <strong>Cash on Delivery (COD)</strong>
-                      <p>Pay safely when your order arrives.</p>
+                  <div className={`payment-option ${form.payment_method === 'cod' ? 'selected' : ''}`} onClick={() => setForm({...form, payment_method: 'cod'})}>
+                    <div className="payment-radio">
+                      {form.payment_method === 'cod' && <div className="payment-radio-dot" />}
                     </div>
-                  </label>
+                    <div className="payment-info">
+                      <div className="payment-title">Cash on Delivery (COD)</div>
+                      <div className="payment-subtitle">Pay safely when your order arrives.</div>
+                    </div>
+                  </div>
                   
-                  <label className={`payment-method ${form.payment_method === 'razorpay' ? 'active' : ''}`}>
-                    <input type="radio" name="payment" value="razorpay" checked={form.payment_method === 'razorpay'} onChange={e => setForm({...form, payment_method: e.target.value})} disabled />
-                    <div className="pm-info">
-                      <div className="flex-between">
-                        <strong>Online Payment (Razorpay)</strong>
-                        <span className="badge badge-orange">Coming Soon</span>
-                      </div>
-                      <p>Pay via UPI, Cards, or NetBanking.</p>
+                  <div className={`payment-option ${form.payment_method === 'razorpay' ? 'selected' : ''}`} style={{opacity: 0.6, cursor: 'not-allowed', marginTop: '0.75rem'}}>
+                    <div className="payment-radio">
+                      {form.payment_method === 'razorpay' && <div className="payment-radio-dot" />}
                     </div>
-                  </label>
+                    <div className="payment-info">
+                      <div className="flex-between">
+                        <div className="payment-title">Online Payment (Razorpay)</div>
+                        <span className="badge badge-orange" style={{fontSize: '0.65rem'}}>COMING SOON</span>
+                      </div>
+                      <div className="payment-subtitle">Pay via UPI, Cards, or NetBanking.</div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -140,7 +144,8 @@ export default function CheckoutPage() {
                   return (
                     <div key={item.id} className="checkout-item-row">
                       <div className="checkout-item-name">
-                        <span className="checkout-item-qty">{item.quantity}x</span> {name}
+                        <span className="checkout-item-qty" style={{marginRight: '8px'}}>{item.quantity}x</span>
+                        <span>{name}</span>
                       </div>
                       <div className="checkout-item-price">₹{(parseFloat(price) * item.quantity).toFixed(2)}</div>
                     </div>
