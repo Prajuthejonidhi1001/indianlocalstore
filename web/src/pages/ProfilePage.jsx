@@ -99,7 +99,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Details Form Card */}
-          <div className="card profile-form-card">
+          <div className="card profile-card">
             <h3 className="form-card-title">Personal Details</h3>
             <div className="form-row">
               <div className="form-group">
