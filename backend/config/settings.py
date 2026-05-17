@@ -84,6 +84,16 @@ if DATABASE_URL:
             ssl_require=True,      # Force SSL to Supabase
         )
     }
+    try:
+        import socket
+        db_host = DATABASES['default'].get('HOST')
+        if db_host:
+            ips = socket.getaddrinfo(db_host, None, socket.AF_INET)
+            if ips:
+                DATABASES['default']['HOST'] = ips[0][4][0]
+    except Exception:
+        pass
+        
 else:
     DATABASES = {
         'default': {
