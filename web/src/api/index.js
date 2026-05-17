@@ -29,7 +29,7 @@ api.interceptors.response.use(
       try {
         const refresh = localStorage.getItem('refresh_token');
         if (!refresh) throw new Error('No refresh token');
-        const { data } = await axios.post('/api/users/token/refresh/', { refresh });
+        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/users/token/refresh/`, { refresh });
         localStorage.setItem('access_token', data.access);
         original.headers.Authorization = `Bearer ${data.access}`;
         return api(original);

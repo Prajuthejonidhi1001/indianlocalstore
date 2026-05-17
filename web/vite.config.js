@@ -7,14 +7,14 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/api': {
-        target: 'http://localhost:8000',
+        target: 'https://indianlocalstore-api-cjiq.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
       '/media': {
-        target: 'http://localhost:8000',
+        target: 'https://indianlocalstore-api-cjiq.onrender.com',
         changeOrigin: true,
-        secure: false,
+        secure: true,
       },
     },
   },
