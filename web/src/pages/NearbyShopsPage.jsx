@@ -161,39 +161,73 @@ export default function NearbyShopsPage() {
             <p>Try selecting a different category or area</p>
           </div>
         ) : (
-          <div className="shops-page-grid">
-            {filteredShops.map(shop => (
-              <Link to={`/shops/${shop.id}`} key={shop.id} className="sp-card card" id={`shop-card-${shop.id}`}>
-                <div className="sp-header">
-                  <div className="sp-avatar">{shop.name[0]}</div>
-                  <div className="sp-info">
-                    <h3 className="sp-name">{shop.name}</h3>
-                    <div className="sp-meta">
-                      <span className="sp-rating">
-                        <Star size={12} fill="currentColor" /> {shop.rating?.toFixed(1) || '0.0'}
+          <div className="shops-cards-grid">
+            {filteredShops.map(shop => {
+              const avatarColor = `hsl(${(shop.name.charCodeAt(0) * 37) % 360}, 60%, 42%)`;
+              const logoSrc = shop.logo
+                ? (shop.logo.startsWith('http') ? shop.logo : `/media/${shop.logo}`)
+                : null;
+
+              return (
+                <Link
+                  to={`/shops/${shop.id}`}
+                  key={shop.id}
+                  className="shop-card-ns"
+                  id={`shop-card-${shop.id}`}
+                >
+                  {/* Banner */}
+                  <div className="scn-banner">
+                    <div className="scn-banner-overlay" />
+                    <div className="scn-tags">
+                      <span className="scn-open-tag">
+                        <span className="scn-open-dot" />
+                        {shop.is_open ? 'Open' : 'Closed'}
                       </span>
-                      <span className="sp-dot">•</span>
-                      <span className={`sp-status ${shop.verification_status === 'verified' ? 'verified' : ''}`}>
-                        {shop.verification_status}
+                      {shop.verification_status === 'verified' && (
+                        <span className="scn-verified-tag">✓ Verified</span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Body */}
+                  <div className="scn-body">
+                    <div className="scn-row1">
+                      {/* Avatar */}
+                      <div className="scn-avatar" style={{ background: avatarColor }}>
+                        {logoSrc
+                          ? <img src={logoSrc} alt={shop.name} />
+                          : shop.name[0].toUpperCase()
+                        }
+                      </div>
+                      <div className="scn-info">
+                        <div className="scn-name">{shop.name}</div>
+                        <div className="scn-city">
+                          <MapPin size={11} /> {shop.city}
+                        </div>
+                      </div>
+                      <div className="scn-rating">
+                        <Star size={13} fill="currentColor" />
+                        {shop.rating?.toFixed(1) || '0.0'}
+                      </div>
+                    </div>
+
+                    <div className="scn-footer">
+                      <span className="scn-phone">
+                        <Phone size={12} />
+                        {shop.reviews_count || 0} review{shop.reviews_count !== 1 ? 's' : ''}
+                      </span>
+                      <span className="scn-cta">
+                        Visit Shop →
                       </span>
                     </div>
                   </div>
-                </div>
-
-                {shop.description && <p className="sp-desc">{shop.description.slice(0, 100)}...</p>}
-
-                <div className="sp-footer">
-                  <div className="sp-item"><MapPin size={13} /> {shop.city}, {shop.state}</div>
-                  <div className="sp-item"><Phone size={13} /> Call Shop</div>
-                </div>
-                {shop.distance && (
-                  <div className="sp-distance">{shop.distance.toFixed(1)} km away</div>
-                )}
-              </Link>
-            ))}
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>
     </div>
   );
 }
+

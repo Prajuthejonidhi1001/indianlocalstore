@@ -59,8 +59,8 @@ export function CartProvider({ children }) {
 
   const cartCount = cart?.items?.length || 0;
   const cartTotal = cart?.items?.reduce((sum, item) => {
-    const price = item.product.discount_price || item.product.price;
-    return sum + parseFloat(price) * item.quantity;
+    const price = parseFloat(item.product_price) || 0;
+    return sum + price * item.quantity;
   }, 0) || 0;
 
   return (

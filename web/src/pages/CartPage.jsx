@@ -18,7 +18,7 @@ export default function CartPage() {
         <div className="section-header flex-between mb-cart">
           <div>
             <h1 id="cart-heading">Your Cart</h1>
-            <p className="section-subtitle">{items.length} items in your cart</p>
+            <p className="section-subtitle">{items.length} item{items.length !== 1 ? 's' : ''} in your cart</p>
           </div>
           {!isEmpty && (
             <button className="btn btn-ghost btn-sm text-danger" id="clear-cart-btn" onClick={clearCart}>
@@ -36,69 +36,98 @@ export default function CartPage() {
           </div>
         ) : (
           <div className="cart-layout">
-            <div className="cart-items-col">
+            {/* Items column */}
+            <div className="cart-items-list">
               {items.map(item => {
-                const product = item.product;
-                const price = product.discount_price || product.price;
-                const imgSrc = product.image ? (product.image.startsWith('http') ? product.image : `/media/${product.image}`) : null;
+                // API returns flat fields: product_name, product_image, product_price
+                // item.product is just the integer product ID
+                const productId = item.product;
+                const name = item.product_name || 'Product';
+                const price = parseFloat(item.product_price) || 0;
+                const rawImg = item.product_image;
+                const imgSrc = rawImg
+                  ? (rawImg.startsWith('http') ? rawImg : `/media/${rawImg}`)
+                  : null;
 
                 return (
-                  <div key={item.id} className="cart-item-card card" id={`cart-item-${item.id}`}>
-                    <Link to={`/products/${product.id}`} className="ci-img-box">
-                      {imgSrc ? <img src={imgSrc} alt={product.name} /> : <div>🛒</div>}
-                    </Link>
-                    <div className="ci-details">
-                      <Link to={`/products/${product.id}`} className="ci-name">{product.name}</Link>
-                      <p className="ci-price">₹{parseFloat(price).toFixed(2)}</p>
-                      
-                      <div className="ci-actions">
-                        <div className="qty-control sm">
-                          <button id={`qty-minus-${item.id}`} onClick={() => addToCart(product.id, Math.max(1, item.quantity - 1))}>-</button>
-                          <span>{item.quantity}</span>
-                          <button id={`qty-plus-${item.id}`} onClick={() => addToCart(product.id, item.quantity + 1)}>+</button>
+                  <div key={item.id} className="cart-item" id={`cart-item-${item.id}`}>
+                    {/* Image */}
+                    <div className="cart-item-img">
+                      {imgSrc
+                        ? <img src={imgSrc} alt={name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: 'var(--radius-md)' }} />
+                        : <span style={{ fontSize: '2rem' }}>🛒</span>
+                      }
+                    </div>
+
+                    {/* Info */}
+                    <div className="cart-item-info">
+                      <p className="cart-item-name">{name}</p>
+                      <p className="cart-item-price">
+                        ₹{price.toFixed(2)}
+                      </p>
+
+                      {/* Qty + Remove */}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
+                        <div className="qty-controls">
+                          <button
+                            className="qty-btn"
+                            id={`qty-minus-${item.id}`}
+                            onClick={() => addToCart(productId, Math.max(1, item.quantity - 1))}
+                          >−</button>
+                          <span className="qty-val">{item.quantity}</span>
+                          <button
+                            className="qty-btn"
+                            id={`qty-plus-${item.id}`}
+                            onClick={() => addToCart(productId, item.quantity + 1)}
+                          >+</button>
                         </div>
-                        <button className="ci-remove" id={`remove-item-${item.id}`} onClick={() => removeFromCart(product.id)}>
+                        <button
+                          className="cart-item-remove"
+                          id={`remove-item-${item.id}`}
+                          onClick={() => removeFromCart(productId)}
+                          title="Remove item"
+                        >
                           <Trash2 size={16} />
                         </button>
                       </div>
                     </div>
-                    <div className="ci-total">
-                      ₹{(parseFloat(price) * item.quantity).toFixed(2)}
+
+                    {/* Line total */}
+                    <div style={{ fontWeight: 800, color: 'var(--saffron)', fontSize: '1rem', flexShrink: 0 }}>
+                      ₹{(price * item.quantity).toFixed(2)}
                     </div>
                   </div>
                 );
               })}
             </div>
 
-            <div className="cart-summary-col">
-              <div className="summary-card card">
-                <h3>Order Summary</h3>
-                <div className="divider" />
-                <div className="summary-row">
-                  <span>Subtotal ({items.length} items)</span>
-                  <span>₹{cartTotal.toFixed(2)}</span>
-                </div>
-                <div className="summary-row">
-                  <span>Delivery Fee</span>
-                  <span className="text-green">Free</span>
-                </div>
-                <div className="divider" />
-                <div className="summary-row summary-total">
-                  <span>Total</span>
-                  <span>₹{cartTotal.toFixed(2)}</span>
-                </div>
-                
-                <button 
-                  id="checkout-btn"
-                  className="btn btn-primary btn-full mt-3 cta-pulse"
-                  onClick={() => navigate('/checkout')}
-                >
-                  Proceed to Checkout <ArrowRight size={16} />
-                </button>
-                <Link to="/products" className="btn btn-ghost btn-full mt-2">
-                  <ShoppingBag size={14} /> Continue Shopping
-                </Link>
+            {/* Summary column */}
+            <div className="cart-summary">
+              <h3>Order Summary</h3>
+              <div className="summary-divider" />
+              <div className="summary-row">
+                <span>Subtotal ({items.length} item{items.length !== 1 ? 's' : ''})</span>
+                <span>₹{cartTotal.toFixed(2)}</span>
               </div>
+              <div className="summary-row">
+                <span>Delivery Fee</span>
+                <span style={{ color: 'var(--green, #22c55e)', fontWeight: 700 }}>Free</span>
+              </div>
+              <div className="summary-row total">
+                <span>Total</span>
+                <span>₹{cartTotal.toFixed(2)}</span>
+              </div>
+
+              <button
+                id="checkout-btn"
+                className="btn btn-primary cart-checkout-btn cta-pulse"
+                onClick={() => navigate('/checkout')}
+              >
+                Proceed to Checkout <ArrowRight size={16} />
+              </button>
+              <Link to="/products" className="btn btn-ghost btn-full mt-2">
+                <ShoppingBag size={14} /> Continue Shopping
+              </Link>
             </div>
           </div>
         )}
