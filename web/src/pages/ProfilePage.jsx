@@ -169,7 +169,7 @@ export default function ProfilePage() {
             <div className="form-group">
               <label className="form-label">Pincode</label>
               <input 
-                type="text" className="form-input" style={{ maxWidth: '200px' }}
+                type="text" className="form-input" 
                 value={form.pincode} 
                 onChange={e => setForm({...form, pincode: e.target.value})}
                 disabled={!editing} 

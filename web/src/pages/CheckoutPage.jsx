@@ -91,7 +91,7 @@ export default function CheckoutPage() {
                   </div>
                   <div className="form-group mt-3">
                     <label className="form-label">Pincode</label>
-                    <input type="text" className="form-input" style={{ maxWidth: '200px' }} value={form.delivery_pincode} onChange={e => setForm({...form, delivery_pincode: e.target.value})} />
+                    <input type="text" className="form-input" value={form.delivery_pincode} onChange={e => setForm({...form, delivery_pincode: e.target.value})} />
                   </div>
                 </div>
               </div>
@@ -134,7 +134,7 @@ export default function CheckoutPage() {
           </div>
 
           <div className="checkout-summary-col">
-            <div className="card summary-card sticky-top">
+            <div className="card checkout-summary sticky-top">
               <h3>Order Items</h3>
               <div className="divider" />
               <div className="checkout-items-list">
