@@ -60,7 +60,7 @@ export default function CheckoutPage() {
 
   return (
     <div className="page pb-section">
-      <div className="container" style={{ paddingTop: '2.5rem' }}>
+      <div className="container" style={{ paddingTop: '6rem' }}>
         <h1 className="mb-4">Checkout</h1>
         
         <div className="checkout-layout">
@@ -135,14 +135,14 @@ export default function CheckoutPage() {
               <div className="divider" />
               <div className="checkout-items-list">
                 {cart.items.map(item => {
-                  const p = item.product;
-                  const price = p.discount_price || p.price;
+                  const price = item.product_price;
+                  const name = item.product_name || `Product #${item.product}`;
                   return (
-                    <div key={item.id} className="co-item">
-                      <div className="co-item-name">
-                        <span className="co-qty">{item.quantity}x</span> {p.name}
+                    <div key={item.id} className="checkout-item-row">
+                      <div className="checkout-item-name">
+                        <span className="checkout-item-qty">{item.quantity}x</span> {name}
                       </div>
-                      <div className="co-item-price">₹{(parseFloat(price) * item.quantity).toFixed(2)}</div>
+                      <div className="checkout-item-price">₹{(parseFloat(price) * item.quantity).toFixed(2)}</div>
                     </div>
                   );
                 })}

@@ -42,7 +42,7 @@ export default function ProfilePage() {
 
   return (
     <div className="page">
-      <div className="container" style={{ paddingTop: '2.5rem', paddingBottom: '3rem', maxWidth: '800px' }}>
+      <div className="container" style={{ paddingTop: '6rem', paddingBottom: '3rem', maxWidth: '900px' }}>
         <div className="section-header flex-between">
           <div>
             <div className="section-label"><User size={14} /> Account</div>
@@ -66,35 +66,37 @@ export default function ProfilePage() {
         </div>
 
         <div className="profile-layout">
-          {/* Avatar Card */}
-          <div className="card profile-avatar-card">
-            <div className="pa-avatar">
-              {user.first_name?.[0] || user.username[0].toUpperCase()}
+          <div className="profile-sidebar">
+            {/* Avatar Card */}
+            <div className="card profile-avatar-card">
+              <div className="pa-avatar">
+                {user.first_name?.[0] || user.username[0].toUpperCase()}
+              </div>
+              <h3 className="pa-name">{user.first_name} {user.last_name}</h3>
+              <p className="pa-role">@{user.username} • <span className="badge badge-orange">{user.role}</span></p>
+              
+              <div className="pa-contact mt-3">
+                <div className="pa-item"><Mail size={14} /> {user.email}</div>
+                <div className="pa-item"><Phone size={14} /> {user.phone || 'Not provided'}</div>
+              </div>
             </div>
-            <h3 className="pa-name">{user.first_name} {user.last_name}</h3>
-            <p className="pa-role">@{user.username} • <span className="badge badge-orange">{user.role}</span></p>
-            
-            <div className="pa-contact mt-3">
-              <div className="pa-item"><Mail size={14} /> {user.email}</div>
-              <div className="pa-item"><Phone size={14} /> {user.phone || 'Not provided'}</div>
-            </div>
-          </div>
 
-          {/* Quick Links — hidden while editing profile */}
-          {!editing && (
-            <div className="profile-quick-links">
-              <Link to="/orders" className="pql-btn" id="profile-orders-link">
-                <Package size={18} />
-                <span>My Orders</span>
-              </Link>
-              {user?.role === 'seller' && (
-                <Link to="/seller" className="pql-btn pql-seller" id="profile-seller-link">
-                  <LayoutDashboard size={18} />
-                  <span>Seller Dashboard</span>
+            {/* Quick Links — hidden while editing profile */}
+            {!editing && (
+              <div className="profile-quick-links mt-3">
+                <Link to="/orders" className="pql-btn" id="profile-orders-link">
+                  <Package size={18} />
+                  <span>My Orders</span>
                 </Link>
-              )}
-            </div>
-          )}
+                {user?.role === 'seller' && (
+                  <Link to="/seller" className="pql-btn pql-seller" id="profile-seller-link">
+                    <LayoutDashboard size={18} />
+                    <span>Seller Dashboard</span>
+                  </Link>
+                )}
+              </div>
+            )}
+          </div>
 
           {/* Details Form Card */}
           <div className="card profile-form-card">
