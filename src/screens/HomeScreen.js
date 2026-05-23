@@ -344,7 +344,7 @@ export default function HomeScreen({ navigation }) {
             activeOpacity={0.8}
           >
             <Ionicons name="search" size={16} color={COLORS.textMuted} />
-            <Text style={styles.searchPlaceholder}>Search products, shops...</Text>
+            <Text style={styles.searchPlaceholder}>Search nearby shops...</Text>
             <View style={styles.searchFilter}>
               <Ionicons name="options" size={14} color={COLORS.primary} />
             </View>

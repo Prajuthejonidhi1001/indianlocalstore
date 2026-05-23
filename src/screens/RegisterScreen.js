@@ -430,18 +430,18 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#070a12' },
+  container: { flex: 1, backgroundColor: COLORS.background },
   bgOrb1: { position: 'absolute', top: -80, right: -80, width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(255,107,53,0.12)' },
   bgOrb2: { position: 'absolute', bottom: -60, left: -60, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(85,33,255,0.1)' },
   scroll: { flexGrow: 1, padding: 18, paddingBottom: 40 },
-  card: { backgroundColor: 'rgba(18,22,32,0.92)', borderRadius: 28, padding: 22, borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)', ...SHADOWS.xl },
+  card: { backgroundColor: COLORS.glass, borderRadius: 28, padding: 22, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.xl },
 
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
-  backBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.06)', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  backBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.elevated, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border },
   logoBox: { width: 42, height: 42, borderRadius: 14, backgroundColor: '#FF6B00', alignItems: 'center', justifyContent: 'center' },
 
-  title: { fontSize: 28, fontWeight: '900', color: '#fff', marginBottom: 4 },
-  subtitle: { fontSize: 14, color: '#8b9bb4', marginBottom: 22 },
+  title: { fontSize: 28, fontWeight: '900', color: COLORS.text, marginBottom: 4 },
+  subtitle: { fontSize: 14, color: COLORS.textMuted, marginBottom: 22 },
 
   // Role Cards
   roleCardRow: { flexDirection: 'row', gap: 12, marginBottom: 22 },
@@ -457,9 +457,9 @@ const styles = StyleSheet.create({
   half: { flex: 1 },
 
   // Input
-  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 14, paddingHorizontal: 14, height: 52, marginBottom: 12, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.06)' },
+  inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.elevated, borderRadius: 14, paddingHorizontal: 14, height: 52, marginBottom: 12, borderWidth: 1.5, borderColor: COLORS.border },
   inputRowFocused: { borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' },
-  inputText: { flex: 1, color: '#fff', fontSize: 15, fontWeight: '500' },
+  inputText: { flex: 1, color: COLORS.text, fontSize: 15, fontWeight: '500' },
 
   // Password strength
   strengthBar: { marginBottom: 14, marginTop: -4 },
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   sellerTitle: { fontSize: 15, fontWeight: '800', color: '#FF6B00', marginBottom: 14 },
 
   // Photo picker
-  photoPicker: { height: 110, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 14, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.1)', borderStyle: 'dashed', marginBottom: 16, overflow: 'hidden' },
+  photoPicker: { height: 110, backgroundColor: COLORS.elevated, borderRadius: 14, borderWidth: 1.5, borderColor: COLORS.border, borderStyle: 'dashed', marginBottom: 16, overflow: 'hidden' },
   photoImg: { width: '100%', height: '100%', resizeMode: 'cover' },
   photoPlaceholder: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 },
   photoText: { color: COLORS.textMuted, fontSize: 13, fontWeight: '600' },
@@ -480,20 +480,20 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 12, fontWeight: '800', color: '#a0aec0', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 10 },
   dimText: { color: COLORS.textMuted, fontSize: 12 },
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.03)' },
+  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.elevated },
   chipSm: { paddingHorizontal: 10, paddingVertical: 6 },
   chipSelected: { borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.18)' },
   chipText: { color: COLORS.textMuted, fontSize: 13, fontWeight: '600' },
-  chipTextSelected: { color: '#fff' },
+  chipTextSelected: { color: COLORS.text },
 
   // Auto-filled location
   autoRow: { flexDirection: 'row', gap: 10, marginBottom: 12 },
-  autoChip: { flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)' },
+  autoChip: { flex: 1, backgroundColor: COLORS.elevated, borderRadius: 12, padding: 10, borderWidth: 1, borderColor: COLORS.border },
   autoLabel: { fontSize: 10, color: COLORS.textMuted, fontWeight: '700', marginBottom: 2 },
-  autoValue: { fontSize: 13, color: '#fff', fontWeight: '600' },
+  autoValue: { fontSize: 13, color: COLORS.text, fontWeight: '600' },
 
   // GPS button
-  gpsBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, borderRadius: 12, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(0,0,0,0.2)', marginBottom: 4, marginTop: 4 },
+  gpsBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, borderRadius: 12, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.elevated, marginBottom: 4, marginTop: 4 },
   gpsBtnDone: { borderColor: 'rgba(46,204,113,0.4)', backgroundColor: 'rgba(46,204,113,0.06)' },
   gpsBtnText: { color: COLORS.textMuted, fontWeight: '700', fontSize: 14 },
 
@@ -502,6 +502,6 @@ const styles = StyleSheet.create({
   submitText: { color: '#fff', fontSize: 16, fontWeight: '900' },
 
   footerLink: { marginTop: 20, alignItems: 'center', paddingBottom: 8 },
-  footerText: { color: '#8b9bb4', fontSize: 14 },
+  footerText: { color: COLORS.textMuted, fontSize: 14 },
   footerAction: { color: '#FF6B00', fontWeight: '800' },
 });

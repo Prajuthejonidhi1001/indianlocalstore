@@ -9,21 +9,21 @@ export const COLORS = {
   red: '#E74C3C',
 
   // Background System (Exact from Web)
-  background: '#06090F',     // bg-base
-  surface: '#0D1117',        // bg-surface
-  card: '#131920',           // bg-card
-  elevated: '#1A2332',       // bg-elevated
-  hover: '#20293A',          // bg-hover
+  background: '#F8FAFC',     // bg-base
+  surface: '#FFFFFF',        // bg-surface
+  card: '#FFFFFF',           // bg-card
+  elevated: '#F1F5F9',       // bg-elevated
+  hover: '#E2E8F0',          // bg-hover
   
   // Text
-  text: '#F0F4FF',           // text-primary
-  textMuted: '#97A3B6',      // text-secondary
-  textDim: '#5A6880',        // text-muted
+  text: '#0F172A',           // text-primary
+  textMuted: '#475569',      // text-secondary
+  textDim: '#64748B',        // text-muted
   
   // Interactions
-  border: 'rgba(255, 255, 255, 0.08)',
-  borderStrong: 'rgba(255, 255, 255, 0.15)',
-  glass: 'rgba(19, 25, 32, 0.7)',
+  border: 'rgba(0, 0, 0, 0.08)',
+  borderStrong: 'rgba(0, 0, 0, 0.15)',
+  glass: 'rgba(255, 255, 255, 0.7)',
   white: '#FFFFFF',
   black: '#000000',
 };
@@ -32,28 +32,28 @@ export const SHADOWS = {
   sm: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.05,
     shadowRadius: 3,
     elevation: 2,
   },
   md: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.08,
     shadowRadius: 8,
     elevation: 5,
   },
   lg: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
+    shadowOpacity: 0.12,
     shadowRadius: 15,
     elevation: 10,
   },
   brand: {
     shadowColor: '#FF6B35',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 8,
   }

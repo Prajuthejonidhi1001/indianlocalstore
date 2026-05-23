@@ -12,7 +12,6 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import HomePage from './pages/HomePage';
 import CategoriesPage from './pages/CategoriesPage';
-import ProductsPage from './pages/ProductsPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import NearbyShopsPage from './pages/NearbyShopsPage';
 import ShopDetailPage from './pages/ShopDetailPage';
@@ -46,7 +45,7 @@ function AppRoutes() {
           <Route path="/" element={isAuthenticated ? <Navigate to="/home" replace /> : <LandingPage />} />
           <Route path="/login" element={isAuthenticated ? <Navigate to="/home" replace /> : <LoginPage />} />
           <Route path="/register" element={isAuthenticated ? <Navigate to="/home" replace /> : <RegisterPage />} />
-          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/products" element={<Navigate to="/shops" replace />} />
           <Route path="/products/:id" element={<ProductDetailPage />} />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/shops" element={<NearbyShopsPage />} />

@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ShoppingBag, MapPin, Star, ArrowRight, Navigation, Grid, TrendingUp, Clock, Zap, ChevronRight } from 'lucide-react';
+import { ShoppingBag, MapPin, Star, ArrowRight, Navigation, Grid, TrendingUp, Clock, Zap, ChevronRight, Store } from 'lucide-react';
 import { productAPI, shopAPI } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
@@ -125,8 +125,8 @@ export default function HomePage() {
             <button className="btn btn-primary" onClick={handleLocateMe} disabled={locating} id="locate-me-btn">
               <Navigation size={15} /> {locating ? 'Locating...' : 'Near Me'}
             </button>
-            <Link to="/products" className="btn btn-secondary" id="browse-products-btn">
-              <ShoppingBag size={15} /> Browse
+            <Link to="/shops" className="btn btn-secondary" id="browse-products-btn">
+              <Store size={15} /> Browse Shops
             </Link>
           </div>
         </div>
@@ -294,8 +294,8 @@ export default function HomePage() {
               <div className="section-label"><TrendingUp size={12} /> Trending</div>
               <h3>Fresh Products from<br />Local Sellers Every Day</h3>
               <p>Browse thousands of products from verified local shops near you.</p>
-              <Link to="/products" className="btn btn-primary" id="trending-products-btn">
-                Explore Products <ArrowRight size={15} />
+              <Link to="/shops" className="btn btn-primary" id="trending-products-btn">
+                Explore Shops <ArrowRight size={15} />
               </Link>
             </div>
             <div className="hpb-emojis" aria-hidden="true">

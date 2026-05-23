@@ -19,39 +19,39 @@
   --purple: #D500F9;
 
   /* ── Background System ── */
-  --bg-base: #050508;
-  --bg-surface: #0A0D14;
-  --bg-card: #0F1520;
-  --bg-elevated: #161D2C;
-  --bg-hover: #1E2740;
-  --bg-overlay: rgba(5, 5, 8, 0.92);
+  --bg-base: #F8FAFC;
+  --bg-surface: #FFFFFF;
+  --bg-card: #FFFFFF;
+  --bg-elevated: #F1F5F9;
+  --bg-hover: #E2E8F0;
+  --bg-overlay: rgba(255, 255, 255, 0.92);
 
   /* ── Text ── */
-  --text-primary: #F0F4FF;
-  --text-secondary: #8892A4;
-  --text-muted: #4A5568;
-  --text-inverse: #050508;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --text-inverse: #FFFFFF;
 
   /* ── Borders ── */
-  --border-subtle: rgba(255, 255, 255, 0.04);
-  --border-default: rgba(255, 255, 255, 0.08);
-  --border-strong: rgba(255, 255, 255, 0.16);
+  --border-subtle: rgba(0, 0, 0, 0.04);
+  --border-default: rgba(0, 0, 0, 0.08);
+  --border-strong: rgba(0, 0, 0, 0.16);
   --border-brand: rgba(255, 107, 53, 0.5);
   --border-glow: rgba(255, 107, 53, 0.8);
 
   /* ── Shadows ── */
-  --shadow-sm: 0 1px 4px rgba(0, 0, 0, 0.5);
-  --shadow-md: 0 4px 20px rgba(0, 0, 0, 0.6);
-  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.7);
-  --shadow-xl: 0 24px 64px rgba(0, 0, 0, 0.8);
-  --shadow-brand: 0 0 30px rgba(255, 107, 53, 0.35), 0 0 60px rgba(255, 107, 53, 0.15);
-  --shadow-gold: 0 0 30px rgba(255, 182, 39, 0.3);
-  --shadow-neon: 0 0 20px rgba(255, 69, 0, 0.6), 0 0 40px rgba(255, 69, 0, 0.3);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.12);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.15);
+  --shadow-brand: 0 4px 14px rgba(255, 107, 53, 0.3);
+  --shadow-gold: 0 4px 14px rgba(255, 182, 39, 0.3);
+  --shadow-neon: 0 4px 20px rgba(255, 69, 0, 0.4);
 
   /* ── Glass ── */
-  --glass-bg: rgba(15, 21, 32, 0.75);
-  --glass-border: rgba(255, 255, 255, 0.07);
-  --glass-shine: rgba(255, 255, 255, 0.04);
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(0, 0, 0, 0.07);
+  --glass-shine: rgba(255, 255, 255, 0.4);
 
   /* ── Typography ── */
   --font-heading: 'Inter', sans-serif;
@@ -399,7 +399,7 @@ h1, h2, h3, h4, h5, h6 {
   color: var(--text-secondary);
   transition: color var(--transition-fast);
 }
-.ds-table tr:hover td { color: var(--text-primary); background: rgba(255,255,255,0.02); }
+.ds-table tr:hover td { color: var(--text-primary); background: rgba(0,0,0,0.02); }
 .ds-table td:first-child { color: var(--text-primary); }
 
 /* ── SCROLL ANIMATIONS ── */
@@ -472,7 +472,7 @@ h1, h2, h3, h4, h5, h6 {
 .nav-blur {
   position: absolute;
   inset: 0;
-  background: rgba(5, 5, 8, 0.8);
+  background: rgba(255, 255, 255, 0.8);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   border-bottom: 1px solid var(--border-subtle);

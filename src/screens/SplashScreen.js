@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions, StatusBar } from 'react-native';
+import { COLORS } from '../constants';
 
 const { width, height } = Dimensions.get('window');
 
@@ -51,7 +52,7 @@ export default function SplashScreen({ onFinish }) {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#050814" />
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
 
       {/* Animated orbs */}
       <Animated.View style={[styles.orb, styles.orb1, { transform: [{ translateY: orb1Y }] }]} />
@@ -105,7 +106,7 @@ export default function SplashScreen({ onFinish }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#050814',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
     overflow: 'hidden',
@@ -169,7 +170,7 @@ const styles = StyleSheet.create({
   appName: {
     fontSize: 36,
     fontWeight: '900',
-    color: '#FFFFFF',
+    color: COLORS.text,
     letterSpacing: 8,
     textShadowColor: 'rgba(255,107,53,0.5)',
     textShadowOffset: { width: 0, height: 0 },
@@ -184,7 +185,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 13,
-    color: 'rgba(255,255,255,0.5)',
+    color: COLORS.textMuted,
     textAlign: 'center',
     marginTop: 20,
     paddingHorizontal: 40,
@@ -206,7 +207,7 @@ const styles = StyleSheet.create({
   dot: {
     width: 6, height: 6,
     borderRadius: 3,
-    backgroundColor: 'rgba(255,255,255,0.2)',
+    backgroundColor: COLORS.borderStrong,
   },
   dotActive: {
     backgroundColor: '#FF6B35',
