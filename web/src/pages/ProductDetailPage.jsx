@@ -54,8 +54,8 @@ export default function ProductDetailPage() {
   return (
     <div className="page">
       <div className="container" style={{ paddingTop: '2rem', paddingBottom: '3rem' }}>
-        <Link to="/products" className="back-link" id="back-to-products">
-          <ArrowLeft size={16} /> Back to Products
+        <Link to="/shops" className="back-link" id="back-to-products">
+          <ArrowLeft size={16} /> Back to Shops
         </Link>
 
         <div className="product-detail-grid">

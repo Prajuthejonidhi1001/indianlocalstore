@@ -339,8 +339,8 @@ export default function LandingPage() {
                 <Link to="/register" className="btn btn-primary btn-lg" id="cta-register-btn">
                   Create Free Account <ArrowRight size={18} />
                 </Link>
-                <Link to="/products" className="btn btn-secondary btn-lg" id="cta-products-btn">
-                  <ShoppingBag size={17} /> Browse Products
+                <Link to="/shops" className="btn btn-secondary btn-lg" id="cta-products-btn">
+                  <ShoppingBag size={17} /> Browse Shops
                 </Link>
               </div>
             </div>

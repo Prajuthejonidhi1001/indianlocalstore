@@ -4,7 +4,7 @@ import './Footer.css';
 
 const links = {
   Shop: [
-    { label: 'All Products', to: '/products' },
+    { label: 'All Shops', to: '/shops' },
     { label: 'Categories', to: '/categories' },
     { label: 'Nearby Shops', to: '/shops' },
   ],

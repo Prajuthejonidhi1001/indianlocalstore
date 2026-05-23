@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { MapPin, Navigation, Star, Phone, Search, Grid } from 'lucide-react';
 import { shopAPI, productAPI } from '../api';
 import { useLocation } from '../context/LocationContext';
@@ -14,12 +14,16 @@ const CAT_EMOJIS = {
 };
 
 export default function NearbyShopsPage() {
+  const [searchParams] = useSearchParams();
   const { location } = useLocation();
   const [shops, setShops] = useState([]);
   const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState(null);
+  const initialCat = searchParams.get('category');
+  const [selectedCategory, setSelectedCategory] = useState(
+    initialCat ? (isNaN(initialCat) ? initialCat : parseInt(initialCat, 10)) : null
+  );
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(searchParams.get('search') || '');
   const [locating, setLocating] = useState(false);
 
   // Fetch categories once

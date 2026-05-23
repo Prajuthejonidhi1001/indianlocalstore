@@ -123,7 +123,7 @@ export default function CategoriesPage() {
                     {cat.description && <p className="cat-section-desc">{cat.description}</p>}
                   </div>
                   <Link
-                    to={`/products?category=${cat.id}`}
+                    to={`/shops?category=${cat.id}`}
                     className="cat-view-all"
                   >
                     View All <ArrowRight size={14} />
@@ -135,7 +135,7 @@ export default function CategoriesPage() {
                   <div className="subcat-grid">
                     {cat.subcategories.map((sub) => (
                       <Link
-                        to={`/products?category=${cat.id}&subcategory=${sub.id}`}
+                        to={`/shops?category=${cat.id}&subcategory=${sub.id}`}
                         key={sub.id}
                         className="subcat-card"
                         id={`subcat-${sub.id}`}
@@ -152,8 +152,8 @@ export default function CategoriesPage() {
                     ))}
                   </div>
                 ) : (
-                  <Link to={`/products?category=${cat.id}`} className="cat-no-sub">
-                    Browse {cat.name} Products <ArrowRight size={14} />
+                  <Link to={`/shops?category=${cat.id}`} className="cat-no-sub">
+                    Browse {cat.name} Shops <ArrowRight size={14} />
                   </Link>
                 )}
               </section>

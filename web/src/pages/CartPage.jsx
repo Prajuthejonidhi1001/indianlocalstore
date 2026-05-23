@@ -32,7 +32,7 @@ export default function CartPage() {
             <div className="empty-state-icon">🛒</div>
             <h3>Your cart is empty</h3>
             <p>Looks like you haven't added anything to your cart yet.</p>
-            <Link to="/products" className="btn btn-primary mt-3">Start Shopping</Link>
+            <Link to="/shops" className="btn btn-primary mt-3">Start Shopping</Link>
           </div>
         ) : (
           <div className="cart-layout">
@@ -125,7 +125,7 @@ export default function CartPage() {
               >
                 Proceed to Checkout <ArrowRight size={16} />
               </button>
-              <Link to="/products" className="btn btn-ghost btn-full mt-2">
+              <Link to="/shops" className="btn btn-ghost btn-full mt-2">
                 <ShoppingBag size={14} /> Continue Shopping
               </Link>
             </div>
