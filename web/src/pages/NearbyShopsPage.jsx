@@ -166,7 +166,7 @@ export default function NearbyShopsPage() {
           </div>
         ) : (
           <div className="shops-cards-grid">
-            {filteredShops.map(shop => {
+            {filteredShops.map((shop, i) => {
               const avatarColor = `hsl(${(shop.name.charCodeAt(0) * 37) % 360}, 60%, 42%)`;
               const logoSrc = shop.logo
                 ? (shop.logo.startsWith('http') ? shop.logo : `/media/${shop.logo}`)
@@ -176,7 +176,7 @@ export default function NearbyShopsPage() {
                 <Link
                   to={`/shops/${shop.id}`}
                   key={shop.id}
-                  className="shop-card-ns"
+                  className={`shop-card-ns animate-in stagger-${(i % 10) + 1}`}
                   id={`shop-card-${shop.id}`}
                 >
                   {/* Banner */}

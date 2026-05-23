@@ -120,10 +120,10 @@
   font-size: 0.85rem;
   font-weight: 500;
   text-align: left;
-  transition: background 0.2s, color 0.2s;
+  transition: background 0.2s, color 0.2s, transform 0.2s;
   width: 100%;
 }
-.cat-pill:hover { background: var(--bg-elevated); color: var(--text-primary); }
+.cat-pill:hover { background: var(--bg-elevated); color: var(--text-primary); transform: translateX(4px); }
 .cat-pill.active {
   background: rgba(255,107,53,0.12);
   color: var(--saffron);
@@ -237,14 +237,14 @@
   border-radius: 14px;
   text-decoration: none;
   text-align: center;
-  transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s, box-shadow 0.2s;
   position: relative;
   overflow: hidden;
 }
 .subcat-card:hover {
-  transform: translateY(-4px);
+  transform: translateY(-6px) scale(1.04);
   border-color: var(--saffron);
-  box-shadow: 0 8px 20px rgba(255,107,53,0.12);
+  box-shadow: 0 12px 24px rgba(255,107,53,0.15);
 }
 .subcat-img-wrap {
   width: 56px;

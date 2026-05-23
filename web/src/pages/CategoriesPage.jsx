@@ -133,11 +133,11 @@ export default function CategoriesPage() {
                 {/* Subcategory Grid */}
                 {cat.subcategories?.length > 0 ? (
                   <div className="subcat-grid">
-                    {cat.subcategories.map((sub) => (
+                    {cat.subcategories.map((sub, j) => (
                       <Link
                         to={`/shops?category=${cat.id}&subcategory=${sub.id}`}
                         key={sub.id}
-                        className="subcat-card"
+                        className={`subcat-card animate-in stagger-${(j % 10) + 1}`}
                         id={`subcat-${sub.id}`}
                       >
                         <div className="subcat-img-wrap" style={{ background: CAT_COLORS[i % CAT_COLORS.length] + '22' }}>
