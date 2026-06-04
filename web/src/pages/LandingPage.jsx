@@ -248,7 +248,7 @@ export default function LandingPage() {
               >
                 <div className="cat-bubble-inner">
                   {cat.icon
-                    ? <img src={cat.icon} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
+                    ? <img src={cat.icon} alt={cat.name} />
                     : <div className="cat-bubble-emoji">{CAT_EMOJIS[cat.name] || '🛍️'}</div>
                   }
                 </div>
