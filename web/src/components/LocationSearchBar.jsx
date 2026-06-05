@@ -82,16 +82,35 @@ export default function LocationSearchBar() {
     if (!navigator.geolocation) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setLocation({
-          name: 'Current Location',
-          district: 'Nearby',
-          state: '',
-          coords: { lat: pos.coords.latitude, lng: pos.coords.longitude },
-        });
-        setLocating(false);
-        setIsOpen(false);
-        resetForm();
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lng = pos.coords.longitude;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=10`);
+          const data = await res.json();
+          const city = data.address?.state_district || data.address?.city || data.address?.county || 'Nearby';
+          const state = data.address?.state || '';
+          const pincode = data.address?.postcode || '';
+          
+          setLocation({
+            name: city !== 'Nearby' ? city : 'Current Location',
+            district: city,
+            state: state,
+            pincode: pincode,
+            coords: { lat, lng },
+          });
+        } catch (error) {
+          setLocation({
+            name: 'Current Location',
+            district: 'Nearby',
+            state: '',
+            coords: { lat, lng },
+          });
+        } finally {
+          setLocating(false);
+          setIsOpen(false);
+          resetForm();
+        }
       },
       () => {
         setLocating(false);

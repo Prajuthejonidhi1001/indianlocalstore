@@ -118,7 +118,7 @@ export default function HomePage() {
               Namaste, <span className="gradient-text">{user?.first_name || user?.username || 'Guest'}!</span> 🙏
             </h1>
             <p className="home-greeting-sub">
-              {location ? `Exploring local shops near ${location.name}` : 'Discover amazing local shops near you'}
+              {location ? `Exploring local shops and comparing prices near ${location.name}` : 'Discover local shops & compare prices near you'}
             </p>
           </div>
           <div className="home-hero-actions">
@@ -292,8 +292,8 @@ export default function HomePage() {
             <div className="hpb-orb" />
             <div className="hpb-content">
               <div className="section-label"><TrendingUp size={12} /> Trending</div>
-              <h3>Fresh Products from<br />Local Sellers Every Day</h3>
-              <p>Browse thousands of products from verified local shops near you.</p>
+              <h3>Find the Best Prices<br />From Local Sellers Near You</h3>
+              <p>Compare product prices across neighbourhood stores to get the best deals from verified local shops.</p>
               <Link to="/shops" className="btn btn-primary" id="trending-products-btn">
                 Explore Shops <ArrowRight size={15} />
               </Link>

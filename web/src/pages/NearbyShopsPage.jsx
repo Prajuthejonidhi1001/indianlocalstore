@@ -90,9 +90,9 @@ export default function NearbyShopsPage() {
                 : 'Support your neighbourhood businesses'}
             </p>
           </div>
-          <div className="shops-controls">
-            <div className="shops-search">
-              <Search size={15} className="ss-icon" />
+          <div className="shops-search-row mt-3">
+            <div className="shops-search-wrap">
+              <Search size={15} className="shops-search-icon" />
               <input
                 id="shop-search"
                 type="text"

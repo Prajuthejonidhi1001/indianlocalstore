@@ -35,47 +35,36 @@ export default function ShopDetailPage() {
   return (
     <div className="page pb-section">
       {/* Cover / Header */}
-      <div className="shop-cover">
+      <div className="shop-cover-banner">
         {shop.banner ? (
-          <img src={shop.banner} alt="Banner" className="shop-banner-img" />
+          <img src={shop.banner} alt="Banner" className="shop-cover-img" />
         ) : (
-          <div className="shop-banner-placeholder" />
+          <div className="shop-cover-overlay" />
         )}
+        <div className="shop-cover-overlay" />
+        <Link to="/shops" className="shop-cover-back"><ArrowLeft size={18} /></Link>
+      </div>
+
+      <div className="shop-info-bar">
         <div className="container">
-          <Link to="/shops" className="back-link slide-up"><ArrowLeft size={16} /> Back</Link>
-          <div className="shop-header-card glass-card">
-            <div className="shop-avatar-lg">{shop.name[0]}</div>
-            <div className="shop-header-info">
-              <div className="shop-title-row">
-                <h1 id="shop-name">{shop.name}</h1>
-                {shop.verification_status === 'verified' && (
-                  <span className="badge badge-green"><Shield size={12}/> Verified</span>
-                )}
+          <div className="shop-info-inner">
+            <div className="shop-logo-wrap">
+              <div className="shop-logo-circle">
+                {shop.logo ? <img src={shop.logo} alt={shop.name} /> : shop.name[0].toUpperCase()}
               </div>
-              <p className="shop-city-lg"><MapPin size={14}/> {shop.address}, {shop.city}, {shop.state} - {shop.pincode}</p>
-              
-              <div className="shop-stats-row">
-                <div className="s-stat">
-                  <Star size={14} className="s-icon" /> 
-                  <span>{shop.rating?.toFixed(1) || '0.0'} ({shop.reviews_count} reviews)</span>
-                </div>
-                <div className="s-stat">
-                  <Phone size={14} className="s-icon" /> <span>{shop.phone}</span>
-                </div>
-                <div className="s-stat">
-                  <Mail size={14} className="s-icon" /> <span>{shop.email}</span>
-                </div>
-                {(shop.opening_time && shop.closing_time) && (
-                  <div className="s-stat">
-                    <Clock size={14} className="s-icon" /> 
-                    <span>{shop.opening_time} - {shop.closing_time}</span>
-                  </div>
-                )}
+            </div>
+            <div className="shop-main-info">
+              <h1 className="shop-detail-name">{shop.name}</h1>
+              <div className="shop-detail-meta">
+                <span className="shop-meta-item rating"><Star size={14} fill="currentColor" /> {shop.rating?.toFixed(1) || '0.0'} ({shop.reviews_count})</span>
+                <span className="shop-meta-item"><MapPin size={14} /> {shop.city}, {shop.state}</span>
+                <span className="shop-meta-item"><Phone size={14} /> {shop.phone}</span>
+                {shop.opening_time && <span className="shop-meta-item"><Clock size={14} /> {shop.opening_time} - {shop.closing_time}</span>}
               </div>
+              <p className="shop-detail-desc">{shop.description || 'No description provided for this shop.'}</p>
               {shop.shop_code && (
-                <div className="shop-id-badge">
-                  <Shield size={12} />
-                  <span>Shop ID: #{shop.id} &middot; {String(shop.shop_code).slice(0, 8).toUpperCase()}</span>
+                <div className="shop-code-badge">
+                  <Shield size={12} /> ID: {String(shop.shop_code).slice(0, 8).toUpperCase()}
                 </div>
               )}
             </div>
@@ -83,51 +72,26 @@ export default function ShopDetailPage() {
         </div>
       </div>
 
-      <div className="container pt-after-cover">
-        <div className="shop-main-grid">
-          {/* Main content - Products */}
-          <div className="shop-products">
-            <h2 className="section-title">Shop Products</h2>
-            <div className="divider" />
-            
-            {products.length === 0 ? (
-              <div className="empty-state">
-                <div className="empty-state-icon">📦</div>
-                <h3>No products listed</h3>
-                <p>This shop hasn't added any products yet.</p>
-              </div>
-            ) : (
-              <div className="grid grid-auto gap-3">
-                {products.map(p => <ProductCard key={p.id} product={p} />)}
-              </div>
-            )}
+      <div className="container pt-4">
+        <div className="shop-products-section">
+          <div className="shop-products-header">
+            <h2>Shop Products</h2>
           </div>
-
-          {/* Sidebar - About Shop */}
-          <div className="shop-sidebar">
-            <div className="card sidebar-card">
-              <h4>About this shop</h4>
-              <p className="shop-about-text">{shop.description || 'No description provided.'}</p>
+          
+          {products.length === 0 ? (
+            <div className="empty-state">
+              <div className="empty-state-icon">📦</div>
+              <h3>No products listed</h3>
+              <p>This shop hasn't added any products yet.</p>
             </div>
-            
-            {shop.services?.length > 0 && (
-              <div className="card sidebar-card mt-3">
-                <h4>Services Offered</h4>
-                <ul className="shop-services-list">
-                  {shop.services.map(s => (
-                    <li key={s.id} className="service-item">
-                      <div className="sv-bullet" />
-                      <div>
-                        <p className="sv-name">{s.name}</p>
-                        <p className="sv-price">₹{s.price}</p>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
+          ) : (
+            <div className="shop-products-grid">
+              {products.map(p => <ProductCard key={p.id} product={p} />)}
+            </div>
+          )}
         </div>
+
+
       </div>
     </div>
   );

@@ -58,10 +58,10 @@ export default function ProductDetailPage() {
           <ArrowLeft size={16} /> Back to Shops
         </Link>
 
-        <div className="product-detail-grid">
+        <div className="pd-layout">
           {/* Image */}
-          <div className="pd-image-col">
-            <div className="pd-image-box">
+          <div className="pd-gallery">
+            <div className="pd-main-img-wrap">
               {imgSrc ? (
                 <img src={imgSrc} alt={product.name} />
               ) : (
@@ -72,8 +72,8 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Info */}
-          <div className="pd-info-col">
-            <p className="pd-category">{product.category_name || 'Product'}</p>
+          <div className="pd-info">
+            <span className="pd-category-tag">{product.category_name || 'Product'}</span>
             <h1 className="pd-name" id="product-title">{product.name}</h1>
 
             <div className="pd-rating">
@@ -108,10 +108,13 @@ export default function ProductDetailPage() {
 
             {/* Quantity + Cart */}
             <div className="pd-actions">
-              <div className="qty-control">
-                <button id="qty-minus" onClick={() => setQty(Math.max(1, qty - 1))}>-</button>
-                <span id="qty-display">{qty}</span>
-                <button id="qty-plus" onClick={() => setQty(Math.min(product.stock, qty + 1))}>+</button>
+              <div className="pd-qty-row">
+                <span className="pd-qty-label">Quantity:</span>
+                <div className="qty-controls">
+                  <button className="qty-btn" onClick={() => setQty(Math.max(1, qty - 1))}>-</button>
+                  <span className="qty-val">{qty}</span>
+                  <button className="qty-btn" onClick={() => setQty(Math.min(product.stock, qty + 1))}>+</button>
+                </div>
               </div>
               <button
                 id="add-to-cart-btn"
@@ -125,10 +128,19 @@ export default function ProductDetailPage() {
 
             {/* Seller */}
             {product.seller_name && (
-              <div className="pd-seller">
-                <Store size={14} />
-                <span>Sold by <strong>{product.seller_name}</strong></span>
-              </div>
+              <>
+                <div className="pd-divider" />
+                <h4 className="pd-description-title">Sold By</h4>
+                <Link to={`/shops/${product.shop}`} className="pd-shop-card">
+                  <div className="pd-shop-avatar">
+                    {product.seller_name[0].toUpperCase()}
+                  </div>
+                  <div className="pd-shop-info">
+                    <div className="pd-shop-name">{product.seller_name}</div>
+                    <div className="pd-shop-city"><Store size={12}/> View Shop</div>
+                  </div>
+                </Link>
+              </>
             )}
           </div>
         </div>

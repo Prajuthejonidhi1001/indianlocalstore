@@ -50,16 +50,53 @@ class ShopViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def nearby(self, request):
-        """Get nearby shops based on user location"""
+        """Get nearby shops based on user location using Haversine distance"""
+        import math
+
+        lat_str = request.query_params.get('latitude')
+        lng_str = request.query_params.get('longitude')
         city = request.query_params.get('city')
-        shops = Shop.objects.filter(is_active=True)
         
-        if city and city != 'undefined':
-            shops = shops.filter(city__icontains=city)
+        shops = Shop.objects.filter(is_active=True)
+
+        if lat_str and lng_str:
+            try:
+                user_lat = float(lat_str)
+                user_lng = float(lng_str)
+            except ValueError:
+                return Response({'error': 'Invalid coordinates'}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Python Haversine calculation
+            def haversine(lat1, lon1, lat2, lon2):
+                R = 6371  # Earth radius in kilometers
+                dLat = math.radians(lat2 - lat1)
+                dLon = math.radians(lon2 - lon1)
+                a = math.sin(dLat/2) * math.sin(dLat/2) + \
+                    math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * \
+                    math.sin(dLon/2) * math.sin(dLon/2)
+                c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+                return R * c
+
+            # Fetch all active shops and sort by distance in memory
+            shop_list = list(shops)
+            for shop in shop_list:
+                shop.distance = haversine(user_lat, user_lng, shop.latitude, shop.longitude)
             
-        shops = shops.order_by('-rating')
-        serializer = ShopListSerializer(shops, many=True, context={'request': request})
-        return Response(serializer.data)
+            # Sort by distance
+            shop_list.sort(key=lambda s: s.distance)
+            
+            serializer = ShopListSerializer(shop_list, many=True, context={'request': request})
+            return Response(serializer.data)
+            
+        elif city and city != 'undefined':
+            shops = shops.filter(city__icontains=city).order_by('-rating')
+            serializer = ShopListSerializer(shops, many=True, context={'request': request})
+            return Response(serializer.data)
+        else:
+            # Default fallback
+            shops = shops.order_by('-rating')
+            serializer = ShopListSerializer(shops, many=True, context={'request': request})
+            return Response(serializer.data)
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def add_review(self, request, pk=None):

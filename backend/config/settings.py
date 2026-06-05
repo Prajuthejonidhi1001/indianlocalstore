@@ -70,8 +70,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-# ── Custom User Model ────────────────────────────────────────────────────────
+# ── Custom User Model & Auth ──────────────────────────────────────────────────
 AUTH_USER_MODEL = 'users.User'
+
+AUTHENTICATION_BACKENDS = [
+    'users.backends.EmailOrUsernameModelBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
 
 # ── Database (Supabase PostgreSQL via DATABASE_URL) ──────────────────────────
 DATABASE_URL = config('DATABASE_URL', default=None)
