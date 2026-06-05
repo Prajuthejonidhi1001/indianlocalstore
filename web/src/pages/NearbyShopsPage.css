@@ -2,20 +2,19 @@
 .shops-page { min-height: 100vh; background: var(--bg-base); }
 
 .shops-hero {
-  background: linear-gradient(135deg, rgba(255,107,53,0.07), rgba(85,33,255,0.04));
+  background: linear-gradient(135deg, rgba(255,107,53,0.04), transparent);
   border-bottom: 1px solid var(--border-subtle);
-  padding: 3rem 0 2rem;
+  padding: 4rem 0 3rem;
+  text-align: center;
 }
 .shops-hero-title {
-  font-size: clamp(2rem, 5vw, 3rem);
+  font-size: clamp(2.5rem, 6vw, 4rem);
   font-weight: 900;
   margin-bottom: 0.5rem;
-  background: linear-gradient(135deg, var(--text-primary), var(--saffron));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
 }
-.shops-hero-sub { color: var(--text-muted); font-size: 1rem; margin-bottom: 1.75rem; }
+.shops-hero-sub { color: var(--text-muted); font-size: 1.1rem; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; }
 
 /* Search + locate */
 .shops-search-row {
@@ -105,16 +104,18 @@
   display: flex;
   flex-direction: column;
   text-decoration: none;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   overflow: hidden;
   border: 1px solid var(--border-subtle);
   background: var(--bg-card);
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s, box-shadow 0.2s;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s;
+  box-shadow: var(--shadow-sm);
+  position: relative;
 }
 .shop-card-ns:hover {
   transform: translateY(-8px);
-  border-color: rgba(255,107,53,0.4);
-  box-shadow: 0 16px 40px rgba(255,107,53,0.15);
+  box-shadow: var(--shadow-brand);
+  border-color: rgba(255,107,53,0.3);
 }
 
 .scn-banner {
@@ -166,23 +167,23 @@
 .scn-body { padding: 1rem; display: flex; flex-direction: column; gap: 0.6rem; flex: 1; }
 .scn-row1 { display: flex; align-items: flex-start; gap: 0.75rem; }
 .scn-avatar {
-  width: 42px; height: 42px;
-  border-radius: 12px;
+  width: 56px; height: 56px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.15rem;
+  font-size: 1.4rem;
   font-weight: 900;
   color: white;
   font-family: var(--font-heading);
   flex-shrink: 0;
   overflow: hidden;
-  margin-top: -26px;
-  border: 2px solid var(--bg-card);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  margin-top: -34px;
+  border: 3px solid var(--bg-card);
+  box-shadow: 0 4px 12px rgba(15,23,42,0.1);
   transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.4s;
 }
-.shop-card-ns:hover .scn-avatar { transform: scale(1.1) rotate(-4deg); box-shadow: 0 8px 24px rgba(0,0,0,0.4); }
+.shop-card-ns:hover .scn-avatar { transform: scale(1.1) translateY(-4px); box-shadow: 0 8px 24px rgba(15,23,42,0.15); }
 .scn-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .scn-info { flex: 1; min-width: 0; padding-top: 0; }
 .scn-name {

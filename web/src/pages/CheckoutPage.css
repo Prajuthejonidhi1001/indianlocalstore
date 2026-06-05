@@ -65,8 +65,11 @@
   align-items: start;
 }
 .checkout-card {
-  padding: 2rem;
-  border-radius: var(--radius-xl);
+  padding: 2.5rem;
+  border-radius: var(--radius-2xl);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-subtle);
 }
 .checkout-card-header {
   display: flex;
@@ -143,8 +146,11 @@
 .checkout-summary {
   position: sticky;
   top: 80px;
-  padding: 1.5rem;
-  border-radius: var(--radius-xl);
+  padding: 2rem;
+  border-radius: var(--radius-2xl);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-subtle);
 }
 .checkout-summary h3 {
   font-size: 1rem;

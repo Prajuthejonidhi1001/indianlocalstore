@@ -84,14 +84,15 @@
   margin: 2rem 0;
 }
 .profile-stat-card {
-  padding: 1.25rem;
-  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  border-radius: var(--radius-xl);
   text-align: center;
-  background: var(--bg-card);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
-  transition: border-color 0.2s, transform 0.2s;
+  transition: all 0.3s;
+  box-shadow: var(--shadow-md);
 }
-.profile-stat-card:hover { border-color: rgba(255,107,53,0.3); transform: translateY(-2px); }
+.profile-stat-card:hover { border-color: rgba(255,107,53,0.3); transform: translateY(-4px); box-shadow: var(--shadow-lg); }
 .psc-icon { font-size: 1.75rem; margin-bottom: 0.5rem; }
 .psc-value { font-size: 1.6rem; font-weight: 900; color: var(--text-primary); }
 .psc-label { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
@@ -151,8 +152,11 @@
 /* Content cards */
 .profile-content { display: flex; flex-direction: column; gap: 1.25rem; }
 .profile-card {
-  padding: 1.75rem;
-  border-radius: var(--radius-xl);
+  padding: 2rem;
+  border-radius: var(--radius-2xl);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-subtle);
 }
 .profile-card-header {
   display: flex;

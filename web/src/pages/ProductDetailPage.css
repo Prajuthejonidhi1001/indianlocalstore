@@ -29,14 +29,15 @@
 .pd-main-img-wrap {
   width: 100%;
   aspect-ratio: 1;
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-2xl);
   overflow: hidden;
-  background: var(--bg-card);
+  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
+  box-shadow: var(--shadow-xl);
 }
 .pd-main-img {
   width: 100%;
