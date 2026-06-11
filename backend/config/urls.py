@@ -22,7 +22,6 @@ urlpatterns = [
     path('', api_root, name='api_root'),
     path('admin/', admin.site.urls),
     path('api/', api_root, name='api-root'),
-    path('api/seed-db-magic-777/', seed_db),
     path('api/products/', include('products.urls')),
     path('api/shops/', include('shops.urls')),
     path('api/orders/', include('orders.urls')),
