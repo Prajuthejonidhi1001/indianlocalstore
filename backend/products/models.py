@@ -34,16 +34,20 @@ class SubCategory(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='subcategories')
     name = models.CharField(max_length=100)
     icon = models.ImageField(upload_to='subcategories/', null=True, blank=True)
+    order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name_plural = 'Sub-categories'
         unique_together = ['category', 'name']
+        ordering = ['order', 'name']
 
     def __str__(self):
         return f"{self.category.name} - {self.name}"
 
     def save(self, *args, **kwargs):
+        if self.name.lower() == 'others':
+            self.order = 1
         if not self.pk:
             if SubCategory.objects.filter(category=self.category, name__iexact=self.name).exists():
                 print(f"BLOCKED Duplicate SubCategory: {self.name}")
