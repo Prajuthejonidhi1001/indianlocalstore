@@ -6,7 +6,8 @@ import {
   ScrollView, 
   TouchableOpacity, 
   ActivityIndicator,
-  Dimensions
+  Dimensions,
+  Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
@@ -43,7 +44,11 @@ export default function SubcategoryScreen({ route, navigation }) {
     >
       <View style={styles.shopHeader}>
         <View style={styles.shopAvatar}>
-          <Text style={styles.avatarText}>{shop.name[0]}</Text>
+          {shop.logo ? (
+            <Image source={{ uri: shop.logo }} style={{ width: 44, height: 44, borderRadius: 22 }} />
+          ) : (
+            <Text style={styles.avatarText}>{shop.name[0]}</Text>
+          )}
         </View>
         <View style={styles.shopBasicInfo}>
           <Text style={styles.shopName} numberOfLines={1}>{shop.name}</Text>

@@ -78,7 +78,7 @@ export default function ShopProductsScreen({ route, navigation }) {
 
       <ScrollView showsVerticalScrollIndicator={false}>
         <Image 
-          source={{ uri: shop.banner_image || 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=800&q=80' }} 
+          source={{ uri: shop.logo || shop.banner_image || 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=800&q=80' }} 
           style={styles.banner} 
         />
         

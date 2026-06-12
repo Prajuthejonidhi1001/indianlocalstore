@@ -181,6 +181,7 @@ export default function NearbyShopsPage() {
                 >
                   {/* Banner */}
                   <div className="scn-banner">
+                    {logoSrc && <img src={logoSrc} alt={shop.name} />}
                     <div className="scn-banner-overlay" />
                     <div className="scn-tags">
                       <span className="scn-open-tag">

@@ -250,11 +250,22 @@ export default function HomeScreen({ navigation }) {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return alert('Location permission denied');
       let loc = await Location.getCurrentPositionAsync({});
+      
+      let geocode = await Location.reverseGeocodeAsync({
+        latitude: loc.coords.latitude,
+        longitude: loc.coords.longitude
+      });
+      
+      let city = geocode[0]?.city || geocode[0]?.subregion || geocode[0]?.district || 'Unknown Location';
+      
       setLocation({
-        name: 'Nearby Me',
-        district: 'Current Location',
+        name: city,
+        district: city,
         coords: { lat: loc.coords.latitude, lng: loc.coords.longitude },
       });
+    } catch (e) {
+      console.error('GPS error:', e);
+      alert('Failed to get location');
     } finally { setLocating(false); }
   };
 
