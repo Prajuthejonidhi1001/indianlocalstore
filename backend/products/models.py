@@ -17,6 +17,17 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        rejected_categories = [
+            'Bakery', 'Beverages', 'Clothing & Fashion', 'Dairy', 'Fruits', 'Furniture',
+            'Grains & Pulses', 'Home & Living', 'Meat & Seafood', 'Personal Care', 
+            'Snacks & Namkeen', 'Spices & Masala', 'Stationery', 'Vegetables'
+        ]
+        if self.name in rejected_categories:
+            print(f"BLOCKED Category: {self.name}")
+            return
+        super().save(*args, **kwargs)
+
 
 class SubCategory(models.Model):
     """Sub-categories under main categories"""
@@ -31,6 +42,13 @@ class SubCategory(models.Model):
 
     def __str__(self):
         return f"{self.category.name} - {self.name}"
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            if SubCategory.objects.filter(category=self.category, name__iexact=self.name).exists():
+                print(f"BLOCKED Duplicate SubCategory: {self.name}")
+                return
+        super().save(*args, **kwargs)
 
 
 class Product(models.Model):
