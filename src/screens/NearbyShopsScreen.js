@@ -12,6 +12,7 @@ import {
   Image
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import * as Location from 'expo-location';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { shopAPI, productAPI } from '../utils/api';
 
@@ -28,13 +29,46 @@ const CAT_EMOJIS = {
 export default function NearbyShopsScreen({ navigation }) {
   const [search, setSearch] = useState('');
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [selectedSubcategory, setSelectedSubcategory] = useState(null);
+  const [locationCoords, setLocationCoords] = useState(null);
+
+  useEffect(() => {
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        fetchData();
+        return;
+      }
+      try {
+        let loc = await Location.getCurrentPositionAsync({});
+        setLocationCoords({
+          latitude: loc.coords.latitude,
+          longitude: loc.coords.longitude,
+        });
+      } catch (error) {
+        console.log("Location error", error);
+        fetchData();
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCategory) {
+      productAPI.getSubCategories(selectedCategory)
+        .then(res => setSubcategories(res.data.results || res.data))
+        .catch(() => setSubcategories([]));
+    } else {
+      setSubcategories([]);
+    }
+  }, [selectedCategory]);
 
   useEffect(() => {
     fetchData();
-  }, [selectedCategory]);
+  }, [selectedCategory, selectedSubcategory, locationCoords]);
 
   const fetchData = async () => {
     try {
@@ -42,10 +76,15 @@ export default function NearbyShopsScreen({ navigation }) {
       
       const shopParams = {};
       if (selectedCategory) shopParams.category = selectedCategory;
+      if (selectedSubcategory) shopParams.subcategory = selectedSubcategory;
+      if (locationCoords) {
+        shopParams.latitude = locationCoords.latitude;
+        shopParams.longitude = locationCoords.longitude;
+      }
 
       const [catRes, shopRes] = await Promise.all([
         productAPI.getCategories(),
-        shopAPI.getNearbyShops(shopParams)
+        locationCoords ? shopAPI.getNearbyShops(shopParams) : shopAPI.getShops(shopParams)
       ]);
       setCategories(catRes.data.results || catRes.data);
       setShops(shopRes.data.results || shopRes.data);
@@ -66,7 +105,10 @@ export default function NearbyShopsScreen({ navigation }) {
         styles.catPill, 
         selectedCategory === item.id && styles.catPillActive
       ]}
-      onPress={() => setSelectedCategory(selectedCategory === item.id ? null : item.id)}
+      onPress={() => {
+        setSelectedCategory(selectedCategory === item.id ? null : item.id);
+        setSelectedSubcategory(null);
+      }}
     >
       <Text style={[styles.catText, selectedCategory === item.id && styles.catTextActive]}>
         {CAT_EMOJIS[item.name] || '🛍️'} {item.name}
@@ -150,12 +192,44 @@ export default function NearbyShopsScreen({ navigation }) {
           ListHeaderComponent={() => (
             <TouchableOpacity 
               style={[styles.catPill, !selectedCategory && styles.catPillActive]}
-              onPress={() => setSelectedCategory(null)}
+              onPress={() => { setSelectedCategory(null); setSelectedSubcategory(null); }}
             >
               <Text style={[styles.catText, !selectedCategory && styles.catTextActive]}>All</Text>
             </TouchableOpacity>
           )}
         />
+        
+        {selectedCategory && subcategories.length > 0 && (
+          <FlatList
+            data={subcategories}
+            renderItem={({ item }) => (
+              <TouchableOpacity 
+                style={[
+                  styles.subCatPill, 
+                  selectedSubcategory === item.id && styles.subCatPillActive
+                ]}
+                onPress={() => setSelectedSubcategory(selectedSubcategory === item.id ? null : item.id)}
+              >
+                {item.icon && <Image source={{ uri: item.icon }} style={styles.subCatIcon} />}
+                <Text style={[styles.subCatText, selectedSubcategory === item.id && styles.subCatTextActive]}>
+                  {item.name}
+                </Text>
+              </TouchableOpacity>
+            )}
+            keyExtractor={item => item.id.toString()}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={[styles.filterList, { marginTop: 10 }]}
+            ListHeaderComponent={() => (
+              <TouchableOpacity 
+                style={[styles.subCatPill, !selectedSubcategory && styles.subCatPillActive]}
+                onPress={() => setSelectedSubcategory(null)}
+              >
+                <Text style={[styles.subCatText, !selectedSubcategory && styles.subCatTextActive]}>All Types</Text>
+              </TouchableOpacity>
+            )}
+          />
+        )}
       </View>
 
       {loading ? (
@@ -214,6 +288,23 @@ const styles = StyleSheet.create({
   catPillActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   catText: { color: COLORS.textMuted, fontWeight: '700', fontSize: 13 },
   catTextActive: { color: '#fff' },
+
+  subCatPill: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: RADIUS.sm,
+    backgroundColor: 'rgba(255, 182, 39, 0.1)',
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6
+  },
+  subCatPillActive: { borderColor: COLORS.secondary },
+  subCatText: { color: COLORS.secondary, fontWeight: '600', fontSize: 12 },
+  subCatTextActive: { color: COLORS.secondary },
+  subCatIcon: { width: 14, height: 14, borderRadius: 3 },
 
   shopList: { paddingHorizontal: 25, paddingTop: 10 },
   shopCard: { 

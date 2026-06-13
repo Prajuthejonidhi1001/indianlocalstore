@@ -21,6 +21,18 @@ class ShopViewSet(viewsets.ModelViewSet):
     ordering_fields = ['rating', 'reviews_count', 'created_at']
     ordering = ['-rating']
 
+    def get_queryset(self):
+        queryset = Shop.objects.filter(is_active=True)
+        category = self.request.query_params.get('category')
+        subcategory = self.request.query_params.get('subcategory')
+        
+        if category and category not in ['null', 'undefined', '']:
+            queryset = queryset.filter(seller__products__category_id=category).distinct()
+        if subcategory and subcategory not in ['null', 'undefined', '']:
+            queryset = queryset.filter(seller__products__subcategory_id=subcategory).distinct()
+            
+        return queryset
+
     def get_serializer_class(self):
         if self.action == 'retrieve':
             return ShopDetailSerializer
@@ -56,8 +68,15 @@ class ShopViewSet(viewsets.ModelViewSet):
         lat_str = request.query_params.get('latitude')
         lng_str = request.query_params.get('longitude')
         city = request.query_params.get('city')
+        category = request.query_params.get('category')
+        subcategory = request.query_params.get('subcategory')
         
         shops = Shop.objects.filter(is_active=True)
+
+        if category and category not in ['null', 'undefined', '']:
+            shops = shops.filter(seller__products__category_id=category).distinct()
+        if subcategory and subcategory not in ['null', 'undefined', '']:
+            shops = shops.filter(seller__products__subcategory_id=subcategory).distinct()
 
         if lat_str and lng_str:
             try:

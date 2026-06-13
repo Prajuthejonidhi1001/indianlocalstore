@@ -18,13 +18,22 @@ export default function NearbyShopsPage() {
   const { location } = useLocation();
   const [shops, setShops] = useState([]);
   const [categories, setCategories] = useState([]);
+  const [subcategories, setSubcategories] = useState([]);
+  
   const initialCat = searchParams.get('category');
   const [selectedCategory, setSelectedCategory] = useState(
     initialCat ? (isNaN(initialCat) ? initialCat : parseInt(initialCat, 10)) : null
   );
+  
+  const initialSubCat = searchParams.get('subcategory');
+  const [selectedSubcategory, setSelectedSubcategory] = useState(
+    initialSubCat ? parseInt(initialSubCat, 10) : null
+  );
+  
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(searchParams.get('search') || '');
   const [locating, setLocating] = useState(false);
+  const [coords, setCoords] = useState(null);
 
   // Fetch categories once
   useEffect(() => {
@@ -33,16 +42,33 @@ export default function NearbyShopsPage() {
       .catch(() => {});
   }, []);
 
-  const fetchShops = async (lat = null, lng = null) => {
+  // Fetch subcategories when category changes
+  useEffect(() => {
+    if (selectedCategory) {
+      productAPI.getSubCategories(selectedCategory)
+        .then(res => setSubcategories(res.data.results || res.data))
+        .catch(() => setSubcategories([]));
+    } else {
+      setSubcategories([]);
+    }
+  }, [selectedCategory]);
+
+  const fetchShops = async () => {
     setLoading(true);
     try {
       let res;
-      if (lat && lng) {
-        res = await shopAPI.getNearbyShops(lat, lng);
+      if (coords?.lat && coords?.lng) {
+        res = await shopAPI.getNearbyShops({ 
+          latitude: coords.lat, 
+          longitude: coords.lng,
+          category: selectedCategory,
+          subcategory: selectedSubcategory
+        });
       } else {
         const params = { page_size: 50 };
         if (location?.district) params.city = location.district;
         if (selectedCategory) params.category = selectedCategory;
+        if (selectedSubcategory) params.subcategory = selectedSubcategory;
         res = await shopAPI.getShops(params);
       }
       setShops(res.data.results || res.data);
@@ -53,22 +79,26 @@ export default function NearbyShopsPage() {
     }
   };
 
-  useEffect(() => { fetchShops(); }, [location?.district, selectedCategory]);
+  useEffect(() => { fetchShops(); }, [location?.district, selectedCategory, selectedSubcategory, coords]);
 
   const handleLocationSearch = () => {
     if (!navigator.geolocation) return;
     setLocating(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
-        fetchShops(pos.coords.latitude, pos.coords.longitude);
+        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocating(false);
       },
       () => {
         setLocating(false);
-        alert('Could not get your location.');
       }
     );
   };
+
+  // Auto locate on mount
+  useEffect(() => {
+    handleLocationSearch();
+  }, []);
 
   const filteredShops = shops.filter(s =>
     s.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -116,11 +146,10 @@ export default function NearbyShopsPage() {
         {categories.length > 0 && (
           <div style={{
             display: 'flex', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.75rem',
-            marginBottom: '1.5rem', scrollbarWidth: 'none'
+            marginBottom: selectedCategory ? '0.5rem' : '1.5rem', scrollbarWidth: 'none'
           }}>
-            {/* "All" chip */}
             <button
-              onClick={() => setSelectedCategory(null)}
+              onClick={() => { setSelectedCategory(null); setSelectedSubcategory(null); }}
               style={{
                 display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
                 padding: '0.45rem 1rem', borderRadius: '999px', border: '1.5px solid',
@@ -136,7 +165,10 @@ export default function NearbyShopsPage() {
             {categories.map(cat => (
               <button
                 key={cat.id}
-                onClick={() => setSelectedCategory(selectedCategory === cat.id ? null : cat.id)}
+                onClick={() => {
+                  setSelectedCategory(selectedCategory === cat.id ? null : cat.id);
+                  setSelectedSubcategory(null);
+                }}
                 style={{
                   display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
                   padding: '0.45rem 1rem', borderRadius: '999px', border: '1.5px solid',
@@ -151,6 +183,45 @@ export default function NearbyShopsPage() {
                   : <span style={{ fontSize: '1rem' }}>{CAT_EMOJIS[cat.name] || '🛍️'}</span>
                 }
                 {cat.name}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Subcategory Filter Row */}
+        {selectedCategory && subcategories.length > 0 && (
+          <div style={{
+            display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem',
+            marginBottom: '1.5rem', scrollbarWidth: 'none'
+          }}>
+            <button
+              onClick={() => setSelectedSubcategory(null)}
+              style={{
+                display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
+                padding: '0.35rem 0.8rem', borderRadius: '8px', border: '1px solid',
+                cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500', transition: 'all 0.2s',
+                borderColor: selectedSubcategory === null ? 'var(--secondary-color)' : 'var(--border-color)',
+                background: selectedSubcategory === null ? 'rgba(255, 182, 39, 0.1)' : 'transparent',
+                color: selectedSubcategory === null ? 'var(--secondary-color)' : 'var(--text-light)',
+              }}
+            >
+              All Types
+            </button>
+            {subcategories.map(sub => (
+              <button
+                key={sub.id}
+                onClick={() => setSelectedSubcategory(selectedSubcategory === sub.id ? null : sub.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
+                  padding: '0.35rem 0.8rem', borderRadius: '8px', border: '1px solid',
+                  cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500', transition: 'all 0.2s',
+                  borderColor: selectedSubcategory === sub.id ? 'var(--secondary-color)' : 'var(--border-color)',
+                  background: selectedSubcategory === sub.id ? 'rgba(255, 182, 39, 0.1)' : 'transparent',
+                  color: selectedSubcategory === sub.id ? 'var(--secondary-color)' : 'var(--text-light)',
+                }}
+              >
+                {sub.icon && <img src={sub.icon} alt="" style={{ width: 14, height: 14, borderRadius: '3px', objectFit: 'cover' }} />}
+                {sub.name}
               </button>
             ))}
           </div>
