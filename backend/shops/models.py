@@ -1,5 +1,6 @@
 from django.db import models
 from users.models import User
+from products.models import Category, SubCategory
 import uuid
 
 
@@ -12,6 +13,10 @@ class Shop(models.Model):
     description = models.TextField(blank=True)
     logo = models.ImageField(upload_to='shop_logos/', null=True, blank=True)
     banner = models.ImageField(upload_to='shop_banners/', null=True, blank=True)
+
+    # Shop Classification
+    category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, blank=True, related_name='shops')
+    subcategory = models.ForeignKey(SubCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='shops')
 
     # Location
     latitude = models.FloatField()

@@ -27,9 +27,9 @@ class ShopViewSet(viewsets.ModelViewSet):
         subcategory = self.request.query_params.get('subcategory')
         
         if category and category not in ['null', 'undefined', '']:
-            queryset = queryset.filter(seller__products__category_id=category).distinct()
+            queryset = queryset.filter(category_id=category)
         if subcategory and subcategory not in ['null', 'undefined', '']:
-            queryset = queryset.filter(seller__products__subcategory_id=subcategory).distinct()
+            queryset = queryset.filter(subcategory_id=subcategory)
             
         return queryset
 
@@ -74,9 +74,9 @@ class ShopViewSet(viewsets.ModelViewSet):
         shops = Shop.objects.filter(is_active=True)
 
         if category and category not in ['null', 'undefined', '']:
-            shops = shops.filter(seller__products__category_id=category).distinct()
+            shops = shops.filter(category_id=category)
         if subcategory and subcategory not in ['null', 'undefined', '']:
-            shops = shops.filter(seller__products__subcategory_id=subcategory).distinct()
+            shops = shops.filter(subcategory_id=subcategory)
 
         if lat_str and lng_str:
             try:

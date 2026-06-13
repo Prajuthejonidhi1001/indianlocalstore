@@ -145,6 +145,8 @@ export default function RegisterPage() {
         shopData.append('latitude', coords.lat || 20.5937);
         shopData.append('longitude', coords.lng || 78.9629);
         shopData.append('description', `${form.shopName} in ${form.taluk}, ${form.district}`);
+        if (form.category) shopData.append('category', form.category);
+        if (form.subcategory) shopData.append('subcategory', form.subcategory);
         if (shopPhoto) shopData.append('logo', shopPhoto);
         await shopAPI.createShop(shopData);
         // Save default category for dashboard to use when adding products

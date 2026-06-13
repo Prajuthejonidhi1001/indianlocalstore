@@ -171,6 +171,8 @@ export default function RegisterScreen({ navigation }) {
         shopData.append('latitude', String(coords.lat || 20.5937));
         shopData.append('longitude', String(coords.lng || 78.9629));
         shopData.append('description', `${form.shopName} in ${form.taluk}, ${form.district}`);
+        if (form.category) shopData.append('category', form.category);
+        if (form.subcategory) shopData.append('subcategory', form.subcategory);
         if (shopPhoto) {
           const filename = shopPhoto.uri.split('/').pop();
           const match = /\.(\w+)$/.exec(filename);
