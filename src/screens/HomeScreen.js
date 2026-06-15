@@ -219,12 +219,21 @@ export default function HomeScreen({ navigation }) {
   // Hero elements fade in
   const heroFade = useRef(new Animated.Value(0)).current;
   const heroSlide = useRef(new Animated.Value(20)).current;
+  const orbFloat = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(heroFade, { toValue: 1, duration: 600, useNativeDriver: true }),
       Animated.spring(heroSlide, { toValue: 0, tension: 80, friction: 10, useNativeDriver: true }),
     ]).start();
+    
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(orbFloat, { toValue: 1, duration: 4000, useNativeDriver: true }),
+        Animated.timing(orbFloat, { toValue: 0, duration: 4000, useNativeDriver: true })
+      ])
+    ).start();
+
     fetchInitialData();
   }, [location?.district]);
 
@@ -291,12 +300,12 @@ export default function HomeScreen({ navigation }) {
       >
         {/* ── HERO BANNER ── */}
         <LinearGradient
-          colors={['#0D1117', '#131920', '#0F1520']}
+          colors={['#0A0D14', '#150E1F', '#1F1410']}
           style={styles.banner}
         >
           {/* Decorative orb */}
-          <View style={styles.heroOrb1} />
-          <View style={styles.heroOrb2} />
+          <Animated.View style={[styles.heroOrb1, { transform: [{ translateY: orbFloat.interpolate({ inputRange: [0, 1], outputRange: [0, -30] }) }] }]} />
+          <Animated.View style={[styles.heroOrb2, { transform: [{ translateY: orbFloat.interpolate({ inputRange: [0, 1], outputRange: [-20, 10] }) }] }]} />
 
           {/* Cart button */}
           <TouchableOpacity style={styles.cartBtn} onPress={() => navigation.navigate('Cart')}>
@@ -453,17 +462,17 @@ const styles = StyleSheet.create({
   },
   heroOrb1: {
     position: 'absolute',
-    width: 250, height: 250,
-    borderRadius: 125,
-    backgroundColor: 'rgba(255,107,53,0.08)',
-    top: -80, right: -60,
+    width: 300, height: 300,
+    borderRadius: 150,
+    backgroundColor: 'rgba(255,107,53,0.12)',
+    top: -100, right: -80,
   },
   heroOrb2: {
     position: 'absolute',
-    width: 180, height: 180,
-    borderRadius: 90,
-    backgroundColor: 'rgba(255,182,39,0.06)',
-    bottom: -50, left: 20,
+    width: 250, height: 250,
+    borderRadius: 125,
+    backgroundColor: 'rgba(155,89,182,0.1)',
+    bottom: -80, left: -40,
   },
   cartBtn: {
     position: 'absolute',
@@ -587,21 +596,23 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 20, fontWeight: '900', color: COLORS.text },
 
   // Categories
-  catList: { paddingLeft: 22, paddingRight: 8, gap: 8 },
+  catList: { paddingLeft: 22, paddingRight: 8, gap: 12, paddingBottom: 10 },
   catPill: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-    borderRadius: RADIUS.full,
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.08)',
-    marginRight: 4,
+    justifyContent: 'center',
+    gap: 8,
+    width: 85,
+    height: 95,
+    borderRadius: RADIUS.xl,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.06)',
+    marginRight: 0,
+    ...SHADOWS.sm,
   },
-  catEmoji: { fontSize: 15 },
-  catText: { color: COLORS.textMuted, fontWeight: '600', fontSize: 13 },
+  catEmoji: { fontSize: 28 },
+  catText: { color: COLORS.textMuted, fontWeight: '700', fontSize: 11, textAlign: 'center' },
 
   // Shop list
   shopsList: { paddingHorizontal: 20, gap: 12 },
