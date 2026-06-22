@@ -25,6 +25,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'anymail',
     'cloudinary_storage',
     'cloudinary',
     'rest_framework',
@@ -238,12 +239,12 @@ LOGGING = {
 
 # ── Email Setup ───────────────────────────────────────────────────────────────
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
-EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+BREVO_API_KEY = config('BREVO_API_KEY', default='')
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
+ANYMAIL = {
+    "BREVO_API_KEY": BREVO_API_KEY,
+}
+EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 
-DEFAULT_FROM_EMAIL = f"Indian Local Store <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else 'Indian Local Store <noreply@indianlocalstore.com>'
+DEFAULT_FROM_EMAIL = f"Indian Local Store <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else 'Indian Local Store <stiratechindianlocalstore@gmail.com>'
 SERVER_EMAIL = 'stiratechindianlocalstore@gmail.com'
