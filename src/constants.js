@@ -69,21 +69,17 @@ export const RADIUS = {
 
 // ... existing CATEGORIES and other data ...
 export const CATEGORIES = [
-  { id: 1, name: 'Vegetables', icon: '🥬' },
-  { id: 2, name: 'Fruits', icon: '🍎' },
-  { id: 3, name: 'Dairy', icon: '🥛' },
-  { id: 4, name: 'Spices', icon: '🌿' },
-  { id: 5, name: 'Grains', icon: '🌾' },
-  { id: 6, name: 'Snacks', icon: '🥜' },
-  { id: 7, name: 'Meat', icon: '🍖' },
-  { id: 8, name: 'Beverages', icon: '🧃' },
-  { id: 9, name: 'Bakery', icon: '🍞' },
-  { id: 10, name: 'Personal Care', icon: '🧴' },
-  { id: 11, name: 'Home & Living', icon: '🏠' },
-  { id: 12, name: 'Electronics', icon: '📱' },
-  { id: 13, name: 'Clothing', icon: '👕' },
-  { id: 14, name: 'Stationery', icon: '📚' },
-  { id: 15, name: 'Pharmacy', icon: '💊' },
+  { id: 1, name: 'Agriculture', icon: '🌾' },
+  { id: 2, name: 'Automobile', icon: '🚗' },
+  { id: 3, name: 'Construction', icon: '🏗️' },
+  { id: 4, name: 'Electronics', icon: '📱' },
+  { id: 5, name: 'Event Management', icon: '🎉' },
+  { id: 6, name: 'Fashion', icon: '👗' },
+  { id: 7, name: 'Furnitures', icon: '🪑' },
+  { id: 8, name: 'Marts', icon: '🛒' },
+  { id: 9, name: 'Pharmacy', icon: '💊' },
+  { id: 10, name: 'Second Hand Vehicles', icon: '🚙' },
+  { id: 11, name: 'Traders', icon: '🤝' },
 ];
 
 export const INDIAN_STATES = [

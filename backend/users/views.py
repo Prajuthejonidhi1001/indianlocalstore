@@ -11,6 +11,13 @@ from .serializers import (
     UserSerializer, UserRegisterSerializer,
     CustomTokenObtainPairSerializer, ProfileUpdateSerializer
 )
+import random
+from django.utils import timezone
+from datetime import timedelta
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
+from .models import OTPVerification
 
 
 class AuthRateThrottle(AnonRateThrottle):
@@ -21,6 +28,49 @@ class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated]
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
+    def send_otp(self, request):
+        email = request.data.get('email')
+        if not email:
+            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Check if email is already registered
+        if User.objects.filter(email=email).exists():
+            return Response({'error': 'A user with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        otp_code = f"{random.randint(100000, 999999)}"
+        expires_at = timezone.now() + timedelta(minutes=10)
+        
+        OTPVerification.objects.create(email=email, otp_code=otp_code, expires_at=expires_at)
+        
+        # Beautiful HTML Email Template
+        html_message = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+            <h2 style="color: #FF6B35; text-align: center;">Indian Local Store</h2>
+            <p style="font-size: 16px; color: #333;">Hello,</p>
+            <p style="font-size: 16px; color: #333;">Please use the verification code below to complete your registration. This code is valid for 10 minutes.</p>
+            <div style="margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px; text-align: center;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #FF6B35;">{otp_code}</span>
+            </div>
+            <p style="font-size: 14px; color: #888; text-align: center;">If you didn't request this, please ignore this email.</p>
+        </div>
+        """
+        plain_message = strip_tags(html_message)
+        
+        try:
+            send_mail(
+                'Your Verification Code - Indian Local Store',
+                plain_message,
+                'noreply@indianlocalstore.com',
+                [email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+        except Exception as e:
+            print("Email sending failed:", str(e))
+            
+        return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
     def register(self, request):

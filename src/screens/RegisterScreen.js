@@ -10,7 +10,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useAuth } from '../context/AuthContext';
-import { shopAPI, productAPI } from '../utils/api';
+import { authAPI, shopAPI, productAPI } from '../utils/api';
 
 export default function RegisterScreen({ navigation }) {
   const { register, login } = useAuth();
@@ -24,6 +24,11 @@ export default function RegisterScreen({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  // OTP State
+  const [step, setStep] = useState(1);
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const otpInputs = useRef([]);
 
   // Form State
   const [form, setForm] = useState({
@@ -149,14 +154,55 @@ export default function RegisterScreen({ navigation }) {
 
     setLoading(true);
     try {
+      if (step === 1) {
+        await authAPI.sendOtp(form.email);
+        setStep(2);
+        Alert.alert('Verification Code Sent', `We sent a code to ${form.email}`);
+      }
+    } catch {
+      triggerShake();
+      Alert.alert('Error', 'Failed to send verification code. Email might be in use.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (text, index) => {
+    if (/[^0-9]/.test(text)) return;
+    const newOtp = [...otp];
+    newOtp[index] = text;
+    setOtp(newOtp);
+
+    // Auto focus next
+    if (text && index < 5) {
+      otpInputs.current[index + 1]?.focus();
+    }
+    
+    // Auto verify
+    if (index === 5 && text) {
+      const fullCode = newOtp.join('');
+      if (fullCode.length === 6) verifyAndRegister(fullCode);
+    }
+  };
+
+  const handleOtpKeyPress = (e, index) => {
+    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
+      otpInputs.current[index - 1]?.focus();
+    }
+  };
+
+  const verifyAndRegister = async (code) => {
+    setLoading(true);
+    try {
       const userData = {
         username: form.username, email: form.email, password: form.password,
         first_name: form.first_name, last_name: form.last_name,
-        phone: form.phone, role: form.role,
+        phone: form.phone, role: form.role, otp: code,
         address: form.shopAddress, city: form.district, state: form.state, pincode: form.pincode
       };
-      const res = await register(userData);
-      if (!res.success) { triggerShake(); Alert.alert('Registration Failed', res.error); setLoading(false); return; }
+      const res = await authAPI.register(userData);
+      // Assuming register returns AxiosResponse
+      if (res.status !== 201 && res.status !== 200) { throw new Error('Registration failed'); }
 
       if (form.role === 'seller') {
         await login(form.username, form.password);
@@ -238,191 +284,224 @@ export default function RegisterScreen({ navigation }) {
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Shop & sell locally</Text>
 
-            {/* ── Role Selector — large cards ── */}
-            <View style={styles.roleCardRow}>
-              <TouchableOpacity
-                style={[styles.roleCard, form.role === 'customer' && styles.roleCardActiveCustomer]}
-                onPress={() => setForm({ ...form, role: 'customer' })}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.roleCardEmoji}>🛒</Text>
-                <Text style={[styles.roleCardTitle, form.role === 'customer' && { color: '#fff' }]}>Customer</Text>
-                <Text style={styles.roleCardDesc}>Browse & buy</Text>
-                {form.role === 'customer' && <View style={styles.roleCardCheck}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.roleCard, form.role === 'seller' && styles.roleCardActiveSeller]}
-                onPress={() => setForm({ ...form, role: 'seller' })}
-                activeOpacity={0.8}
-              >
-                <Text style={styles.roleCardEmoji}>🏪</Text>
-                <Text style={[styles.roleCardTitle, form.role === 'seller' && { color: '#FF6B00' }]}>Seller</Text>
-                <Text style={styles.roleCardDesc}>List & sell</Text>
-                {form.role === 'seller' && <View style={[styles.roleCardCheck, { backgroundColor: '#FF6B00' }]}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
-              </TouchableOpacity>
-            </View>
-
-            {/* ── Basic Fields ── */}
-            <View style={styles.row}>
-              <View style={styles.half}>
-                {renderInput('person-outline', 'First Name', form.first_name, 'first_name')}
-              </View>
-              <View style={{ width: 10 }} />
-              <View style={styles.half}>
-                {renderInput('person-outline', 'Last Name', form.last_name, 'last_name')}
-              </View>
-            </View>
-            {renderInput('at-outline', 'Username', form.username, 'username')}
-            {renderInput('mail-outline', 'Email', form.email, 'email', false, 'email-address')}
-            {renderInput('call-outline', 'Phone', form.phone, 'phone', false, 'phone-pad')}
-            {renderInput('lock-closed-outline', 'Password (min 8 chars)', form.password, 'password', true)}
-
-            {form.password.length > 0 && (
-              <View style={styles.strengthBar}>
-                <View style={[styles.strengthFill, { width: `${(passwordStrength / 4) * 100}%`, backgroundColor: strengthColor }]} />
-                <Text style={[styles.strengthLabel, { color: strengthColor }]}>{strengthLabel}</Text>
-              </View>
-            )}
-
-            {/* Confirm Password */}
-            <View style={[styles.inputRow, focusedInput === 'confirmPassword' && styles.inputRowFocused,
-              confirmPassword.length > 0 && confirmPassword !== form.password && { borderColor: '#E74C3C' },
-              confirmPassword.length > 0 && confirmPassword === form.password && { borderColor: '#2ECC71' },
-            ]}>
-              <Ionicons name="shield-checkmark-outline" size={18}
-                color={confirmPassword.length > 0 ? (confirmPassword === form.password ? '#2ECC71' : '#E74C3C') : (focusedInput === 'confirmPassword' ? '#FF6B00' : COLORS.textMuted)}
-                style={{ marginRight: 10 }} />
-              <TextInput
-                placeholder="Confirm Password"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                style={styles.inputText}
-                secureTextEntry={!showConfirmPass}
-                placeholderTextColor={COLORS.textMuted}
-                autoCapitalize="none"
-                onFocus={() => setFocusedInput('confirmPassword')}
-                onBlur={() => setFocusedInput(null)}
-              />
-              <TouchableOpacity onPress={() => setShowConfirmPass(!showConfirmPass)}>
-                <Ionicons name={showConfirmPass ? 'eye-off' : 'eye'} size={20} color={COLORS.textMuted} />
-              </TouchableOpacity>
-            </View>
-            {confirmPassword.length > 0 && (
-              <Text style={{ fontSize: 12, fontWeight: '700', marginTop: -8, marginBottom: 10, textAlign: 'right',
-                color: confirmPassword === form.password ? '#2ECC71' : '#E74C3C' }}>
-                {confirmPassword === form.password ? '✓ Passwords match' : '✗ Passwords do not match'}
-              </Text>
-            )}
-
-            {/* ── Seller Section ── */}
-            {form.role === 'seller' && (
-              <View style={styles.sellerBox}>
-                <Text style={styles.sellerTitle}>🏪 Business Details</Text>
-
-                {renderInput('business-outline', 'Shop Name', form.shopName, 'shopName')}
-
-                {/* Shop Logo */}
-                <TouchableOpacity style={styles.photoPicker} onPress={pickImage} activeOpacity={0.8}>
-                  {shopPhoto ? (
-                    <Image source={{ uri: shopPhoto.uri }} style={styles.photoImg} />
-                  ) : (
-                    <View style={styles.photoPlaceholder}>
-                      <Ionicons name="camera" size={28} color={COLORS.textMuted} />
-                      <Text style={styles.photoText}>Upload Shop Logo</Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
-
-                {/* Category — single selection */}
-                <Text style={styles.fieldLabel}>Shop Category *</Text>
-                <View style={styles.chipGrid}>
-                  {categories.length === 0 ? (
-                    <Text style={styles.dimText}>Loading…</Text>
-                  ) : categories.map(cat => (
-                    <TouchableOpacity
-                      key={cat.id}
-                      style={[styles.chip, form.category === String(cat.id) && styles.chipSelected]}
-                      onPress={() => setForm(f => ({ ...f, category: String(cat.id), subcategory: '' }))}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.chipText, form.category === String(cat.id) && styles.chipTextSelected]}>
-                        {cat.name}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
+            {step === 1 ? (
+              <>
+                {/* ── Role Selector — large cards ── */}
+                <View style={styles.roleCardRow}>
+                  <TouchableOpacity
+                    style={[styles.roleCard, form.role === 'customer' && styles.roleCardActiveCustomer]}
+                    onPress={() => setForm({ ...form, role: 'customer' })}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.roleCardEmoji}>🛒</Text>
+                    <Text style={[styles.roleCardTitle, form.role === 'customer' && { color: '#fff' }]}>Customer</Text>
+                    <Text style={styles.roleCardDesc}>Browse & buy</Text>
+                    {form.role === 'customer' && <View style={styles.roleCardCheck}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.roleCard, form.role === 'seller' && styles.roleCardActiveSeller]}
+                    onPress={() => setForm({ ...form, role: 'seller' })}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.roleCardEmoji}>🏪</Text>
+                    <Text style={[styles.roleCardTitle, form.role === 'seller' && { color: '#FF6B00' }]}>Seller</Text>
+                    <Text style={styles.roleCardDesc}>List & sell</Text>
+                    {form.role === 'seller' && <View style={[styles.roleCardCheck, { backgroundColor: '#FF6B00' }]}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
+                  </TouchableOpacity>
                 </View>
 
-                {/* Subcategory — single selection */}
-                {subcategories.length > 0 && (
-                  <>
-                    <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Subcategory <Text style={styles.dimText}>(optional)</Text></Text>
+                {/* ── Basic Fields ── */}
+                <View style={styles.row}>
+                  <View style={styles.half}>
+                    {renderInput('person-outline', 'First Name', form.first_name, 'first_name')}
+                  </View>
+                  <View style={{ width: 10 }} />
+                  <View style={styles.half}>
+                    {renderInput('person-outline', 'Last Name', form.last_name, 'last_name')}
+                  </View>
+                </View>
+                {renderInput('at-outline', 'Username', form.username, 'username')}
+                {renderInput('mail-outline', 'Email', form.email, 'email', false, 'email-address')}
+                {renderInput('call-outline', 'Phone', form.phone, 'phone', false, 'phone-pad')}
+                {renderInput('lock-closed-outline', 'Password (min 8 chars)', form.password, 'password', true)}
+
+                {form.password.length > 0 && (
+                  <View style={styles.strengthBar}>
+                    <View style={[styles.strengthFill, { width: `${(passwordStrength / 4) * 100}%`, backgroundColor: strengthColor }]} />
+                    <Text style={[styles.strengthLabel, { color: strengthColor }]}>{strengthLabel}</Text>
+                  </View>
+                )}
+
+                {/* Confirm Password */}
+                <View style={[styles.inputRow, focusedInput === 'confirmPassword' && styles.inputRowFocused,
+                  confirmPassword.length > 0 && confirmPassword !== form.password && { borderColor: '#E74C3C' },
+                  confirmPassword.length > 0 && confirmPassword === form.password && { borderColor: '#2ECC71' },
+                ]}>
+                  <Ionicons name="shield-checkmark-outline" size={18}
+                    color={confirmPassword.length > 0 ? (confirmPassword === form.password ? '#2ECC71' : '#E74C3C') : (focusedInput === 'confirmPassword' ? '#FF6B00' : COLORS.textMuted)}
+                    style={{ marginRight: 10 }} />
+                  <TextInput
+                    placeholder="Confirm Password"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    style={styles.inputText}
+                    secureTextEntry={!showConfirmPass}
+                    placeholderTextColor={COLORS.textMuted}
+                    autoCapitalize="none"
+                    onFocus={() => setFocusedInput('confirmPassword')}
+                    onBlur={() => setFocusedInput(null)}
+                  />
+                  <TouchableOpacity onPress={() => setShowConfirmPass(!showConfirmPass)}>
+                    <Ionicons name={showConfirmPass ? 'eye-off' : 'eye'} size={20} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                </View>
+                {confirmPassword.length > 0 && (
+                  <Text style={{ fontSize: 12, fontWeight: '700', marginTop: -8, marginBottom: 10, textAlign: 'right',
+                    color: confirmPassword === form.password ? '#2ECC71' : '#E74C3C' }}>
+                    {confirmPassword === form.password ? '✓ Passwords match' : '✗ Passwords do not match'}
+                  </Text>
+                )}
+
+                {/* ── Seller Section ── */}
+                {form.role === 'seller' && (
+                  <View style={styles.sellerBox}>
+                    <Text style={styles.sellerTitle}>🏪 Business Details</Text>
+
+                    {renderInput('business-outline', 'Shop Name', form.shopName, 'shopName')}
+
+                    {/* Shop Logo */}
+                    <TouchableOpacity style={styles.photoPicker} onPress={pickImage} activeOpacity={0.8}>
+                      {shopPhoto ? (
+                        <Image source={{ uri: shopPhoto.uri }} style={styles.photoImg} />
+                      ) : (
+                        <View style={styles.photoPlaceholder}>
+                          <Ionicons name="camera" size={28} color={COLORS.textMuted} />
+                          <Text style={styles.photoText}>Upload Shop Logo</Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+
+                    {/* Category — single selection */}
+                    <Text style={styles.fieldLabel}>Shop Category *</Text>
                     <View style={styles.chipGrid}>
-                      {subcategories.map(sub => (
+                      {categories.length === 0 ? (
+                        <Text style={styles.dimText}>Loading…</Text>
+                      ) : categories.map(cat => (
                         <TouchableOpacity
-                          key={sub.id}
-                          style={[styles.chip, styles.chipSm, form.subcategory === String(sub.id) && styles.chipSelected]}
-                          onPress={() => setForm(f => ({ ...f, subcategory: String(sub.id) }))}
+                          key={cat.id}
+                          style={[styles.chip, form.category === String(cat.id) && styles.chipSelected]}
+                          onPress={() => setForm(f => ({ ...f, category: String(cat.id), subcategory: '' }))}
                           activeOpacity={0.7}
                         >
-                          <Text style={[styles.chipText, form.subcategory === String(sub.id) && styles.chipTextSelected]}>
-                            {sub.name}
+                          <Text style={[styles.chipText, form.category === String(cat.id) && styles.chipTextSelected]}>
+                            {cat.name}
                           </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
-                  </>
-                )}
 
-                {/* Pincode + Auto Location */}
-                <Text style={styles.fieldLabel}>📍 Pincode {fetchingPin && <Text style={{ color: COLORS.primary }}> (fetching…)</Text>}</Text>
-                {renderInput('map-outline', '560001', form.pincode, 'pincode', false, 'numeric', { maxLength: 6 })}
+                    {/* Subcategory — single selection */}
+                    {subcategories.length > 0 && (
+                      <>
+                        <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Subcategory <Text style={styles.dimText}>(optional)</Text></Text>
+                        <View style={styles.chipGrid}>
+                          {subcategories.map(sub => (
+                            <TouchableOpacity
+                              key={sub.id}
+                              style={[styles.chip, styles.chipSm, form.subcategory === String(sub.id) && styles.chipSelected]}
+                              onPress={() => setForm(f => ({ ...f, subcategory: String(sub.id) }))}
+                              activeOpacity={0.7}
+                            >
+                              <Text style={[styles.chipText, form.subcategory === String(sub.id) && styles.chipTextSelected]}>
+                                {sub.name}
+                              </Text>
+                            </TouchableOpacity>
+                          ))}
+                        </View>
+                      </>
+                    )}
 
-                {/* Auto-filled location */}
-                {(form.state || form.district) && (
-                  <View style={styles.autoRow}>
-                    <View style={styles.autoChip}>
-                      <Text style={styles.autoLabel}>🏛️ State</Text>
-                      <Text style={styles.autoValue}>{form.state || '—'}</Text>
-                    </View>
-                    <View style={styles.autoChip}>
-                      <Text style={styles.autoLabel}>🗺️ District</Text>
-                      <Text style={styles.autoValue}>{form.district || '—'}</Text>
-                    </View>
+                    {/* Pincode + Auto Location */}
+                    <Text style={styles.fieldLabel}>📍 Pincode {fetchingPin && <Text style={{ color: COLORS.primary }}> (fetching…)</Text>}</Text>
+                    {renderInput('map-outline', '560001', form.pincode, 'pincode', false, 'numeric', { maxLength: 6 })}
+
+                    {/* Auto-filled location */}
+                    {(form.state || form.district) && (
+                      <View style={styles.autoRow}>
+                        <View style={styles.autoChip}>
+                          <Text style={styles.autoLabel}>🏛️ State</Text>
+                          <Text style={styles.autoValue}>{form.state || '—'}</Text>
+                        </View>
+                        <View style={styles.autoChip}>
+                          <Text style={styles.autoLabel}>🗺️ District</Text>
+                          <Text style={styles.autoValue}>{form.district || '—'}</Text>
+                        </View>
+                      </View>
+                    )}
+
+                    {renderInput('navigate-outline', 'Full Shop Address', form.shopAddress, 'shopAddress')}
+
+                    {/* GPS button */}
+                    <TouchableOpacity
+                      style={[styles.gpsBtn, coords.lat && styles.gpsBtnDone]}
+                      onPress={detectLocation}
+                      disabled={locating}
+                      activeOpacity={0.8}
+                    >
+                      <Ionicons
+                        name={coords.lat ? 'checkmark-circle' : 'locate'}
+                        size={18}
+                        color={coords.lat ? '#2ECC71' : COLORS.textMuted}
+                      />
+                      <Text style={[styles.gpsBtnText, coords.lat && { color: '#2ECC71' }]}>
+                        {locating ? 'Detecting GPS…' : coords.lat ? 'GPS Captured ✅' : 'Detect GPS Location'}
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 )}
 
-                {renderInput('navigate-outline', 'Full Shop Address', form.shopAddress, 'shopAddress')}
+                {/* Submit */}
+                <TouchableOpacity style={[styles.submitBtn, loading && { opacity: 0.7 }]} onPress={handleRegister} disabled={loading} activeOpacity={0.85}>
+                  {loading
+                    ? <ActivityIndicator color="#fff" />
+                    : <><Text style={styles.submitText}>Continue</Text><Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 8 }} /></>
+                  }
+                </TouchableOpacity>
 
-                {/* GPS button */}
-                <TouchableOpacity
-                  style={[styles.gpsBtn, coords.lat && styles.gpsBtnDone]}
-                  onPress={detectLocation}
-                  disabled={locating}
-                  activeOpacity={0.8}
-                >
-                  <Ionicons
-                    name={coords.lat ? 'checkmark-circle' : 'locate'}
-                    size={18}
-                    color={coords.lat ? '#2ECC71' : COLORS.textMuted}
-                  />
-                  <Text style={[styles.gpsBtnText, coords.lat && { color: '#2ECC71' }]}>
-                    {locating ? 'Detecting GPS…' : coords.lat ? 'GPS Captured ✅' : 'Detect GPS Location'}
-                  </Text>
+                <TouchableOpacity style={styles.footerLink} onPress={() => navigation.navigate('Login')}>
+                  <Text style={styles.footerText}>Already have an account? <Text style={styles.footerAction}>Sign In</Text></Text>
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={styles.otpSection}>
+                <Text style={styles.otpTitle}>Verification Code</Text>
+                <Text style={styles.otpSubtitle}>We sent a 6-digit code to</Text>
+                <Text style={styles.otpEmail}>{form.email}</Text>
+
+                <View style={styles.otpContainer}>
+                  {otp.map((digit, index) => (
+                    <TextInput
+                      key={index}
+                      ref={el => otpInputs.current[index] = el}
+                      style={styles.otpInput}
+                      keyboardType="number-pad"
+                      maxLength={1}
+                      value={digit}
+                      onChangeText={(text) => handleOtpChange(text, index)}
+                      onKeyPress={(e) => handleOtpKeyPress(e, index)}
+                      autoFocus={index === 0}
+                    />
+                  ))}
+                </View>
+
+                {loading && <ActivityIndicator color="#FF6B00" style={{ marginTop: 20 }} />}
+
+                <TouchableOpacity style={styles.backToRegBtn} onPress={() => { setStep(1); setOtp(['','','','','','']); }}>
+                  <Ionicons name="arrow-back" size={16} color={COLORS.textMuted} style={{ marginRight: 6 }} />
+                  <Text style={styles.backToRegText}>Back to Registration</Text>
                 </TouchableOpacity>
               </View>
             )}
-
-            {/* Submit */}
-            <TouchableOpacity style={[styles.submitBtn, loading && { opacity: 0.7 }]} onPress={handleRegister} disabled={loading} activeOpacity={0.85}>
-              {loading
-                ? <ActivityIndicator color="#fff" />
-                : <><Text style={styles.submitText}>Create Account</Text><Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 8 }} /></>
-              }
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.footerLink} onPress={() => navigation.navigate('Login')}>
-              <Text style={styles.footerText}>Already have an account? <Text style={styles.footerAction}>Sign In</Text></Text>
-            </TouchableOpacity>
 
           </Animated.View>
         </ScrollView>
@@ -506,4 +585,14 @@ const styles = StyleSheet.create({
   footerLink: { marginTop: 20, alignItems: 'center', paddingBottom: 8 },
   footerText: { color: COLORS.textMuted, fontSize: 14 },
   footerAction: { color: '#FF6B00', fontWeight: '800' },
+
+  // OTP Styles
+  otpSection: { alignItems: 'center', paddingVertical: 20 },
+  otpTitle: { fontSize: 24, fontWeight: '900', color: COLORS.text, marginBottom: 8 },
+  otpSubtitle: { fontSize: 14, color: COLORS.textMuted, marginBottom: 4 },
+  otpEmail: { fontSize: 15, fontWeight: '700', color: COLORS.text, marginBottom: 24 },
+  otpContainer: { flexDirection: 'row', justifyContent: 'center', gap: 10, marginBottom: 20 },
+  otpInput: { width: 45, height: 55, borderRadius: 12, borderWidth: 2, borderColor: COLORS.border, backgroundColor: COLORS.elevated, fontSize: 22, fontWeight: '800', textAlign: 'center', color: COLORS.text },
+  backToRegBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 30 },
+  backToRegText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' }
 });

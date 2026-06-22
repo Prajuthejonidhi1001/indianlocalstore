@@ -230,11 +230,13 @@ export default function HomePage() {
           ) : filteredShops.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">🏪</div>
-              <h3>No shops yet</h3>
-              <p>Be the first seller in your area!</p>
-              <Link to="/seller" className="btn btn-primary" style={{ marginTop: '1rem' }}>
-                Open a Shop
-              </Link>
+              <h3>No shops found</h3>
+              <p>{selectedCategory ? "No shops in this particular field or categories" : "Be the first seller in your area!"}</p>
+              {!selectedCategory && (
+                <Link to="/seller" className="btn btn-primary" style={{ marginTop: '1rem' }}>
+                  Open a Shop
+                </Link>
+              )}
             </div>
           ) : (
             <div className="shops-grid">

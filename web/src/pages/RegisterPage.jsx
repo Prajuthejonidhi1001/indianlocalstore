@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Store, ArrowRight, Eye, EyeOff, User, ShoppingBag, MapPin, Tag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { shopAPI, productAPI } from '../api';
+import { authAPI, shopAPI, productAPI } from '../api';
 import toast from 'react-hot-toast';
 import './AuthPages.css';
 
@@ -30,6 +30,10 @@ export default function RegisterPage() {
   const [coords, setCoords] = useState({ lat: 0, lng: 0 });
   const [categories, setCategories] = useState([]);
   const [subcategories, setSubcategories] = useState([]);
+
+  const [step, setStep] = useState(1);
+  const [otp, setOtp] = useState(new Array(6).fill(''));
+  const [otpStatus, setOtpStatus] = useState(''); // 'success' or 'error'
 
   // Load categories when seller role is selected
   useEffect(() => {
@@ -125,12 +129,75 @@ export default function RegisterPage() {
 
     setLoading(true);
     try {
+      if (step === 1) {
+        await authAPI.sendOtp(form.email);
+        setStep(2);
+        toast.success("Verification code sent to your email!");
+      }
+    } catch (err) {
+      toast.error('Failed to send verification code. Email might be in use.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (element, index) => {
+    if (isNaN(element.value)) return false;
+    
+    setOtpStatus('');
+    const newOtp = [...otp];
+    newOtp[index] = element.value;
+    setOtp(newOtp);
+
+    // Focus next input
+    if (element.nextSibling && element.value) {
+      element.nextSibling.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text/plain').slice(0, 6).split('');
+    if (pasteData.some(isNaN)) return;
+    
+    const newOtp = new Array(6).fill('');
+    pasteData.forEach((char, index) => newOtp[index] = char);
+    setOtp(newOtp);
+    setOtpStatus('');
+    
+    // Focus last filled input
+    const inputs = document.querySelectorAll('.otp-input');
+    if (inputs[pasteData.length - 1]) {
+      inputs[pasteData.length - 1].focus();
+    }
+  };
+
+  const handleOtpKeyDown = (e, index) => {
+    if (e.key === 'Backspace') {
+      setOtpStatus('');
+      if (!otp[index] && e.target.previousSibling) {
+        e.target.previousSibling.focus();
+      }
+    }
+  };
+
+  useEffect(() => {
+    const code = otp.join('');
+    if (code.length === 6 && step === 2) {
+      verifyAndRegister(code);
+    }
+  }, [otp, step]);
+
+  const verifyAndRegister = async (code) => {
+    setLoading(true);
+    try {
       const userData = {
         username: form.username, email: form.email, phone: form.phone,
         first_name: form.first_name, last_name: form.last_name,
-        password: form.password, role: form.role
+        password: form.password, role: form.role, otp: code
       };
-      await register(userData);
+      await authAPI.register(userData);
+      setOtpStatus('success');
 
       if (form.role === 'seller') {
         await login(form.username, form.password);
@@ -149,7 +216,7 @@ export default function RegisterPage() {
         if (form.subcategory) shopData.append('subcategory', form.subcategory);
         if (shopPhoto) shopData.append('logo', shopPhoto);
         await shopAPI.createShop(shopData);
-        // Save default category for dashboard to use when adding products
+        
         if (form.category) {
           localStorage.setItem('seller_default_category', form.category);
           const catName = categories.find(c => String(c.id) === form.category)?.name || '';
@@ -160,23 +227,24 @@ export default function RegisterPage() {
           const subName = subcategories.find(s => String(s.id) === form.subcategory)?.name || '';
           localStorage.setItem('seller_default_subcategory_name', subName);
         }
-        toast.success('Account & Shop created! Welcome aboard.');
-        navigate('/seller');
+        
+        setTimeout(() => {
+          toast.success('Account & Shop created! Welcome aboard.');
+          navigate('/seller');
+        }, 800);
       } else {
-        toast.success('Account created! Please log in.');
-        navigate('/login');
+        setTimeout(() => {
+          toast.success('Account created! Please log in.');
+          navigate('/login');
+        }, 800);
       }
     } catch (err) {
-      if (err.response?.data) {
-        const errorData = err.response.data;
-        const firstKey = Object.keys(errorData)[0];
-        if (firstKey) {
-          const msg = Array.isArray(errorData[firstKey]) ? errorData[firstKey][0] : errorData[firstKey];
-          toast.error(`${firstKey.toUpperCase()}: ${msg}`);
-          return;
-        }
+      setOtpStatus('error');
+      if (err.response?.data?.otp) {
+        toast.error(err.response.data.otp[0]);
+      } else {
+        toast.error('Verification failed. Invalid code.');
       }
-      toast.error('Registration failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -193,48 +261,51 @@ export default function RegisterPage() {
         <p className="auth-subtitle">Join thousands of local shoppers & sellers</p>
 
         {/* Role Selector — large cards */}
-        <div className="role-card-grid" style={{ marginBottom: '1.5rem' }}>
-          <button
-            type="button"
-            className={`role-card ${form.role === 'customer' ? 'active' : ''}`}
-            onClick={() => setForm({ ...form, role: 'customer' })}
-            id="role-customer"
-          >
-            <div className="role-card-icon">🛒</div>
-            <div className="role-card-body">
-              <div className="role-card-title">Customer</div>
-              <div className="role-card-desc">Browse shops & buy products</div>
-            </div>
-            {form.role === 'customer' && <div className="role-card-check">✓</div>}
-          </button>
-          <button
-            type="button"
-            className={`role-card ${form.role === 'seller' ? 'active' : ''}`}
-            onClick={() => setForm({ ...form, role: 'seller' })}
-            id="role-seller"
-          >
-            <div className="role-card-icon">🏪</div>
-            <div className="role-card-body">
-              <div className="role-card-title">Seller</div>
-              <div className="role-card-desc">List your shop & sell products</div>
-            </div>
-            {form.role === 'seller' && <div className="role-card-check">✓</div>}
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="auth-form" id="register-form">
-          <div className="form-row">
-            <div className="form-group">
-              <label className="form-label" htmlFor="first_name">First Name</label>
-              <input id="first_name" type="text" className="form-input" placeholder="Rahul"
-                value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} />
-            </div>
-            <div className="form-group">
-              <label className="form-label" htmlFor="last_name">Last Name</label>
-              <input id="last_name" type="text" className="form-input" placeholder="Sharma"
-                value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} />
-            </div>
+        {step === 1 && (
+          <div className="role-card-grid" style={{ marginBottom: '1.5rem' }}>
+            <button
+              type="button"
+              className={`role-card ${form.role === 'customer' ? 'active' : ''}`}
+              onClick={() => setForm({ ...form, role: 'customer' })}
+              id="role-customer"
+            >
+              <div className="role-card-icon">🛒</div>
+              <div className="role-card-body">
+                <div className="role-card-title">Customer</div>
+                <div className="role-card-desc">Browse shops & buy products</div>
+              </div>
+              {form.role === 'customer' && <div className="role-card-check">✓</div>}
+            </button>
+            <button
+              type="button"
+              className={`role-card ${form.role === 'seller' ? 'active' : ''}`}
+              onClick={() => setForm({ ...form, role: 'seller' })}
+              id="role-seller"
+            >
+              <div className="role-card-icon">🏪</div>
+              <div className="role-card-body">
+                <div className="role-card-title">Seller</div>
+                <div className="role-card-desc">List your shop & sell products</div>
+              </div>
+              {form.role === 'seller' && <div className="role-card-check">✓</div>}
+            </button>
           </div>
+        )}
+
+        {step === 1 ? (
+          <form onSubmit={handleSubmit} className="auth-form" id="register-form">
+            <div className="form-row">
+              <div className="form-group">
+                <label className="form-label" htmlFor="first_name">First Name</label>
+                <input id="first_name" type="text" className="form-input" placeholder="Rahul"
+                  value={form.first_name} onChange={e => setForm({ ...form, first_name: e.target.value })} />
+              </div>
+              <div className="form-group">
+                <label className="form-label" htmlFor="last_name">Last Name</label>
+                <input id="last_name" type="text" className="form-input" placeholder="Sharma"
+                  value={form.last_name} onChange={e => setForm({ ...form, last_name: e.target.value })} />
+              </div>
+            </div>
 
           <div className="form-group">
             <label className="form-label" htmlFor="reg-username">Username *</label>
@@ -390,9 +461,46 @@ export default function RegisterPage() {
           )}
 
           <button id="register-btn" type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ marginTop: '1.25rem' }}>
-            {loading ? <span className="spinner-sm" /> : <>Create Account <ArrowRight size={16} /></>}
+            {loading ? <span className="spinner-sm" /> : <>Continue <ArrowRight size={16} /></>}
           </button>
         </form>
+        ) : (
+          <div className="auth-form animate-in">
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <h3 style={{ marginBottom: 8 }}>Verification Code</h3>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+                We sent a 6-digit code to <strong>{form.email}</strong>
+              </p>
+            </div>
+
+            <div className="otp-container" onPaste={handleOtpPaste}>
+              {otp.map((digit, index) => (
+                <input
+                  key={index}
+                  type="text"
+                  maxLength={1}
+                  className={`otp-input ${otpStatus}`}
+                  value={digit}
+                  onChange={(e) => handleOtpChange(e.target, index)}
+                  onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                  autoFocus={index === 0}
+                  disabled={loading}
+                />
+              ))}
+            </div>
+
+            {loading && <div style={{ textAlign: 'center', marginTop: 16 }}><span className="spinner-sm" /></div>}
+            
+            <button 
+              className="auth-back-btn" 
+              onClick={() => { setStep(1); setOtp(new Array(6).fill('')); setOtpStatus(''); }}
+              style={{ marginTop: '2rem', margin: '2rem auto 0' }}
+              disabled={loading}
+            >
+              ← Back to Registration
+            </button>
+          </div>
+        )}
 
         <p className="auth-switch">
           Already have an account? <Link to="/login" id="go-login-link">Sign in</Link>

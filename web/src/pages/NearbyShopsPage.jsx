@@ -233,7 +233,7 @@ export default function NearbyShopsPage() {
           <div className="empty-state">
             <div className="empty-state-icon">🏪</div>
             <h3>No shops found</h3>
-            <p>Try selecting a different category or area</p>
+            <p>No shops in this particular field or categories</p>
           </div>
         ) : (
           <div className="shops-cards-grid">

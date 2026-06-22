@@ -18,11 +18,12 @@ class UserSerializer(serializers.ModelSerializer):
 class UserRegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True, min_length=6)
     password2 = serializers.CharField(write_only=True, min_length=6, required=False)
+    otp = serializers.CharField(write_only=True, min_length=6, max_length=6, required=True)
 
     class Meta:
         model = User
         fields = ['username', 'email', 'phone', 'password', 'password2', 'first_name', 
-                  'last_name', 'role']
+                  'last_name', 'role', 'otp']
         extra_kwargs = {
             'phone': {'required': False, 'allow_blank': True}
         }
@@ -31,6 +32,24 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         password2 = data.pop('password2', None)
         if password2 and data['password'] != password2:
             raise serializers.ValidationError("Passwords don't match")
+
+        otp = data.pop('otp', None)
+        email = data.get('email')
+        if not otp or not email:
+            raise serializers.ValidationError({"otp": ["OTP and email are required for verification."]})
+            
+        from django.utils import timezone
+        from .models import OTPVerification
+        
+        try:
+            otp_record = OTPVerification.objects.filter(email=email).latest('created_at')
+            if otp_record.otp_code != otp:
+                raise serializers.ValidationError({"otp": ["Invalid OTP code."]})
+            if otp_record.expires_at < timezone.now():
+                raise serializers.ValidationError({"otp": ["OTP has expired."]})
+            otp_record.delete()
+        except OTPVerification.DoesNotExist:
+            raise serializers.ValidationError({"otp": ["Please request an OTP first."]})
 
         # Convert empty phone to None so unique constraint allows multiple users with no phone
         if 'phone' in data and not data['phone']:

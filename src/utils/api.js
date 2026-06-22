@@ -65,6 +65,7 @@ api.interceptors.response.use(
 
 // ========== Authentication API ==========
 export const authAPI = {
+  sendOtp: (email) => api.post('/users/send_otp/', { email }),
   register: (data) => api.post('/users/register/', data),
   login: (email, password) => api.post('/users/token/', { username: email, password }),
   refreshToken: (refresh_token) => api.post('/users/token/refresh/', { refresh: refresh_token }),
