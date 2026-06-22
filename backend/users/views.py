@@ -70,6 +70,7 @@ class UserViewSet(viewsets.ModelViewSet):
             )
         except Exception as e:
             print("Email sending failed:", str(e))
+            return Response({'error': f"Failed to send email: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
         return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
 
@@ -154,6 +155,7 @@ class UserViewSet(viewsets.ModelViewSet):
             )
         except Exception as e:
             print("Email sending failed:", str(e))
+            return Response({'error': f"Failed to send email: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
         return Response({
             'message': 'OTP generated successfully.',
@@ -170,8 +172,17 @@ class UserViewSet(viewsets.ModelViewSet):
         if not email or not otp or not new_password:
             return Response({'error': 'email, otp, and new_password are required.'}, status=400)
             
-        if len(new_password) < 6:
-            return Response({'error': 'Password must be at least 6 characters.'}, status=400)
+        import re
+        if len(new_password) < 8:
+            return Response({'error': 'Password must be at least 8 characters.'}, status=400)
+        if not re.search(r'[A-Z]', new_password):
+            return Response({'error': 'Password must contain at least one uppercase letter.'}, status=400)
+        if not re.search(r'[a-z]', new_password):
+            return Response({'error': 'Password must contain at least one lowercase letter.'}, status=400)
+        if not re.search(r'[0-9]', new_password):
+            return Response({'error': 'Password must contain at least one number.'}, status=400)
+        if not re.search(r'[^A-Za-z0-9]', new_password):
+            return Response({'error': 'Password must contain at least one special character.'}, status=400)
             
         try:
             otp_record = OTPVerification.objects.filter(email=email).latest('created_at')

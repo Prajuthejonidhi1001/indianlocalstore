@@ -180,13 +180,16 @@ export default function LoginPage() {
                   <input
                     type={showPw ? 'text' : 'password'}
                     className="form-input"
-                    placeholder="Minimum 6 characters"
+                    placeholder="Minimum 8 characters"
                     value={fpNewPassword}
                     onChange={e => setFpNewPassword(e.target.value)}
                   />
                   <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)}>
                     {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6, lineHeight: 1.4 }}>
+                  Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.
                 </div>
               </div>
               <div className="form-group">

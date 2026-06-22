@@ -344,6 +344,9 @@ export default function RegisterPage() {
             </div>
             {form.password.length > 0 && (
               <div style={{ marginTop: 8 }}>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6, lineHeight: 1.4 }}>
+                  Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.
+                </div>
                 <div style={{ height: 4, borderRadius: 2, background: 'var(--border-subtle)', overflow: 'hidden' }}>
                   <div style={{ height: '100%', borderRadius: 2, transition: 'all 0.4s', width: `${(passwordStrength / 4) * 100}%`, backgroundColor: passwordStrength <= 1 ? '#E74C3C' : passwordStrength === 2 ? '#F1C40F' : passwordStrength === 3 ? '#3498DB' : '#2ECC71' }} />
                 </div>

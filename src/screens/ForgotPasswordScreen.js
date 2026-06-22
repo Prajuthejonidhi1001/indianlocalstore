@@ -143,6 +143,9 @@ export default function ForgotPasswordScreen({ navigation }) {
                 <Ionicons name={showPass ? 'eye-off' : 'eye'} size={16} color={COLORS.textMuted} />
               </TouchableOpacity>
             </View>
+            <Text style={{ fontSize: 11, color: COLORS.textMuted, marginTop: 4, marginBottom: 12, lineHeight: 16 }}>
+              Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special character.
+            </Text>
 
             <Text style={styles.label}>Confirm Password</Text>
             <View style={styles.inputWrap}>

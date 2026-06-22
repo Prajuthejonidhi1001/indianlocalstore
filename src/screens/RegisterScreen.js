@@ -258,9 +258,6 @@ export default function RegisterScreen({ navigation }) {
     </View>
   );
 
-  const strengthColor = passwordStrength <= 1 ? '#E74C3C' : passwordStrength === 2 ? '#F1C40F' : passwordStrength === 3 ? '#3498DB' : '#2ECC71';
-  const strengthLabel = passwordStrength <= 1 ? 'Weak' : passwordStrength === 2 ? 'Fair' : passwordStrength === 3 ? 'Good' : 'Strong';
-
   return (
     <SafeAreaView style={styles.container}>
       {/* Background gradient orb */}
