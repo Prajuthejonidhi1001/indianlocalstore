@@ -176,23 +176,30 @@ export default function LoginPage() {
               </div>
               <div className="form-group">
                 <label className="form-label">New Password</label>
-                <input
-                  type="password"
-                  className="form-input"
-                  placeholder="Minimum 6 characters"
-                  value={fpNewPassword}
-                  onChange={e => setFpNewPassword(e.target.value)}
-                />
+                <div className="input-with-icon">
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    className="form-input"
+                    placeholder="Minimum 6 characters"
+                    value={fpNewPassword}
+                    onChange={e => setFpNewPassword(e.target.value)}
+                  />
+                  <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)}>
+                    {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label">Confirm Password</label>
-                <input
-                  type="password"
-                  className="form-input"
-                  placeholder="Re-enter new password"
-                  value={fpConfirmPassword}
-                  onChange={e => setFpConfirmPassword(e.target.value)}
-                />
+                <div className="input-with-icon">
+                  <input
+                    type={showPw ? 'text' : 'password'}
+                    className="form-input"
+                    placeholder="Re-enter new password"
+                    value={fpConfirmPassword}
+                    onChange={e => setFpConfirmPassword(e.target.value)}
+                  />
+                </div>
               </div>
               <button type="submit" className="btn btn-primary btn-full" disabled={fpLoading}>
                 {fpLoading ? <span className="spinner-sm" /> : <>Reset Password <ArrowRight size={16} /></>}
