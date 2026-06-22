@@ -135,7 +135,7 @@ export default function RegisterPage() {
         toast.success("Verification code sent to your email!");
       }
     } catch (err) {
-      toast.error('Failed to send verification code. Email might be in use.');
+      toast.error(err.response?.data?.error || 'Failed to send verification code.');
     } finally {
       setLoading(false);
     }
