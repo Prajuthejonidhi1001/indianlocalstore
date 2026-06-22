@@ -15,6 +15,7 @@ import random
 from django.utils import timezone
 from datetime import timedelta
 from django.core.mail import send_mail
+from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .models import OTPVerification
@@ -62,7 +63,7 @@ class UserViewSet(viewsets.ModelViewSet):
             send_mail(
                 'Your Verification Code - Indian Local Store',
                 plain_message,
-                'noreply@indianlocalstore.com',
+                settings.DEFAULT_FROM_EMAIL,
                 [email],
                 html_message=html_message,
                 fail_silently=False,
@@ -146,7 +147,7 @@ class UserViewSet(viewsets.ModelViewSet):
             send_mail(
                 'Password Reset Code - Indian Local Store',
                 plain_message,
-                'noreply@indianlocalstore.com',
+                settings.DEFAULT_FROM_EMAIL,
                 [email],
                 html_message=html_message,
                 fail_silently=False,
