@@ -114,46 +114,80 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def forgot_password(self, request):
-        """Generate a password reset token for the given username or email."""
-        import secrets
-        identifier = request.data.get('username') or request.data.get('email', '')
-        if not identifier:
-            return Response({'error': 'Provide username or email.'}, status=400)
-        user = None
+        """Generate a 6-digit OTP and send to the user's email."""
+        email = request.data.get('email', '')
+        if not email:
+            return Response({'error': 'Provide email.'}, status=400)
+            
         try:
-            user = User.objects.get(username=identifier)
+            user = User.objects.get(email=email)
         except User.DoesNotExist:
-            try:
-                user = User.objects.get(email=identifier)
-            except User.DoesNotExist:
-                # Do not reveal whether account exists
-                return Response({'message': 'If that account exists, a reset token has been generated.'})
-        token = secrets.token_urlsafe(32)
-        user.password_reset_token = token
-        user.save(update_fields=['password_reset_token'])
+            # Do not reveal whether account exists
+            return Response({'message': 'If that account exists, an OTP has been sent.'})
+            
+        otp_code = f"{random.randint(100000, 999999)}"
+        expires_at = timezone.now() + timedelta(minutes=10)
+        OTPVerification.objects.create(email=email, otp_code=otp_code, expires_at=expires_at)
+
+        html_message = f"""
+        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+            <h2 style="color: #FF6B35; text-align: center;">Password Reset</h2>
+            <p style="font-size: 16px; color: #333;">Hello,</p>
+            <p style="font-size: 16px; color: #333;">Please use the verification code below to reset your password. This code is valid for 10 minutes.</p>
+            <div style="margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px; text-align: center;">
+                <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #FF6B35;">{otp_code}</span>
+            </div>
+            <p style="font-size: 14px; color: #888; text-align: center;">If you didn't request this, please ignore this email.</p>
+        </div>
+        """
+        plain_message = strip_tags(html_message)
+        
+        try:
+            send_mail(
+                'Password Reset Code - Indian Local Store',
+                plain_message,
+                'noreply@indianlocalstore.com',
+                [email],
+                html_message=html_message,
+                fail_silently=False,
+            )
+        except Exception as e:
+            print("Email sending failed:", str(e))
+            
         return Response({
-            'message': 'Reset token generated successfully.',
-            'reset_token': token,
+            'message': 'OTP generated successfully.',
             'username': user.username,
         })
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny])
     def reset_password(self, request):
-        """Reset password using the token returned by forgot_password."""
-        token = request.data.get('reset_token', '')
+        """Reset password using OTP verification."""
+        email = request.data.get('email', '')
+        otp = request.data.get('otp', '')
         new_password = request.data.get('new_password', '')
-        if not token or not new_password:
-            return Response({'error': 'reset_token and new_password are required.'}, status=400)
+        
+        if not email or not otp or not new_password:
+            return Response({'error': 'email, otp, and new_password are required.'}, status=400)
+            
         if len(new_password) < 6:
             return Response({'error': 'Password must be at least 6 characters.'}, status=400)
+            
         try:
-            user = User.objects.get(password_reset_token=token)
+            otp_record = OTPVerification.objects.filter(email=email).latest('created_at')
+            if otp_record.otp_code != otp:
+                return Response({'error': 'Invalid OTP code.'}, status=400)
+            if otp_record.expires_at < timezone.now():
+                return Response({'error': 'OTP has expired.'}, status=400)
+                
+            user = User.objects.get(email=email)
+            user.set_password(new_password)
+            user.save()
+            otp_record.delete()
+            return Response({'message': 'Password has been reset successfully.'})
+        except OTPVerification.DoesNotExist:
+            return Response({'error': 'Please request an OTP first.'}, status=400)
         except User.DoesNotExist:
-            return Response({'error': 'Invalid or expired reset token.'}, status=400)
-        user.set_password(new_password)
-        user.password_reset_token = ''
-        user.save(update_fields=['password', 'password_reset_token'])
-        return Response({'message': 'Password reset successfully. You can now log in.'})
+            return Response({'error': 'User not found.'}, status=404)
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):

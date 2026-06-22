@@ -321,8 +321,16 @@ export default function RegisterPage() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="phone">Phone</label>
-            <input id="phone" type="tel" className="form-input" placeholder="+91 98765 43210"
-              value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+            <div style={{ display: 'flex', alignItems: 'stretch' }}>
+              <div style={{ padding: '0 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-subtle)', borderRight: 'none', borderRadius: '12px 0 0 12px', color: 'var(--text)', fontWeight: '600' }}>
+                +91
+              </div>
+              <input id="phone" type="tel" className="form-input" style={{ borderRadius: '0 12px 12px 0', flex: 1 }} placeholder="9876543210"
+                value={form.phone} onChange={e => {
+                  const val = e.target.value.replace(/\D/g, '');
+                  if (val.length <= 10) setForm({ ...form, phone: val });
+                }} />
+            </div>
           </div>
 
           <div className="form-group">
@@ -335,14 +343,14 @@ export default function RegisterPage() {
               </button>
             </div>
             {form.password.length > 0 && (
-              <>
-                <div style={{ height: 4, borderRadius: 2, marginTop: 8, background: 'var(--border-subtle)', overflow: 'hidden' }}>
+              <div style={{ marginTop: 8 }}>
+                <div style={{ height: 4, borderRadius: 2, background: 'var(--border-subtle)', overflow: 'hidden' }}>
                   <div style={{ height: '100%', borderRadius: 2, transition: 'all 0.4s', width: `${(passwordStrength / 4) * 100}%`, backgroundColor: passwordStrength <= 1 ? '#E74C3C' : passwordStrength === 2 ? '#F1C40F' : passwordStrength === 3 ? '#3498DB' : '#2ECC71' }} />
                 </div>
-                <div style={{ fontSize: 12, textAlign: 'right', marginTop: 4, color: passwordStrength <= 1 ? '#E74C3C' : passwordStrength === 2 ? '#F1C40F' : passwordStrength === 3 ? '#3498DB' : '#2ECC71' }}>
+                <div style={{ fontSize: 12, textAlign: 'right', marginTop: 4, fontWeight: 600, color: passwordStrength <= 1 ? '#E74C3C' : passwordStrength === 2 ? '#F1C40F' : passwordStrength === 3 ? '#3498DB' : '#2ECC71' }}>
                   {passwordStrength <= 1 ? 'Weak' : passwordStrength === 2 ? 'Fair' : passwordStrength === 3 ? 'Good' : 'Strong'}
                 </div>
-              </>
+              </div>
             )}
           </div>
 

@@ -42,13 +42,12 @@ export default function LoginPage() {
 
   const handleForgotRequest = async (e) => {
     e.preventDefault();
-    if (!fpIdentifier.trim()) { toast.error('Please enter your username or email'); return; }
+    if (!fpIdentifier.trim()) { toast.error('Please enter your email'); return; }
     setFpLoading(true);
     try {
-      const res = await axios.post(`${API_URL}/users/forgot_password/`, { username: fpIdentifier });
-      setFpToken(res.data.reset_token || '');
+      await axios.post(`${API_URL}/users/forgot_password/`, { email: fpIdentifier });
       setResetStep(2);
-      toast.success('Reset token generated!');
+      toast.success('OTP sent to your email!');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Could not find that account');
     } finally {
@@ -58,21 +57,53 @@ export default function LoginPage() {
 
   const handleResetPassword = async (e) => {
     e.preventDefault();
-    if (!fpToken.trim() || !fpNewPassword.trim()) { toast.error('Please fill all fields'); return; }
+    const code = fpToken.join ? fpToken.join('') : fpToken;
+    if (code.length !== 6 || !fpNewPassword.trim()) { toast.error('Please fill all fields'); return; }
     if (fpNewPassword !== fpConfirmPassword) { toast.error('Passwords do not match'); return; }
     if (fpNewPassword.length < 6) { toast.error('Password must be at least 6 characters'); return; }
     setFpLoading(true);
     try {
       await axios.post(`${API_URL}/users/reset_password/`, {
-        reset_token: fpToken,
+        email: fpIdentifier,
+        otp: code,
         new_password: fpNewPassword,
       });
       setFpSuccess(true);
       toast.success('Password reset! Please log in.');
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Invalid or expired token');
+      toast.error(err.response?.data?.error || 'Invalid or expired OTP');
     } finally {
       setFpLoading(false);
+    }
+  };
+
+  // OTP Magic Input Handlers
+  const handleOtpChange = (element, index) => {
+    if (isNaN(element.value)) return;
+    const newOtp = Array.isArray(fpToken) ? [...fpToken] : new Array(6).fill('');
+    newOtp[index] = element.value;
+    setFpToken(newOtp);
+    if (element.nextSibling && element.value) {
+      element.nextSibling.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text/plain').slice(0, 6).split('');
+    if (pasteData.some(isNaN)) return;
+    const newOtp = new Array(6).fill('');
+    pasteData.forEach((char, index) => newOtp[index] = char);
+    setFpToken(newOtp);
+    const inputs = document.querySelectorAll('.otp-input');
+    if (inputs[pasteData.length - 1]) {
+      inputs[pasteData.length - 1].focus();
+    }
+  };
+
+  const handleOtpKeyDown = (e, index) => {
+    if (e.key === 'Backspace' && (!fpToken[index] || fpToken[index] === '') && e.target.previousSibling) {
+      e.target.previousSibling.focus();
     }
   };
 
@@ -82,7 +113,7 @@ export default function LoginPage() {
       <div className="auth-page">
         <div className="auth-bg" />
         <div className="auth-card glass-card animate-in">
-          <button className="auth-back-btn" onClick={() => { setForgotMode(false); setResetStep(1); setFpSuccess(false); }}>
+          <button className="auth-back-btn" onClick={() => { setForgotMode(false); setResetStep(1); setFpSuccess(false); setFpToken(new Array(6).fill('')); }}>
             <ChevronLeft size={16} /> Back to Login
           </button>
 
@@ -94,52 +125,54 @@ export default function LoginPage() {
 
           <h2 className="auth-title">Reset Password</h2>
           <p className="auth-subtitle">
-            {fpSuccess ? 'Password updated successfully!' : resetStep === 1 ? 'Enter your username or email to get a reset token.' : 'Enter your reset token and new password.'}
+            {fpSuccess ? 'Password updated successfully!' : resetStep === 1 ? 'Enter your email to get an OTP.' : 'Enter your 6-digit OTP and new password.'}
           </p>
 
           {fpSuccess ? (
             <div className="fp-success">
               <CheckCircle size={48} color="#00E676" />
               <p>Your password has been reset. You can now log in.</p>
-              <button className="btn btn-primary btn-full" onClick={() => { setForgotMode(false); setResetStep(1); setFpSuccess(false); }}>
+              <button className="btn btn-primary btn-full" onClick={() => { setForgotMode(false); setResetStep(1); setFpSuccess(false); setFpToken(new Array(6).fill('')); }}>
                 Go to Login <ArrowRight size={16} />
               </button>
             </div>
           ) : resetStep === 1 ? (
             <form onSubmit={handleForgotRequest} className="auth-form">
               <div className="form-group">
-                <label className="form-label">Username or Email</label>
+                <label className="form-label">Email</label>
                 <input
-                  type="text"
+                  type="email"
                   className="form-input"
-                  placeholder="Enter your username or email"
+                  placeholder="Enter your email"
                   value={fpIdentifier}
                   onChange={e => setFpIdentifier(e.target.value)}
                   autoFocus
                 />
               </div>
               <button type="submit" className="btn btn-primary btn-full" disabled={fpLoading}>
-                {fpLoading ? <span className="spinner-sm" /> : <>Get Reset Token <ArrowRight size={16} /></>}
+                {fpLoading ? <span className="spinner-sm" /> : <>Send OTP <ArrowRight size={16} /></>}
               </button>
             </form>
           ) : (
             <form onSubmit={handleResetPassword} className="auth-form">
-              {fpToken && (
-                <div className="fp-token-box">
-                  <p className="fp-token-label">Your Reset Token:</p>
-                  <code className="fp-token-value">{fpToken}</code>
-                  <p className="fp-token-note">⚠️ Copy this (in production it would be emailed to you)</p>
-                </div>
-              )}
               <div className="form-group">
-                <label className="form-label">Reset Token</label>
-                <input
-                  type="text"
-                  className="form-input"
-                  placeholder="Paste your reset token"
-                  value={fpToken}
-                  onChange={e => setFpToken(e.target.value)}
-                />
+                <label className="form-label" style={{ textAlign: 'center', marginBottom: 16 }}>Verification OTP</label>
+                <div className="otp-container" style={{ justifyContent: 'center' }}>
+                  {(Array.isArray(fpToken) ? fpToken : new Array(6).fill('')).map((data, index) => (
+                    <input
+                      className="otp-input"
+                      type="text"
+                      name="otp"
+                      maxLength="1"
+                      key={index}
+                      value={data}
+                      onChange={e => handleOtpChange(e.target, index)}
+                      onFocus={e => e.target.select()}
+                      onKeyDown={e => handleOtpKeyDown(e, index)}
+                      onPaste={handleOtpPaste}
+                    />
+                  ))}
+                </div>
               </div>
               <div className="form-group">
                 <label className="form-label">New Password</label>
@@ -164,7 +197,6 @@ export default function LoginPage() {
               <button type="submit" className="btn btn-primary btn-full" disabled={fpLoading}>
                 {fpLoading ? <span className="spinner-sm" /> : <>Reset Password <ArrowRight size={16} /></>}
               </button>
-              <button type="button" className="btn-ghost" onClick={() => setResetStep(1)}>← Go back</button>
             </form>
           )}
         </div>

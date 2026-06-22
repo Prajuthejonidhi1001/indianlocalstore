@@ -51,8 +51,13 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         except OTPVerification.DoesNotExist:
             raise serializers.ValidationError({"otp": ["Please request an OTP first."]})
 
-        # Convert empty phone to None so unique constraint allows multiple users with no phone
-        if 'phone' in data and not data['phone']:
+        # Enforce exactly 10 digits for phone
+        phone = data.get('phone')
+        if phone:
+            if not re.match(r'^\d{10}$', phone):
+                raise serializers.ValidationError({"phone": ["Phone number must be exactly 10 digits."]})
+            # Convert empty phone to None so unique constraint allows multiple users with no phone
+        elif 'phone' in data and not phone:
             data['phone'] = None
 
         password = data['password']

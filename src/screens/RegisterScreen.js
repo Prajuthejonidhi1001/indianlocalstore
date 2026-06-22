@@ -322,7 +322,19 @@ export default function RegisterScreen({ navigation }) {
                 </View>
                 {renderInput('at-outline', 'Username', form.username, 'username')}
                 {renderInput('mail-outline', 'Email', form.email, 'email', false, 'email-address')}
-                {renderInput('call-outline', 'Phone', form.phone, 'phone', false, 'phone-pad')}
+                <View style={[styles.inputRow, focusedInput === 'phone' && styles.inputRowFocused]}>
+                  <Ionicons name="call-outline" size={18} color={focusedInput === 'phone' ? '#FF6B00' : COLORS.textMuted} style={{ marginRight: 10 }} />
+                  <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '600', marginRight: 5 }}>+91</Text>
+                  <TextInput
+                    placeholder="9876543210" value={form.phone}
+                    onChangeText={t => {
+                      const val = t.replace(/\D/g, '');
+                      if (val.length <= 10) setForm({ ...form, phone: val });
+                    }}
+                    style={styles.inputText} keyboardType="phone-pad" placeholderTextColor={COLORS.textMuted}
+                    onFocus={() => setFocusedInput('phone')} onBlur={() => setFocusedInput(null)}
+                  />
+                </View>
                 {renderInput('lock-closed-outline', 'Password (min 8 chars)', form.password, 'password', true)}
 
                 {form.password.length > 0 && (
