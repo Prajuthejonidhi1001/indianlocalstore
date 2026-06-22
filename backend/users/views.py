@@ -124,8 +124,7 @@ class UserViewSet(viewsets.ModelViewSet):
         try:
             user = User.objects.get(email=email)
         except User.DoesNotExist:
-            # Do not reveal whether account exists
-            return Response({'message': 'If that account exists, an OTP has been sent.'})
+            return Response({'error': 'This email is not registered. Please create an account first.'}, status=404)
             
         otp_code = f"{random.randint(100000, 999999)}"
         expires_at = timezone.now() + timedelta(minutes=10)

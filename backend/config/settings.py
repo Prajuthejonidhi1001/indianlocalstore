@@ -240,13 +240,10 @@ LOGGING = {
 EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
 EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 
-if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
-    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-    EMAIL_HOST = 'smtp.gmail.com'
-    EMAIL_PORT = 587
-    EMAIL_USE_TLS = True
-else:
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
 
-DEFAULT_FROM_EMAIL = 'Indian Local Store <stiratechindianlocalstore@gmail.com>'
+DEFAULT_FROM_EMAIL = f"Indian Local Store <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else 'Indian Local Store <noreply@indianlocalstore.com>'
 SERVER_EMAIL = 'stiratechindianlocalstore@gmail.com'
