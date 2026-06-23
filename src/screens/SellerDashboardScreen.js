@@ -485,11 +485,10 @@ export default function SellerDashboardScreen({ navigation }) {
               </View>
             </View>
 
-            {(isClothing || isFootwear) && (
               <View style={styles.field}>
                 <Text style={styles.label}>Sizes (Tap to toggle)</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                  {(isFootwear ? ['6','7','8','9','10','11'] : ['XS','S','M','L','XL','XXL']).map(size => {
+                  {['XS','S','M','L','XL','XXL','38','40','42','6','7','8','9','10','11','12'].map(size => {
                     const isSel = productVariants.sizes.includes(size);
                     return (
                       <TouchableOpacity 
@@ -529,8 +528,6 @@ export default function SellerDashboardScreen({ navigation }) {
                   })}
                 </View>
               </View>
-            )}
-            
             <View style={styles.field}>
               <Text style={styles.label}>Description</Text>
               <TextInput style={[styles.input, {height: 80, textAlignVertical: 'top'}]} multiline value={productForm.description} onChangeText={t => setProductForm({...productForm, description: t})} />

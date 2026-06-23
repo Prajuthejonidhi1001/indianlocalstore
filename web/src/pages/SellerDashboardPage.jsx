@@ -489,13 +489,12 @@ export default function SellerDashboardPage() {
                   <input type="number" className="form-input" required value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: e.target.value })} />
                 </div>
                 
-                {(isApparel || isFootwear) && (
                   <div className="form-group mb-3 p-3" style={{ background: 'var(--bg-secondary)', borderRadius: '8px' }}>
-                    <label className="form-label" style={{ marginBottom: 12 }}>Product Variants</label>
+                    <label className="form-label" style={{ marginBottom: 12 }}>Product Variants (Optional)</label>
                     <div style={{ marginBottom: 16 }}>
                       <label className="form-label text-sm text-muted">Sizes</label>
                       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {(isApparel ? ['XS', 'S', 'M', 'L', 'XL', 'XXL', '38', '40', '42'] : ['6', '7', '8', '9', '10', '11', '12']).map(size => {
+                        {['XS', 'S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '6', '7', '8', '9', '10', '11', '12'].map(size => {
                           const isActive = productForm.variants.find(v => v.type === 'Size')?.values.includes(size);
                           return (
                             <button
@@ -529,7 +528,6 @@ export default function SellerDashboardPage() {
                       </div>
                     </div>
                   </div>
-                )}
 
                 <div className="form-group mb-4">
                   <label className="form-label">Description *</label>

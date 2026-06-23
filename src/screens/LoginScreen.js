@@ -135,18 +135,17 @@ export default function LoginScreen({ navigation, route }) {
                 <Ionicons name={showPass ? 'eye-off' : 'eye'} size={22} color={showPass ? '#FF6B00' : COLORS.textMuted} />
               </TouchableOpacity>
             </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10, marginBottom: 20 }}>
+              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgotBtn}>
+                <Text style={styles.forgotText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            </View>
 
             <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading} activeOpacity={0.85}>
               <View style={styles.btnHologram} />
               <Text style={styles.loginBtnText}>{loading ? 'Authenticating...' : 'Sign In Now'}</Text>
               {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
             </TouchableOpacity>
-
-            <Animated.View style={[styles.footer, { opacity: cardOpacity }]}>
-              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgotBtn}>
-                <Text style={styles.forgotText}>Forgot Password?</Text>
-              </TouchableOpacity>
-            </Animated.View>
 
             <Animated.View style={[styles.footer, { opacity: cardOpacity }]}>
               <Text style={styles.footerText}>New to IndianLocalStore? </Text>
