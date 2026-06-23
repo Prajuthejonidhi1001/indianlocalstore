@@ -236,71 +236,99 @@ export default function NearbyShopsPage() {
             <p>No shops in this particular field or categories</p>
           </div>
         ) : (
-          <div className="shops-cards-grid">
-            {filteredShops.map((shop, i) => {
-              const avatarColor = `hsl(${(shop.name.charCodeAt(0) * 37) % 360}, 60%, 42%)`;
-              const logoSrc = shop.logo
-                ? (shop.logo.startsWith('http') ? shop.logo : `/media/${shop.logo}`)
-                : null;
+          <>
+          <>
+            {(() => {
+              const nearby = filteredShops.filter(s => s.distance == null || s.distance <= 5);
+              const distant = filteredShops.filter(s => s.distance != null && s.distance > 5);
+
+              const renderCards = (shopList) => (
+                <div className="shops-cards-grid">
+                  {shopList.map((shop, i) => {
+                    const avatarColor = `hsl(${(shop.name.charCodeAt(0) * 37) % 360}, 60%, 42%)`;
+                    const logoSrc = shop.logo ? (shop.logo.startsWith('http') ? shop.logo : `/media/${shop.logo}`) : null;
+
+                    return (
+                      <Link
+                        to={`/shops/${shop.id}`}
+                        key={shop.id}
+                        className={`shop-card-ns animate-in stagger-${(i % 10) + 1}`}
+                        id={`shop-card-${shop.id}`}
+                      >
+                        <div className="scn-banner">
+                          {logoSrc && <img src={logoSrc} alt={shop.name} />}
+                          <div className="scn-banner-overlay" />
+                          <div className="scn-tags">
+                            <span className="scn-open-tag">
+                              <span className="scn-open-dot" />
+                              {shop.is_open ? 'Open' : 'Closed'}
+                            </span>
+                            {shop.verification_status === 'verified' && (
+                              <span className="scn-verified-tag">✓ Verified</span>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="scn-body">
+                          <div className="scn-row1">
+                            <div className="scn-avatar" style={{ background: avatarColor }}>
+                              {logoSrc ? <img src={logoSrc} alt={shop.name} /> : shop.name[0].toUpperCase()}
+                            </div>
+                            <div className="scn-info">
+                              <div className="scn-name">{shop.name}</div>
+                              <div className="scn-city">
+                                <MapPin size={11} /> {shop.city}
+                                {shop.distance != null && <span style={{ marginLeft: 6, color: 'var(--primary)' }}>({shop.distance}km)</span>}
+                              </div>
+                            </div>
+                            <div className="scn-rating">
+                              <Star size={13} fill="currentColor" />
+                              {shop.rating?.toFixed(1) || '0.0'}
+                            </div>
+                          </div>
+
+                          <div className="scn-footer">
+                            <span className="scn-phone">
+                              <Phone size={12} />
+                              {shop.reviews_count || 0} review{shop.reviews_count !== 1 ? 's' : ''}
+                            </span>
+                            <span className="scn-cta">
+                              Visit Shop →
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
 
               return (
-                <Link
-                  to={`/shops/${shop.id}`}
-                  key={shop.id}
-                  className={`shop-card-ns animate-in stagger-${(i % 10) + 1}`}
-                  id={`shop-card-${shop.id}`}
-                >
-                  {/* Banner */}
-                  <div className="scn-banner">
-                    {logoSrc && <img src={logoSrc} alt={shop.name} />}
-                    <div className="scn-banner-overlay" />
-                    <div className="scn-tags">
-                      <span className="scn-open-tag">
-                        <span className="scn-open-dot" />
-                        {shop.is_open ? 'Open' : 'Closed'}
-                      </span>
-                      {shop.verification_status === 'verified' && (
-                        <span className="scn-verified-tag">✓ Verified</span>
-                      )}
+                <div>
+                  {nearby.length === 0 && distant.length > 0 && (
+                    <div className="empty-state" style={{ padding: '2rem 1rem' }}>
+                      <div className="empty-state-icon" style={{ fontSize: '3rem' }}>📍</div>
+                      <h3 style={{ margin: '0.5rem 0' }}>No shops in your location</h3>
+                      <p>We couldn't find any shops within 5km of your area.</p>
                     </div>
-                  </div>
+                  )}
 
-                  {/* Body */}
-                  <div className="scn-body">
-                    <div className="scn-row1">
-                      {/* Avatar */}
-                      <div className="scn-avatar" style={{ background: avatarColor }}>
-                        {logoSrc
-                          ? <img src={logoSrc} alt={shop.name} />
-                          : shop.name[0].toUpperCase()
-                        }
-                      </div>
-                      <div className="scn-info">
-                        <div className="scn-name">{shop.name}</div>
-                        <div className="scn-city">
-                          <MapPin size={11} /> {shop.city}
-                        </div>
-                      </div>
-                      <div className="scn-rating">
-                        <Star size={13} fill="currentColor" />
-                        {shop.rating?.toFixed(1) || '0.0'}
-                      </div>
-                    </div>
+                  {nearby.length > 0 && renderCards(nearby)}
 
-                    <div className="scn-footer">
-                      <span className="scn-phone">
-                        <Phone size={12} />
-                        {shop.reviews_count || 0} review{shop.reviews_count !== 1 ? 's' : ''}
-                      </span>
-                      <span className="scn-cta">
-                        Visit Shop →
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                  {distant.length > 0 && (
+                    <>
+                      <div style={{ margin: '3rem 0 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+                        <h3 style={{ fontSize: '1.2rem', color: 'var(--text-color)' }}>Distant Shops</h3>
+                        <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
+                      </div>
+                      {renderCards(distant)}
+                    </>
+                  )}
+                </div>
               );
-            })}
-          </div>
+            })()}
+          </>
         )}
       </div>
     </div>

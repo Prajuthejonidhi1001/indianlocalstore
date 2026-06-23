@@ -28,6 +28,9 @@ class ShopListSerializer(serializers.ModelSerializer):
                   'category', 'subcategory']
 
     def get_distance(self, obj):
+        if hasattr(obj, 'distance') and obj.distance is not None:
+            return round(obj.distance, 2)
+            
         request = self.context.get('request')
         if request and hasattr(request.user, 'latitude') and request.user.latitude:
             from math import radians, cos, sin, asin, sqrt

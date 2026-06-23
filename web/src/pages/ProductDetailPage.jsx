@@ -12,6 +12,7 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [qty, setQty] = useState(1);
+  const [selectedVariants, setSelectedVariants] = useState({});
   const [reviewForm, setReviewForm] = useState({ rating: 5, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
 
@@ -97,6 +98,32 @@ export default function ProductDetailPage() {
             </div>
 
             <p className="pd-description">{product.description}</p>
+
+            {product.variants && product.variants.length > 0 && (
+              <div className="pd-variants" style={{ margin: '1.5rem 0' }}>
+                {product.variants.map((v) => (
+                  <div key={v.type} style={{ marginBottom: '1rem' }}>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
+                      Select {v.type}
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      {v.values.map(val => {
+                        const isSelected = selectedVariants[v.type] === val;
+                        return (
+                          <button
+                            key={val}
+                            className={`btn btn-sm ${isSelected ? 'btn-primary' : 'btn-outline'}`}
+                            onClick={() => setSelectedVariants({ ...selectedVariants, [v.type]: val })}
+                          >
+                            {val}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
 
             <div className="pd-stock">
               {product.stock > 0 ? (

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { MapPin, Phone, Mail, Clock, Star, ArrowLeft, Shield } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Star, ArrowLeft, Shield, Search } from 'lucide-react';
 import { shopAPI, productAPI } from '../api';
 import ProductCard from '../components/ProductCard';
 import './ShopDetailPage.css';
@@ -10,6 +10,9 @@ export default function ShopDetailPage() {
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -74,19 +77,31 @@ export default function ShopDetailPage() {
 
       <div className="container pt-4">
         <div className="shop-products-section">
-          <div className="shop-products-header">
+          <div className="shop-products-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <h2>Shop Products</h2>
+            <div className="search-bar" style={{ flex: '1', maxWidth: '300px' }}>
+              <div className="input-with-icon">
+                <Search size={18} className="input-icon" />
+                <input 
+                  type="text" 
+                  className="form-input" 
+                  placeholder="Search products in this shop..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
           </div>
           
-          {products.length === 0 ? (
+          {filteredProducts.length === 0 ? (
             <div className="empty-state">
               <div className="empty-state-icon">📦</div>
-              <h3>No products listed</h3>
-              <p>This shop hasn't added any products yet.</p>
+              <h3>No products found</h3>
+              <p>{searchQuery ? 'Try a different search term.' : "This shop hasn't added any products yet."}</p>
             </div>
           ) : (
             <div className="shop-products-grid">
-              {products.map(p => <ProductCard key={p.id} product={p} />)}
+              {filteredProducts.map(p => <ProductCard key={p.id} product={p} />)}
             </div>
           )}
         </div>

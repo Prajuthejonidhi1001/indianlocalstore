@@ -53,8 +53,8 @@ export const authAPI = {
   getProfile: () => api.get('/users/me/'),
   updateProfile: (data) => api.put('/users/update_profile/', data),
   getSellers: () => api.get('/users/sellers/'),
-  forgotPassword: (identifier) => api.post('/users/forgot_password/', { username: identifier }),
-  resetPassword: (reset_token, new_password) => api.post('/users/reset_password/', { reset_token, new_password }),
+  forgotPassword: (email) => api.post('/users/forgot_password/', { email }),
+  resetPassword: (email, otp, new_password) => api.post('/users/reset_password/', { email, otp, new_password }),
 };
 
 // ── Products ──────────────────────────────────────────
@@ -64,8 +64,8 @@ export const productAPI = {
   getProducts: (params) => api.get('/products/products/', { params }),
   getProductDetail: (id) => api.get(`/products/products/${id}/`),
   searchProducts: (query) => api.get('/products/products/search/', { params: { q: query } }),
-  createProduct: (data) => api.post('/products/products/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  updateProduct: (id, data) => api.put(`/products/products/${id}/`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  createProduct: (data) => api.post('/products/products/', data),
+  updateProduct: (id, data) => api.put(`/products/products/${id}/`, data),
   deleteProduct: (id) => api.delete(`/products/products/${id}/`),
   addReview: (productId, data) => api.post(`/products/products/${productId}/add_review/`, data),
   getMyProducts: () => api.get('/products/products/my_products/'),
@@ -76,8 +76,8 @@ export const shopAPI = {
   getShops: (params) => api.get('/shops/', { params }),
   getShopDetail: (id) => api.get(`/shops/${id}/`),
   getNearbyShops: (lat, lng) => api.get('/shops/nearby/', { params: { latitude: lat, longitude: lng } }),
-  createShop: (data) => api.post('/shops/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
-  updateShop: (id, data) => api.put(`/shops/${id}/`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  createShop: (data) => api.post('/shops/', data),
+  updateShop: (id, data) => api.put(`/shops/${id}/`, data),
   getMyShop: () => api.get('/shops/my_shop/'),
   addReview: (shopId, data) => api.post(`/shops/${shopId}/add_review/`, data),
 };

@@ -68,6 +68,8 @@ class Product(models.Model):
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     stock = models.IntegerField(default=0)
     
+    variants = models.JSONField(default=list, blank=True, null=True)
+    
     image = models.ImageField(upload_to='products/', blank=True, default='')
     rating = models.FloatField(default=0)
     reviews_count = models.IntegerField(default=0)

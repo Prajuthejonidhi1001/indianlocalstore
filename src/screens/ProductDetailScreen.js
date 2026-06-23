@@ -15,6 +15,7 @@ export default function ProductDetailScreen({ route, navigation }) {
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
+  const [selectedVariants, setSelectedVariants] = useState({});
 
   const price = parseFloat(product.price || 0);
   const discountPrice = product.discount_price ? parseFloat(product.discount_price) : null;
@@ -124,6 +125,32 @@ export default function ProductDetailScreen({ route, navigation }) {
 
           {/* Divider */}
           <View style={styles.divider} />
+
+          {/* Variants */}
+          {product.variants && product.variants.length > 0 && (
+            <View style={{ marginBottom: 15 }}>
+              {product.variants.map((v) => (
+                <View key={v.type} style={{ marginBottom: 15 }}>
+                  <Text style={styles.sectionTitle}>Select {v.type}</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                    {v.values.map(val => {
+                      const isSelected = selectedVariants[v.type] === val;
+                      return (
+                        <TouchableOpacity
+                          key={val}
+                          style={{ paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8, borderWidth: 1, borderColor: isSelected ? COLORS.primary : COLORS.border, backgroundColor: isSelected ? 'rgba(255,107,53,0.1)' : 'transparent' }}
+                          onPress={() => setSelectedVariants({ ...selectedVariants, [v.type]: val })}
+                        >
+                          <Text style={{ color: isSelected ? COLORS.primary : COLORS.text, fontWeight: isSelected ? '700' : '500' }}>{val}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              ))}
+              <View style={styles.divider} />
+            </View>
+          )}
 
           {/* Description */}
           {product.description ? (

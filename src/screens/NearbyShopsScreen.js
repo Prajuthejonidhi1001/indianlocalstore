@@ -99,6 +99,9 @@ export default function NearbyShopsScreen({ navigation }) {
     s.name.toLowerCase().includes(search.toLowerCase())
   );
 
+  const nearbyShops = filteredShops.filter(s => s.distance !== undefined && s.distance <= 5);
+  const farShops = filteredShops.filter(s => s.distance === undefined || s.distance > 5);
+
   const renderCategoryPill = ({ item }) => (
     <TouchableOpacity 
       style={[
@@ -240,7 +243,24 @@ export default function NearbyShopsScreen({ navigation }) {
           contentContainerStyle={styles.shopList}
         >
           {filteredShops.length > 0 ? (
-            filteredShops.map(renderShopItem)
+            locationCoords ? (
+              <>
+                {nearbyShops.length > 0 && (
+                  <View style={{ marginBottom: 20 }}>
+                    <Text style={{ fontSize: 18, fontWeight: '800', marginBottom: 10, color: COLORS.text }}>Near You ({"< 5km"})</Text>
+                    {nearbyShops.map(renderShopItem)}
+                  </View>
+                )}
+                {farShops.length > 0 && (
+                  <View>
+                    <Text style={{ fontSize: 18, fontWeight: '800', marginBottom: 10, color: COLORS.text }}>Other Shops</Text>
+                    {farShops.map(renderShopItem)}
+                  </View>
+                )}
+              </>
+            ) : (
+              filteredShops.map(renderShopItem)
+            )
           ) : (
             <View style={styles.emptyContainer}>
               <Ionicons name="storefront-outline" size={60} color={COLORS.elevated} />

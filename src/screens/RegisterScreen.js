@@ -29,6 +29,14 @@ export default function RegisterScreen({ navigation }) {
   const [step, setStep] = useState(1);
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const otpInputs = useRef([]);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timerId = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timerId);
+    }
+  }, [resendCooldown]);
 
   // Form State
   const [form, setForm] = useState({
@@ -157,6 +165,7 @@ export default function RegisterScreen({ navigation }) {
       if (step === 1) {
         await authAPI.sendOtp(form.email);
         setStep(2);
+        setResendCooldown(60);
         Alert.alert('Verification Code Sent', `We sent a code to ${form.email}`);
       }
     } catch {
@@ -164,6 +173,17 @@ export default function RegisterScreen({ navigation }) {
       Alert.alert('Error', 'Failed to send verification code. Email might be in use.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0) return;
+    try {
+      await authAPI.sendOtp(form.email);
+      setResendCooldown(60);
+      Alert.alert('OTP Sent', 'A new verification code has been sent to your email.');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to resend OTP. Please try again.');
     }
   };
 
@@ -502,6 +522,16 @@ export default function RegisterScreen({ navigation }) {
                     />
                   ))}
                 </View>
+
+                <TouchableOpacity 
+                  style={{ alignSelf: 'center', marginVertical: 10 }} 
+                  onPress={handleResendOTP} 
+                  disabled={resendCooldown > 0}
+                >
+                  <Text style={{ color: resendCooldown > 0 ? COLORS.textMuted : COLORS.primary, fontWeight: '600' }}>
+                    {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
+                  </Text>
+                </TouchableOpacity>
 
                 {loading && <ActivityIndicator color="#FF6B00" style={{ marginTop: 20 }} />}
 

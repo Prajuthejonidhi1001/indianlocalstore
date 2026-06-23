@@ -10,9 +10,9 @@ import { useAuth } from '../context/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LoginScreen({ navigation }) {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+export default function LoginScreen({ navigation, route }) {
+  const [username, setUsername] = useState(route.params?.prefillEmail || '');
+  const [password, setPassword] = useState(route.params?.prefillPassword || '');
   const [showPass, setShowPass] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
   

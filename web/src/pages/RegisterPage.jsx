@@ -34,6 +34,14 @@ export default function RegisterPage() {
   const [step, setStep] = useState(1);
   const [otp, setOtp] = useState(new Array(6).fill(''));
   const [otpStatus, setOtpStatus] = useState(''); // 'success' or 'error'
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timerId = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timerId);
+    }
+  }, [resendCooldown]);
 
   // Load categories when seller role is selected
   useEffect(() => {
@@ -132,12 +140,24 @@ export default function RegisterPage() {
       if (step === 1) {
         await authAPI.sendOtp(form.email);
         setStep(2);
+        setResendCooldown(60);
         toast.success("Verification code sent to your email!");
       }
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to send verification code.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+    try {
+      await authAPI.sendOtp(form.email);
+      toast.success('New verification code sent!');
+      setResendCooldown(60);
+    } catch (err) {
+      toast.error('Failed to resend code.');
     }
   };
 
@@ -498,6 +518,12 @@ export default function RegisterPage() {
                   disabled={loading}
                 />
               ))}
+            </div>
+
+            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+              <button type="button" className="btn btn-ghost btn-sm" disabled={resendCooldown > 0} onClick={handleResendOtp}>
+                {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
+              </button>
             </div>
 
             {loading && <div style={{ textAlign: 'center', marginTop: 16 }}><span className="spinner-sm" /></div>}

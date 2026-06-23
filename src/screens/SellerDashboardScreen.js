@@ -32,6 +32,7 @@ export default function SellerDashboardScreen({ navigation }) {
   // Product Form — no category/subcat
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '' });
+  const [productVariants, setProductVariants] = useState({ sizes: [], colors: [] });
   const [productImages, setProductImages] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
 
@@ -42,6 +43,10 @@ export default function SellerDashboardScreen({ navigation }) {
   const [selectedSubcats, setSelectedSubcats] = useState([]);
   const [catsLocked, setCatsLocked] = useState(false);
   const [savingCats, setSavingCats] = useState(false);
+
+  const categoryName = allCategories.find(c => c.id === shop?.category)?.name || '';
+  const isClothing = categoryName.toLowerCase().includes('clothing') || categoryName.toLowerCase().includes('fashion');
+  const isFootwear = categoryName.toLowerCase().includes('footwear') || categoryName.toLowerCase().includes('shoes');
 
   useEffect(() => {
     fetchData();
@@ -176,6 +181,14 @@ export default function SellerDashboardScreen({ navigation }) {
       Object.keys(productForm).forEach(key => {
         if (productForm[key]) formData.append(key, productForm[key]);
       });
+
+      if (productVariants.sizes.length > 0 || productVariants.colors.length > 0) {
+        const variantsArr = [];
+        if (productVariants.sizes.length > 0) variantsArr.push({ type: 'Size', values: productVariants.sizes });
+        if (productVariants.colors.length > 0) variantsArr.push({ type: 'Color', values: productVariants.colors });
+        formData.append('variants', JSON.stringify(variantsArr));
+      }
+
       // First image = main image field
       const makeFileObj = (asset) => {
         const uri = asset.uri;
@@ -471,6 +484,52 @@ export default function SellerDashboardScreen({ navigation }) {
                 <TextInput style={styles.input} keyboardType="number-pad" value={productForm.stock} onChangeText={t => setProductForm({...productForm, stock: t})} />
               </View>
             </View>
+
+            {(isClothing || isFootwear) && (
+              <View style={styles.field}>
+                <Text style={styles.label}>Sizes (Tap to toggle)</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                  {(isFootwear ? ['6','7','8','9','10','11'] : ['XS','S','M','L','XL','XXL']).map(size => {
+                    const isSel = productVariants.sizes.includes(size);
+                    return (
+                      <TouchableOpacity 
+                        key={size}
+                        style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: isSel ? COLORS.primary : COLORS.border, backgroundColor: isSel ? 'rgba(255,107,53,0.1)' : 'transparent' }}
+                        onPress={() => {
+                          setProductVariants(prev => ({
+                            ...prev,
+                            sizes: isSel ? prev.sizes.filter(s => s !== size) : [...prev.sizes, size]
+                          }));
+                        }}
+                      >
+                        <Text style={{ color: isSel ? COLORS.primary : COLORS.textMuted, fontWeight: '600' }}>{size}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+
+                <Text style={[styles.label, { marginTop: 16 }]}>Colors (Tap to toggle)</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                  {['Red','Blue','Green','Black','White','Yellow'].map(color => {
+                    const isSel = productVariants.colors.includes(color);
+                    return (
+                      <TouchableOpacity 
+                        key={color}
+                        style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: isSel ? COLORS.primary : COLORS.border, backgroundColor: isSel ? 'rgba(255,107,53,0.1)' : 'transparent' }}
+                        onPress={() => {
+                          setProductVariants(prev => ({
+                            ...prev,
+                            colors: isSel ? prev.colors.filter(c => c !== color) : [...prev.colors, color]
+                          }));
+                        }}
+                      >
+                        <Text style={{ color: isSel ? COLORS.primary : COLORS.textMuted, fontWeight: '600' }}>{color}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
             
             <View style={styles.field}>
               <Text style={styles.label}>Description</Text>

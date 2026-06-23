@@ -17,6 +17,14 @@ export default function ForgotPasswordScreen({ navigation }) {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  React.useEffect(() => {
+    if (resendCooldown > 0) {
+      const timerId = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timerId);
+    }
+  }, [resendCooldown]);
 
   const handleRequestOTP = async () => {
     if (!identifier.trim()) {
@@ -27,11 +35,23 @@ export default function ForgotPasswordScreen({ navigation }) {
     try {
       await axios.post(`${API_URL}/users/forgot_password/`, { email: identifier.trim() });
       setStep(2);
+      setResendCooldown(60);
       Alert.alert('OTP Sent', 'Check your email for the 6-digit verification code.');
     } catch (err) {
       Alert.alert('Error', err.response?.data?.error || 'Could not process request. Try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendOTP = async () => {
+    if (resendCooldown > 0) return;
+    try {
+      await axios.post(`${API_URL}/users/forgot_password/`, { email: identifier.trim() });
+      setResendCooldown(60);
+      Alert.alert('OTP Sent', 'A new verification code has been sent to your email.');
+    } catch (err) {
+      Alert.alert('Error', 'Failed to resend OTP. Please try again.');
     }
   };
 
@@ -126,6 +146,16 @@ export default function ForgotPasswordScreen({ navigation }) {
                 maxLength={6}
               />
             </View>
+
+            <TouchableOpacity 
+              style={{ alignSelf: 'center', marginVertical: 10 }} 
+              onPress={handleResendOTP} 
+              disabled={resendCooldown > 0}
+            >
+              <Text style={{ color: resendCooldown > 0 ? COLORS.textMuted : COLORS.primary, fontWeight: '600' }}>
+                {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
+              </Text>
+            </TouchableOpacity>
 
             <Text style={styles.label}>New Password</Text>
             <View style={styles.inputWrap}>

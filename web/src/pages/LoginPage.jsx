@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Store, Eye, EyeOff, ArrowRight, KeyRound, ChevronLeft, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
@@ -24,6 +24,15 @@ export default function LoginPage() {
   const [fpConfirmPassword, setFpConfirmPassword] = useState('');
   const [fpLoading, setFpLoading] = useState(false);
   const [fpSuccess, setFpSuccess] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+
+  // Handle countdown timer
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timerId = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timerId);
+    }
+  }, [resendCooldown]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -47,11 +56,23 @@ export default function LoginPage() {
     try {
       await axios.post(`${API_URL}/users/forgot_password/`, { email: fpIdentifier });
       setResetStep(2);
+      setResendCooldown(60);
       toast.success('OTP sent to your email!');
     } catch (err) {
       toast.error(err.response?.data?.error || 'Could not find that account');
     } finally {
       setFpLoading(false);
+    }
+  };
+
+  const handleResendOtp = async () => {
+    if (resendCooldown > 0) return;
+    try {
+      await axios.post(`${API_URL}/users/forgot_password/`, { email: fpIdentifier });
+      toast.success('New OTP sent to your email!');
+      setResendCooldown(60);
+    } catch (err) {
+      toast.error('Failed to resend OTP');
     }
   };
 
@@ -132,7 +153,13 @@ export default function LoginPage() {
             <div className="fp-success">
               <CheckCircle size={48} color="#00E676" />
               <p>Your password has been reset. You can now log in.</p>
-              <button className="btn btn-primary btn-full" onClick={() => { setForgotMode(false); setResetStep(1); setFpSuccess(false); setFpToken(new Array(6).fill('')); }}>
+              <button className="btn btn-primary btn-full" onClick={() => { 
+                setForm({ username: fpIdentifier, password: fpNewPassword });
+                setForgotMode(false); 
+                setResetStep(1); 
+                setFpSuccess(false); 
+                setFpToken(new Array(6).fill('')); 
+              }}>
                 Go to Login <ArrowRight size={16} />
               </button>
             </div>
@@ -172,6 +199,11 @@ export default function LoginPage() {
                       onPaste={handleOtpPaste}
                     />
                   ))}
+                </div>
+                <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+                  <button type="button" className="btn btn-ghost btn-sm" disabled={resendCooldown > 0} onClick={handleResendOtp}>
+                    {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
+                  </button>
                 </div>
               </div>
               <div className="form-group">

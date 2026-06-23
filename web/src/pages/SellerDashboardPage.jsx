@@ -26,7 +26,7 @@ export default function SellerDashboardPage() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState({
     name: '', description: '', price: '', discount_price: '', stock: '',
-    category: '', subcategory: '',
+    category: '', subcategory: '', variants: []
   });
   const [productImages, setProductImages] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
@@ -142,6 +142,7 @@ export default function SellerDashboardPage() {
       const subId = defaultSubId || productForm.subcategory;
       if (catId) formData.append('category', catId);
       if (subId) formData.append('subcategory', subId);
+      if (productForm.variants.length > 0) formData.append('variants', JSON.stringify(productForm.variants));
       formData.append('image', productImages[0]);
       productImages.slice(1).forEach(img => formData.append('images', img));
 
@@ -149,7 +150,7 @@ export default function SellerDashboardPage() {
       const freshProducts = await productAPI.getMyProducts();
       setProducts(freshProducts.data.results || freshProducts.data);
       setShowProductModal(false);
-      setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', category: '', subcategory: '' });
+      setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', category: '', subcategory: '', variants: [] });
       setProductImages([]);
       setProductSubcats([]);
       toast.success('✅ Product added!');
@@ -173,6 +174,29 @@ export default function SellerDashboardPage() {
       } catch {}
     }
   };
+
+  const handleToggleVariant = (variantType, variantValue) => {
+    const existing = productForm.variants.find(v => v.type === variantType);
+    let newVariants = [...productForm.variants];
+    
+    if (existing) {
+      if (existing.values.includes(variantValue)) {
+        existing.values = existing.values.filter(v => v !== variantValue);
+        if (existing.values.length === 0) {
+          newVariants = newVariants.filter(v => v.type !== variantType);
+        }
+      } else {
+        existing.values.push(variantValue);
+      }
+    } else {
+      newVariants.push({ type: variantType, values: [variantValue] });
+    }
+    setProductForm({ ...productForm, variants: newVariants });
+  };
+
+  const activeCategoryName = allCategories.find(c => c.id === (productForm.category || defaultCatId))?.name || defaultCatName;
+  const isApparel = activeCategoryName.toLowerCase().includes('clothing') || activeCategoryName.toLowerCase().includes('apparel');
+  const isFootwear = activeCategoryName.toLowerCase().includes('footwear') || activeCategoryName.toLowerCase().includes('shoes');
 
   if (loading) return <div className="loading-center"><div className="spinner" /></div>;
 
@@ -464,6 +488,49 @@ export default function SellerDashboardPage() {
                   <label className="form-label">Stock *</label>
                   <input type="number" className="form-input" required value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: e.target.value })} />
                 </div>
+                
+                {(isApparel || isFootwear) && (
+                  <div className="form-group mb-3 p-3" style={{ background: 'var(--bg-secondary)', borderRadius: '8px' }}>
+                    <label className="form-label" style={{ marginBottom: 12 }}>Product Variants</label>
+                    <div style={{ marginBottom: 16 }}>
+                      <label className="form-label text-sm text-muted">Sizes</label>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {(isApparel ? ['XS', 'S', 'M', 'L', 'XL', 'XXL', '38', '40', '42'] : ['6', '7', '8', '9', '10', '11', '12']).map(size => {
+                          const isActive = productForm.variants.find(v => v.type === 'Size')?.values.includes(size);
+                          return (
+                            <button
+                              type="button"
+                              key={size}
+                              className={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline'}`}
+                              onClick={() => handleToggleVariant('Size', size)}
+                            >
+                              {size}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="form-label text-sm text-muted">Colors</label>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                        {['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Brown', 'Grey'].map(color => {
+                          const isActive = productForm.variants.find(v => v.type === 'Color')?.values.includes(color);
+                          return (
+                            <button
+                              type="button"
+                              key={color}
+                              className={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline'}`}
+                              onClick={() => handleToggleVariant('Color', color)}
+                            >
+                              {color}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 <div className="form-group mb-4">
                   <label className="form-label">Description *</label>
                   <textarea className="form-input" rows={3} required value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} />

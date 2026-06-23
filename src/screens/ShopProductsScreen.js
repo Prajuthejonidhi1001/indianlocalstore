@@ -12,6 +12,7 @@ export default function ShopProductsScreen({ route, navigation }) {
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
   const { addToCart, cartCount } = useCart();
 
   useEffect(() => {
@@ -110,9 +111,22 @@ export default function ShopProductsScreen({ route, navigation }) {
         </View>
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Product Catalog</Text>
-          {products.length > 0 ? (
-            products.map((item) => (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Product Catalog</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.elevated, borderRadius: 12, paddingHorizontal: 12, height: 44, marginBottom: 20, borderWidth: 1, borderColor: COLORS.border }}>
+            <Ionicons name="search" size={18} color={COLORS.textMuted} />
+            <TextInput
+              style={{ flex: 1, marginLeft: 8, color: COLORS.text, fontSize: 14 }}
+              placeholder="Search products in this shop..."
+              placeholderTextColor={COLORS.textMuted}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+            />
+          </View>
+          
+          {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
+            products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((item) => (
               <TouchableOpacity
                 key={item.id}
                 style={styles.productCard}

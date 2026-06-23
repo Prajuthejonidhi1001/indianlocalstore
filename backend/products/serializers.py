@@ -40,7 +40,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'discount_price', 'discount_percentage',
-                  'image', 'images', 'rating', 'stock', 'category_name', 'subcategory_name', 'seller_name']
+                  'variants', 'image', 'images', 'rating', 'stock', 'category_name', 'subcategory_name', 'seller_name']
 
     def get_discount_percentage(self, obj):
         return obj.get_discount_percentage()
@@ -57,7 +57,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'description', 'price', 'discount_price',
-                  'discount_percentage', 'stock', 'image', 'images', 'rating', 'reviews_count',
+                  'discount_percentage', 'stock', 'variants', 'image', 'images', 'rating', 'reviews_count',
                   'category', 'subcategory', 'seller', 'product_reviews', 'created_at']
 
     def get_discount_percentage(self, obj):
@@ -68,6 +68,6 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['category', 'subcategory', 'name', 'description', 'price',
-                  'discount_price', 'stock', 'image']
+                  'discount_price', 'stock', 'variants', 'image']
         # is_active is intentionally excluded — new products are always active
         # Sellers can deactivate via a separate admin/edit flow
