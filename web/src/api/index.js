@@ -95,7 +95,13 @@ export const orderAPI = {
   createOrder: (data) => api.post('/orders/orders/', data),
   getMyOrders: () => api.get('/orders/orders/my_orders/'),
   getOrderDetail: (id) => api.get(`/orders/orders/${id}/`),
+  createPayment: (id) => api.post(`/orders/orders/${id}/create_payment/`),
+  verifyPayment: (id, data) => api.post(`/orders/orders/${id}/verify_payment/`, data),
   cancelOrder: (id) => api.post(`/orders/orders/${id}/cancel/`),
+  
+  // Seller Actions
+  getSellerOrders: () => api.get('/orders/orders/seller_orders/'),
+  dispatchOrder: (id) => api.post(`/orders/orders/${id}/dispatch_order/`),
 };
 
 export default api;

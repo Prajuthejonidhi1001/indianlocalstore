@@ -188,3 +188,53 @@ class OrderViewSet(viewsets.ModelViewSet):
         order.order_status = 'cancelled'
         order.save()
         return Response({'message': 'Order cancelled successfully.'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['get'])
+    def seller_orders(self, request):
+        """Get orders that contain items from the current seller"""
+        if request.user.role != 'seller':
+            return Response({'error': 'Only sellers can access this'}, status=status.HTTP_403_FORBIDDEN)
+            
+        # Get all orders that have an item belonging to this seller
+        orders = Order.objects.filter(items__seller=request.user).distinct()
+        serializer = self.get_serializer(orders, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def dispatch_order(self, request, pk=None):
+        """Seller dispatches the order to a hyper-local delivery partner"""
+        if request.user.role != 'seller':
+            return Response({'error': 'Only sellers can dispatch'}, status=status.HTTP_403_FORBIDDEN)
+            
+        order = self.get_object()
+        
+        # Verify the seller owns items in this order
+        if not order.items.filter(seller=request.user).exists():
+            return Response({'error': 'You cannot dispatch this order'}, status=status.HTTP_403_FORBIDDEN)
+            
+        if order.order_status not in ['pending', 'confirmed', 'processing']:
+            return Response({'error': f'Order is already {order.order_status}'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            shop = request.user.shop
+        except Exception:
+            return Response({'error': 'You do not have a shop set up'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Call delivery service
+        from .delivery_service import delivery_service
+        try:
+            dispatch_info = delivery_service.create_hyperlocal_order(order, shop, order.user)
+            
+            # Update order tracking info
+            order.tracking_id = dispatch_info.get('tracking_id')
+            order.tracking_url = dispatch_info.get('tracking_url')
+            order.order_status = 'shipped'
+            order.save()
+            
+            return Response({
+                'message': 'Order dispatched successfully via ' + dispatch_info.get('courier_name', 'Delivery Partner'),
+                'tracking_url': dispatch_info.get('tracking_url'),
+                'tracking_id': order.tracking_id
+            })
+        except Exception as e:
+            return Response({'error': f'Failed to dispatch: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Store, Package, ShoppingBag, Plus, Save, X, Truck, Hash, ToggleLeft, ToggleRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { shopAPI, productAPI } from '../api';
+import { shopAPI, productAPI, orderAPI } from '../api';
 import toast from 'react-hot-toast';
 import './SellerDashboardPage.css';
 
@@ -10,6 +10,7 @@ export default function SellerDashboardPage() {
   const [activeTab, setActiveTab] = useState('overview');
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
+  const [sellerOrders, setSellerOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Shop Form
@@ -65,6 +66,13 @@ export default function SellerDashboardPage() {
 
           const prodRes = await productAPI.getMyProducts();
           setProducts(prodRes.data.results || prodRes.data);
+
+          try {
+            const ordRes = await orderAPI.getSellerOrders();
+            setSellerOrders(ordRes.data.results || ordRes.data);
+          } catch (ordErr) {
+            console.error("Orders fetch failed", ordErr);
+          }
         } catch (shopErr) {
           if (shopErr.response?.status !== 404) console.error(shopErr);
         }
@@ -209,10 +217,10 @@ export default function SellerDashboardPage() {
               <Store size={18} /> Shop Settings
             </button>
             <button className={`dsb-link ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')} id="tab-products">
-              <Package size={18} /> My Products
+              <Package size={18} /> Products
             </button>
-            <button className={`dsb-link`} disabled id="tab-orders">
-              <ShoppingBag size={18} /> Orders <span className="badge badge-orange" style={{ marginLeft: 'auto' }}>Soon</span>
+            <button className={`dsb-link ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')} id="tab-orders">
+              <ShoppingBag size={18} /> Orders
             </button>
           </div>
 
@@ -353,6 +361,55 @@ export default function SellerDashboardPage() {
                             <td>₹{p.price}</td>
                             <td>{p.stock}</td>
                             <td><span className={`badge ${p.is_active ? 'badge-green' : 'badge-orange'}`}>{p.is_active ? 'Active' : 'Draft'}</span></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* ── ORDERS ── */}
+            {activeTab === 'orders' && (
+              <div className="card ds-card animate-in">
+                <div className="ds-header flex-between mb-0">
+                  <div><h2>Shop Orders</h2><p>Manage and dispatch your orders</p></div>
+                </div>
+                {sellerOrders.length === 0 ? (
+                  <div className="empty-state mt-4">
+                    <div className="empty-state-icon">🛒</div>
+                    <h3>No orders yet</h3>
+                    <p>When customers buy your products, they will appear here.</p>
+                  </div>
+                ) : (
+                  <div className="table-responsive mt-4">
+                    <table className="ds-table">
+                      <thead><tr><th>Order ID</th><th>Customer</th><th>Status</th><th>Action</th></tr></thead>
+                      <tbody>
+                        {sellerOrders.map(o => (
+                          <tr key={o.id}>
+                            <td className="font-medium">{o.order_id}</td>
+                            <td>{o.delivery_city}</td>
+                            <td><span className={`badge badge-${o.order_status === 'pending' ? 'orange' : 'blue'}`}>{o.order_status}</span></td>
+                            <td>
+                              {(o.order_status === 'pending' || o.order_status === 'confirmed') ? (
+                                <button className="btn btn-primary btn-sm" onClick={() => {
+                                  toast.promise(orderAPI.dispatchOrder(o.id), {
+                                    loading: 'Dispatching...',
+                                    success: 'Order Dispatched to Delivery Partner!',
+                                    error: 'Failed to dispatch'
+                                  }).then(() => {
+                                    // Refresh orders
+                                    orderAPI.getSellerOrders().then(res => setSellerOrders(res.data.results || res.data));
+                                  });
+                                }}>
+                                  Dispatch
+                                </button>
+                              ) : (
+                                <a href={o.tracking_url} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">Track</a>
+                              )}
+                            </td>
                           </tr>
                         ))}
                       </tbody>

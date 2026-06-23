@@ -90,6 +90,7 @@ class Order(models.Model):
     # Status
     order_status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     tracking_id = models.CharField(max_length=100, null=True, blank=True)
+    tracking_url = models.URLField(max_length=500, null=True, blank=True)
     
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)

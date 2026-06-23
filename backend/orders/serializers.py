@@ -44,7 +44,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
-        fields = ['id', 'order_id', 'total_amount', 'final_amount', 'order_status', 'payment_status', 'created_at']
+        fields = ['id', 'order_id', 'total_amount', 'final_amount', 'order_status', 'payment_status', 'delivery_city', 'tracking_url', 'created_at']
 
 
 class OrderDetailSerializer(serializers.ModelSerializer):
@@ -55,7 +55,7 @@ class OrderDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'order_id', 'total_amount', 'discount_amount', 'shipping_charge',
                   'final_amount', 'order_status', 'payment_status', 'delivery_address',
                   'delivery_city', 'delivery_state', 'delivery_pincode', 'tracking_id',
-                  'items', 'created_at', 'created_at']
+                  'tracking_url', 'items', 'created_at']
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):

@@ -113,6 +113,11 @@ export default function OrdersPage() {
                     <h4>Delivery Details</h4>
                     <p className="od-text">{selectedOrder.delivery_address}</p>
                     <p className="od-text">{selectedOrder.delivery_city}, {selectedOrder.delivery_state} - {selectedOrder.delivery_pincode}</p>
+                    {selectedOrder.tracking_url && (
+                      <a href={selectedOrder.tracking_url} target="_blank" rel="noreferrer" className="btn btn-primary btn-sm mt-3" style={{display:'inline-block'}}>
+                        Track Order Live 🛵
+                      </a>
+                    )}
                   </div>
 
                   <div className="od-section">
