@@ -195,7 +195,7 @@ export default function SellerDashboardPage() {
   };
 
   const activeCategoryName = allCategories.find(c => c.id === (productForm.category || defaultCatId))?.name || defaultCatName;
-  const isApparel = activeCategoryName.toLowerCase().includes('clothing') || activeCategoryName.toLowerCase().includes('apparel');
+  const isApparel = activeCategoryName.toLowerCase().includes('clothing') || activeCategoryName.toLowerCase().includes('apparel') || activeCategoryName.toLowerCase().includes('fashion');
   const isFootwear = activeCategoryName.toLowerCase().includes('footwear') || activeCategoryName.toLowerCase().includes('shoes');
 
   if (loading) return <div className="loading-center"><div className="spinner" /></div>;
