@@ -237,7 +237,6 @@ export default function NearbyShopsPage() {
           </div>
         ) : (
           <>
-          <>
             {(() => {
               const nearby = filteredShops.filter(s => s.distance == null || s.distance <= 5);
               const distant = filteredShops.filter(s => s.distance != null && s.distance > 5);
