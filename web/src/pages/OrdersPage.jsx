@@ -82,18 +82,18 @@ export default function OrdersPage() {
                   onClick={() => handleOrderClick(order.id)}
                   id={`order-card-${order.id}`}
                 >
-                  <div className="oc-header">
-                    <div>
-                      <p className="oc-id">Order #{order.order_id}</p>
-                      <p className="oc-date"><Clock size={12} /> {new Date(order.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
+                  <div className="order-header">
+                    <div className="order-header-left">
+                      <p className="order-id">Order #{order.order_id}</p>
+                      <p className="order-date"><Clock size={12} /> {new Date(order.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' })}</p>
                     </div>
-                    <span className={`badge badge-${STATUS_COLORS[order.order_status]}`}>
+                    <span className={`order-status-badge status-${order.order_status}`}>
                       {order.order_status.toUpperCase()}
                     </span>
                   </div>
-                  <div className="oc-footer">
-                    <p className="oc-total">₹{parseFloat(order.final_amount).toFixed(2)}</p>
-                    <div className="oc-arrow"><ChevronRight size={18} /></div>
+                  <div className="order-footer">
+                    <p className="order-total"><strong>₹{parseFloat(order.final_amount).toFixed(2)}</strong></p>
+                    <div className="order-arrow"><ChevronRight size={18} /></div>
                   </div>
                 </div>
               ))}
