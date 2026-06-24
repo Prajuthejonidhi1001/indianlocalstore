@@ -152,7 +152,47 @@ export default function HomePage() {
         </div>
       </div>
 
-      <div className="container">
+      {/* ── HIGH-TECH FEATURED CAROUSEL ── */}
+      <section className="featured-carousel-section">
+        <div className="fc-header">
+          <div className="fc-glow-orb" />
+          <h2 className="fc-title"><Zap size={18} className="fc-icon" /> Featured Premium Stores</h2>
+          <p className="fc-subtitle">Experience the future of local shopping</p>
+        </div>
+        
+        <div className="fc-marquee-wrapper">
+          <div className="fc-marquee">
+            {/* We duplicate the items to create an infinite scroll effect */}
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="fc-track">
+                <div className="fc-item">
+                  <img src="/media/carousel_shop_1_1782331878160.png" alt="Neon Electronics Store" />
+                  <div className="fc-item-overlay">
+                    <h3>Neon Electronics</h3>
+                    <span>Top Rated Tech</span>
+                  </div>
+                </div>
+                <div className="fc-item">
+                  <img src="/media/carousel_shop_2_1782331892639.png" alt="Premium Fashion Boutique" />
+                  <div className="fc-item-overlay">
+                    <h3>Luxe Boutique</h3>
+                    <span>Exclusive Styles</span>
+                  </div>
+                </div>
+                <div className="fc-item">
+                  <img src="/media/carousel_shop_3_1782331906448.png" alt="Modern Organic Market" />
+                  <div className="fc-item-overlay">
+                    <h3>Fresh Mart</h3>
+                    <span>Organic Groceries</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <div className="container" style={{ marginTop: '2rem' }}>
         {/* ── CATEGORIES ── */}
         <section className="section-sm">
           <div className="home-section-header">

@@ -486,14 +486,14 @@ export default function SellerDashboardScreen({ navigation }) {
             </View>
 
               <View style={styles.field}>
-                <Text style={styles.label}>Sizes (Tap to toggle)</Text>
+                <Text style={styles.label}>Sizes</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
                   {['XS','S','M','L','XL','XXL','38','40','42','6','7','8','9','10','11','12'].map(size => {
                     const isSel = productVariants.sizes.includes(size);
                     return (
                       <TouchableOpacity 
                         key={size}
-                        style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: isSel ? COLORS.primary : COLORS.border, backgroundColor: isSel ? 'rgba(255,107,53,0.1)' : 'transparent' }}
+                        style={{ minWidth: 44, height: 38, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 6, borderWidth: 1.5, borderColor: isSel ? COLORS.primary : COLORS.borderStrong, backgroundColor: isSel ? 'rgba(255,107,53,0.08)' : COLORS.glass }}
                         onPress={() => {
                           setProductVariants(prev => ({
                             ...prev,
@@ -501,20 +501,22 @@ export default function SellerDashboardScreen({ navigation }) {
                           }));
                         }}
                       >
-                        <Text style={{ color: isSel ? COLORS.primary : COLORS.textMuted, fontWeight: '600' }}>{size}</Text>
+                        <Text style={{ color: isSel ? COLORS.primary : COLORS.text, fontWeight: '600', fontSize: 13 }}>{size}</Text>
                       </TouchableOpacity>
                     );
                   })}
                 </View>
 
-                <Text style={[styles.label, { marginTop: 16 }]}>Colors (Tap to toggle)</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                  {['Red','Blue','Green','Black','White','Yellow'].map(color => {
+                <Text style={[styles.label, { marginTop: 16 }]}>Colors</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
+                  {['Black','White','Red','Blue','Green','Yellow','Brown','Grey'].map(color => {
                     const isSel = productVariants.colors.includes(color);
+                    const colorHexMap = { Black:'#000', White:'#FFF', Red:'#FF3B30', Blue:'#007AFF', Green:'#34C759', Yellow:'#FFCC00', Brown:'#A2845E', Grey:'#8E8E93' };
+                    const hex = colorHexMap[color] || color;
                     return (
                       <TouchableOpacity 
                         key={color}
-                        style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: isSel ? COLORS.primary : COLORS.border, backgroundColor: isSel ? 'rgba(255,107,53,0.1)' : 'transparent' }}
+                        style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: isSel ? COLORS.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}
                         onPress={() => {
                           setProductVariants(prev => ({
                             ...prev,
@@ -522,7 +524,7 @@ export default function SellerDashboardScreen({ navigation }) {
                           }));
                         }}
                       >
-                        <Text style={{ color: isSel ? COLORS.primary : COLORS.textMuted, fontWeight: '600' }}>{color}</Text>
+                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: hex, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' }} />
                       </TouchableOpacity>
                     );
                   })}

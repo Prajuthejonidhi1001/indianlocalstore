@@ -394,3 +394,57 @@
   flex-wrap: wrap;
   gap: 0.5rem;
 }
+
+/* ── AMAZON-STYLE VARIANTS UI ── */
+.variant-size-box {
+  min-width: 44px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1.5px solid var(--border-strong);
+  border-radius: 6px;
+  background: var(--bg-card);
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+.variant-size-box:hover {
+  border-color: var(--text-muted);
+  background: var(--bg-elevated);
+}
+.variant-size-box.active {
+  border-color: var(--saffron);
+  background: rgba(255,107,53,0.08);
+  color: var(--saffron);
+}
+
+.variant-color-circle-wrap {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: var(--bg-card);
+}
+.variant-color-circle-wrap:hover {
+  border-color: var(--border-strong);
+}
+.variant-color-circle-wrap.active {
+  border-color: var(--saffron);
+}
+.variant-color-circle {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.15);
+  border: 1px solid rgba(0,0,0,0.1);
+}

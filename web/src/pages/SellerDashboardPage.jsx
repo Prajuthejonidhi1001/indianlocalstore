@@ -500,7 +500,7 @@ export default function SellerDashboardPage() {
                             <button
                               type="button"
                               key={size}
-                              className={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline'}`}
+                              className={`variant-size-box ${isActive ? 'active' : ''}`}
                               onClick={() => handleToggleVariant('Size', size)}
                             >
                               {size}
@@ -511,18 +511,20 @@ export default function SellerDashboardPage() {
                     </div>
                     <div>
                       <label className="form-label text-sm text-muted">Colors</label>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
                         {['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Brown', 'Grey'].map(color => {
                           const isActive = productForm.variants.find(v => v.type === 'Color')?.values.includes(color);
+                          const colorHexMap = { Black:'#000', White:'#FFF', Red:'#FF3B30', Blue:'#007AFF', Green:'#34C759', Yellow:'#FFCC00', Brown:'#A2845E', Grey:'#8E8E93' };
+                          const hex = colorHexMap[color] || color;
                           return (
-                            <button
-                              type="button"
+                            <div
                               key={color}
-                              className={`btn btn-sm ${isActive ? 'btn-primary' : 'btn-outline'}`}
+                              className={`variant-color-circle-wrap ${isActive ? 'active' : ''}`}
                               onClick={() => handleToggleVariant('Color', color)}
+                              title={color}
                             >
-                              {color}
-                            </button>
+                              <div className="variant-color-circle" style={{ backgroundColor: hex }} />
+                            </div>
                           );
                         })}
                       </div>
