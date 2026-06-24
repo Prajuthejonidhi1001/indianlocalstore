@@ -25,10 +25,10 @@ export function CartProvider({ children }) {
 
   useEffect(() => { fetchCart(); }, [fetchCart]);
 
-  const addToCart = async (productId, quantity = 1) => {
+  const addToCart = async (productId, quantity = 1, variants = {}) => {
     if (!isAuthenticated) { Alert.alert('Error', 'Please login to add items to cart'); return false; }
     try {
-      await cartAPI.addItem(productId, quantity);
+      await cartAPI.addItem(productId, quantity, variants);
       await fetchCart();
       Alert.alert('Success', 'Added to cart!');
       return true;
@@ -38,9 +38,9 @@ export function CartProvider({ children }) {
     }
   };
 
-  const removeFromCart = async (productId) => {
+  const removeFromCart = async (itemId) => {
     try {
-      await cartAPI.removeItem(productId);
+      await cartAPI.removeItem(itemId);
       await fetchCart();
       Alert.alert('Success', 'Removed from cart');
     } catch {

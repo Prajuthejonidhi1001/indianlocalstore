@@ -10,7 +10,7 @@ class CartItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'product_name', 'product_image', 'product_price', 'quantity', 'total']
+        fields = ['id', 'product', 'product_name', 'product_image', 'product_price', 'variants', 'quantity', 'total']
 
     def get_total(self, obj):
         return str(obj.get_total())
@@ -38,7 +38,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ['product', 'product_name', 'quantity', 'price', 'discount_price', 'seller_name']
+        fields = ['product', 'product_name', 'quantity', 'price', 'discount_price', 'seller_name', 'variants']
 
 
 class OrderListSerializer(serializers.ModelSerializer):

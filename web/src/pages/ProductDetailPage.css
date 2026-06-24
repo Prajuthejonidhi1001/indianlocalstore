@@ -25,14 +25,20 @@
 }
 
 /* Image gallery */
-.pd-gallery { position: sticky; top: 80px; }
+.pd-gallery {
+  position: sticky;
+  top: 6rem;
+  height: fit-content;
+}
 .pd-main-img-wrap {
+  position: relative;
   width: 100%;
-  aspect-ratio: 1;
-  border-radius: var(--radius-2xl);
+  aspect-ratio: 1 / 1.1;
+  background: var(--bg-elevated);
+  border-radius: var(--radius-xl);
   overflow: hidden;
-  background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
+  margin-bottom: 1rem;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -175,6 +181,51 @@
 .pd-specs-table tr:not(:last-child) td { border-bottom: 1px solid var(--border-subtle); }
 .pd-specs-table td { padding: 0.6rem 0; color: var(--text-secondary); }
 .pd-specs-table td:first-child { color: var(--text-muted); font-weight: 600; width: 40%; }
+
+/* Reviews Section */
+.pd-reviews-section {
+  margin-top: 3rem;
+}
+.pd-section-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin-bottom: 1.5rem;
+}
+.review-form-box {
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+  background: var(--bg-card);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+}
+.review-form-box h4 {
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+}
+.review-form .form-group {
+  margin-bottom: 1rem;
+}
+.review-form textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-default);
+  resize: vertical;
+}
+.star-rating {
+  display: flex;
+  gap: 0.25rem;
+}
+.star-rating .star {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: var(--text-muted);
+}
+.star-rating .star.active {
+  color: var(--gold);
+}
 
 @media (max-width: 900px) {
   .pd-layout { grid-template-columns: 1fr; gap: 2rem; }

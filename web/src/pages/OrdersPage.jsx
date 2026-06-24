@@ -131,9 +131,16 @@ export default function OrdersPage() {
                     <div className="od-items">
                       {selectedOrder.items?.map(item => (
                         <div key={item.id} className="od-item">
-                          <div className="od-item-info">
-                            <span className="od-qty">{item.quantity}x</span>
-                            <span className="od-name">{item.product_name || `Product #${item.product}`}</span>
+                          <div className="od-item-info" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 0 }}>
+                            <div>
+                              <span className="od-qty">{item.quantity}x </span>
+                              <span className="od-name">{item.product_name || `Product #${item.product}`}</span>
+                            </div>
+                            {item.variants && Object.keys(item.variants).length > 0 && (
+                              <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '2px' }}>
+                                {Object.entries(item.variants).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                              </div>
+                            )}
                           </div>
                           <div className="od-price">₹{(parseFloat(item.price) * item.quantity).toFixed(2)}</div>
                         </div>

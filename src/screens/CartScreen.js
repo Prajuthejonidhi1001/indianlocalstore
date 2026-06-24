@@ -74,31 +74,40 @@ export default function CartScreen({ navigation }) {
           {/* Cart Items */}
           <View style={styles.itemsList}>
             {items.map((item) => {
-              const product = item.product;
-              const price = product.discount_price || product.price;
+              const productId = item.product;
+              const name = item.product_name || 'Product';
+              const price = item.product_price || 0;
+              const imgSrc = item.product_image ? (item.product_image.startsWith('http') ? item.product_image : `http://10.0.2.2:8000${item.product_image}`) : 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80';
               
               return (
                 <View key={item.id} style={styles.cartCard}>
                   <Image 
-                    source={{ uri: product.image || 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80' }} 
+                    source={{ uri: imgSrc }} 
                     style={styles.itemImage} 
                   />
                   <View style={styles.itemDetails}>
-                    <Text style={styles.itemName} numberOfLines={2}>{product.name}</Text>
+                    <Text style={styles.itemName} numberOfLines={2}>{name}</Text>
+                    
+                    {item.variants && Object.keys(item.variants).length > 0 && (
+                      <Text style={{ fontSize: 12, color: COLORS.textMuted, marginTop: 2 }}>
+                        {Object.entries(item.variants).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                      </Text>
+                    )}
+
                     <Text style={styles.itemPrice}>₹{parseFloat(price).toFixed(2)}</Text>
                     
                     <View style={styles.itemActionsRow}>
                       <View style={styles.qtyControl}>
-                        <TouchableOpacity style={styles.qtyBtn} onPress={() => addToCart(product.id, Math.max(1, item.quantity - 1))}>
+                        <TouchableOpacity style={styles.qtyBtn} onPress={() => addToCart(productId, Math.max(1, item.quantity - 1), item.variants)}>
                           <Ionicons name="remove" size={16} color={COLORS.text} />
                         </TouchableOpacity>
                         <Text style={styles.qtyText}>{item.quantity}</Text>
-                        <TouchableOpacity style={styles.qtyBtn} onPress={() => addToCart(product.id, item.quantity + 1)}>
+                        <TouchableOpacity style={styles.qtyBtn} onPress={() => addToCart(productId, item.quantity + 1, item.variants)}>
                           <Ionicons name="add" size={16} color={COLORS.text} />
                         </TouchableOpacity>
                       </View>
                       
-                      <TouchableOpacity style={styles.removeBtn} onPress={() => removeFromCart(product.id)}>
+                      <TouchableOpacity style={styles.removeBtn} onPress={() => removeFromCart(item.id)}>
                         <Ionicons name="trash-outline" size={18} color={COLORS.textMuted} />
                       </TouchableOpacity>
                     </View>

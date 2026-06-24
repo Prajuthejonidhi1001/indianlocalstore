@@ -29,7 +29,16 @@ export default function ProductDetailScreen({ route, navigation }) {
     : [];
 
   const handleAddToCart = async () => {
-    await addToCart(product.id);
+    if (product.variants && product.variants.length > 0) {
+      const requiredTypes = product.variants.map(v => v.type);
+      const selectedKeys = Object.keys(selectedVariants);
+      const missing = requiredTypes.filter(t => !selectedKeys.includes(t));
+      if (missing.length > 0) {
+        alert(`Please select: ${missing.join(', ')}`);
+        return;
+      }
+    }
+    await addToCart(product.id, 1, selectedVariants);
     setAddedToCart(true);
     setTimeout(() => setAddedToCart(false), 2000);
   };

@@ -32,10 +32,12 @@ class CartViewSet(viewsets.ModelViewSet):
         cart, _ = Cart.objects.get_or_create(user=request.user)
         product_id = request.data.get('product_id')
         quantity = request.data.get('quantity', 1)
+        variants = request.data.get('variants', {})
         
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product_id=product_id,
+            variants=variants,
             defaults={'quantity': quantity}
         )
         
@@ -49,8 +51,8 @@ class CartViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['delete'])
     def remove_item(self, request):
         cart = get_object_or_404(Cart, user=request.user)
-        product_id = request.data.get('product_id')
-        CartItem.objects.filter(cart=cart, product_id=product_id).delete()
+        item_id = request.data.get('item_id')
+        CartItem.objects.filter(cart=cart, id=item_id).delete()
         return Response({'message': 'Item removed'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['delete'])
@@ -102,7 +104,8 @@ class OrderViewSet(viewsets.ModelViewSet):
                 quantity=cart_item.quantity,
                 price=cart_item.product.price,
                 discount_price=cart_item.product.discount_price,
-                seller=cart_item.product.seller
+                seller=cart_item.product.seller,
+                variants=cart_item.variants
             )
         
         # Clear cart

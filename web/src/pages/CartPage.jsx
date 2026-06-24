@@ -65,6 +65,12 @@ export default function CartPage() {
                       <p className="cart-item-price">
                         ₹{price.toFixed(2)}
                       </p>
+                      
+                      {item.variants && Object.keys(item.variants).length > 0 && (
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                          {Object.entries(item.variants).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                        </div>
+                      )}
 
                       {/* Qty + Remove */}
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -72,19 +78,19 @@ export default function CartPage() {
                           <button
                             className="qty-btn"
                             id={`qty-minus-${item.id}`}
-                            onClick={() => addToCart(productId, Math.max(1, item.quantity - 1))}
+                            onClick={() => addToCart(productId, Math.max(1, item.quantity - 1), item.variants)}
                           >−</button>
                           <span className="qty-val">{item.quantity}</span>
                           <button
                             className="qty-btn"
                             id={`qty-plus-${item.id}`}
-                            onClick={() => addToCart(productId, item.quantity + 1)}
+                            onClick={() => addToCart(productId, item.quantity + 1, item.variants)}
                           >+</button>
                         </div>
                         <button
                           className="cart-item-remove"
                           id={`remove-item-${item.id}`}
-                          onClick={() => removeFromCart(productId)}
+                          onClick={() => removeFromCart(item.id)}
                           title="Remove item"
                         >
                           <Trash2 size={16} />

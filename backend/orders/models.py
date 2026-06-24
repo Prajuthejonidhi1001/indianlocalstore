@@ -34,12 +34,13 @@ class CartItem(models.Model):
     """Item in shopping cart"""
     cart = models.ForeignKey(Cart, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    variants = models.JSONField(default=dict, blank=True)
     quantity = models.IntegerField(default=1, validators=[MinValueValidator(1)])
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        unique_together = ['cart', 'product']
+        pass
 
     def __str__(self):
         return f"{self.product.name} x {self.quantity}"
@@ -112,6 +113,7 @@ class OrderItem(models.Model):
     """Items in an order"""
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')
     product = models.ForeignKey(Product, on_delete=models.SET_NULL, null=True)
+    variants = models.JSONField(default=dict, blank=True)
     quantity = models.IntegerField(validators=[MinValueValidator(1)])
     price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)

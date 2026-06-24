@@ -25,7 +25,16 @@ export default function ProductDetailPage() {
   }, [id]);
 
   const handleAddToCart = async () => {
-    await addToCart(product.id, qty);
+    if (product.variants && product.variants.length > 0) {
+      const requiredTypes = product.variants.map(v => v.type);
+      const selectedKeys = Object.keys(selectedVariants);
+      const missing = requiredTypes.filter(t => !selectedKeys.includes(t));
+      if (missing.length > 0) {
+        toast.error(`Please select: ${missing.join(', ')}`);
+        return;
+      }
+    }
+    await addToCart(product.id, qty, selectedVariants);
   };
 
   const handleReview = async (e) => {
