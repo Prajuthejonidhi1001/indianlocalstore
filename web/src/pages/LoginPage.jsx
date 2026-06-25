@@ -272,12 +272,7 @@ export default function LoginPage() {
           </div>
 
           <div className="form-group">
-            <div className="form-label-row">
-              <label className="form-label" htmlFor="password">Password</label>
-              <button type="button" className="forgot-link" onClick={() => setForgotMode(true)}>
-                Forgot password?
-              </button>
-            </div>
+            <label className="form-label" htmlFor="password">Password</label>
             <div className="input-with-icon">
               <input
                 id="password"
@@ -290,6 +285,11 @@ export default function LoginPage() {
               />
               <button type="button" className="pw-toggle" onClick={() => setShowPw(!showPw)}>
                 {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
+              </button>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+              <button type="button" className="forgot-link" onClick={() => setForgotMode(true)}>
+                Forgot password?
               </button>
             </div>
           </div>

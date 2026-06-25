@@ -166,24 +166,24 @@ export default function HomePage() {
             {[...Array(2)].map((_, i) => (
               <div key={i} className="fc-track">
                 <div className="fc-item">
-                  <img src="/media/carousel_shop_1_1782331878160.png" alt="Neon Electronics Store" />
+                  <img src="https://images.unsplash.com/photo-1542838132-92c53300491e?w=800&q=80" alt="Fresh Market" />
                   <div className="fc-item-overlay">
-                    <h3>Neon Electronics</h3>
-                    <span>Top Rated Tech</span>
+                    <h3>Fresh Mart</h3>
+                    <span>Organic Groceries</span>
                   </div>
                 </div>
                 <div className="fc-item">
-                  <img src="/media/carousel_shop_2_1782331892639.png" alt="Premium Fashion Boutique" />
+                  <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&q=80" alt="Luxe Boutique" />
                   <div className="fc-item-overlay">
                     <h3>Luxe Boutique</h3>
                     <span>Exclusive Styles</span>
                   </div>
                 </div>
                 <div className="fc-item">
-                  <img src="/media/carousel_shop_3_1782331906448.png" alt="Modern Organic Market" />
+                  <img src="https://images.unsplash.com/photo-1491933382434-500287f9b54b?w=800&q=80" alt="Neon Electronics" />
                   <div className="fc-item-overlay">
-                    <h3>Fresh Mart</h3>
-                    <span>Organic Groceries</span>
+                    <h3>Neon Electronics</h3>
+                    <span>Top Rated Tech</span>
                   </div>
                 </div>
               </div>
