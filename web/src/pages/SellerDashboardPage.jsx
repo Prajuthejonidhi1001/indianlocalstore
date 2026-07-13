@@ -24,6 +24,7 @@ export default function SellerDashboardPage() {
 
   // Product Form
   const [showProductModal, setShowProductModal] = useState(false);
+  const [activeProductTab, setActiveProductTab] = useState('basic');
   const [productForm, setProductForm] = useState({
     name: '', description: '', price: '', discount_price: '', stock: '',
     category: '', subcategory: '', variants: []
@@ -448,100 +449,157 @@ export default function SellerDashboardPage() {
         {/* Add Product Modal */}
         {showProductModal && (
           <div className="modal-overlay">
-            <div className="modal-content card" style={{ maxWidth: '540px', maxHeight: '90vh', overflowY: 'auto' }}>
-              <div className="modal-header">
-                <h3>Add New Product</h3>
-                <button className="modal-close" onClick={() => setShowProductModal(false)}><X size={20} /></button>
+            <div className="modal-content product-modal-container">
+              <div className="product-modal-sidebar">
+                <div className="pms-header">
+                  <h3>Add Product</h3>
+                  <p>List a new item for sale</p>
+                </div>
+                <nav className="pms-nav">
+                  <button type="button" className={`pms-nav-item ${activeProductTab === 'basic' ? 'active' : ''}`} onClick={() => setActiveProductTab('basic')}>Basic Info</button>
+                  <button type="button" className={`pms-nav-item ${activeProductTab === 'pricing' ? 'active' : ''}`} onClick={() => setActiveProductTab('pricing')}>Pricing & Inventory</button>
+                  <button type="button" className={`pms-nav-item ${activeProductTab === 'media' ? 'active' : ''}`} onClick={() => setActiveProductTab('media')}>Media</button>
+                  <button type="button" className={`pms-nav-item ${activeProductTab === 'variants' ? 'active' : ''}`} onClick={() => setActiveProductTab('variants')}>Variants</button>
+                </nav>
               </div>
-              <form onSubmit={handleSaveProduct} id="add-product-form">
 
-                <div className="form-group mb-3">
-                  <label className="form-label">Product Name *</label>
-                  <input type="text" className="form-input" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} />
+              <div className="product-modal-content-area">
+                <div className="modal-header border-bottom-0 pb-0">
+                  <h3 className="tab-title">
+                    {activeProductTab === 'basic' && 'Basic Information'}
+                    {activeProductTab === 'pricing' && 'Pricing & Inventory'}
+                    {activeProductTab === 'media' && 'Product Media'}
+                    {activeProductTab === 'variants' && 'Options & Variants'}
+                  </h3>
+                  <button className="modal-close" onClick={() => setShowProductModal(false)}><X size={20} /></button>
                 </div>
 
-                <div className="form-group mb-3">
-                  <label className="form-label">Images * (1–5, square preferred)</label>
-                  <input type="file" className="form-input" accept="image/*" multiple required onChange={handleImageChange} style={{ padding: '0.6rem' }} id="product-images-input" />
-                  {productImages.length > 0 && (
-                    <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
-                      {productImages.map((img, i) => (
-                        <div key={i} style={{ position: 'relative' }}>
-                          <img src={URL.createObjectURL(img)} alt="" className="product-thumb-square" />
-                          {i === 0 && <span style={{ position: 'absolute', bottom: 2, left: 2, fontSize: 9, background: 'var(--primary)', color: '#fff', borderRadius: 3, padding: '1px 4px' }}>Main</span>}
+                <form onSubmit={handleSaveProduct} id="add-product-form" className="product-modal-form">
+                  <div className="product-tab-content">
+                    {activeProductTab === 'basic' && (
+                      <div className="animate-in fade-in">
+                        <div className="form-group mb-4">
+                          <label className="form-label">Product Name *</label>
+                          <input type="text" className="form-input" required value={productForm.name} onChange={e => setProductForm({ ...productForm, name: e.target.value })} placeholder="e.g. Premium Cotton T-Shirt" />
                         </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="form-row mb-3">
-                  <div className="form-group">
-                    <label className="form-label">Price (₹) *</label>
-                    <input type="number" step="0.01" className="form-input" required value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Discount Price (₹)</label>
-                    <input type="number" step="0.01" className="form-input" value={productForm.discount_price} onChange={e => setProductForm({ ...productForm, discount_price: e.target.value })} />
-                  </div>
-                </div>
-                <div className="form-group mb-3">
-                  <label className="form-label">Stock *</label>
-                  <input type="number" className="form-input" required value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: e.target.value })} />
-                </div>
-                
-                  <div className="form-group mb-3 p-3" style={{ background: 'var(--bg-secondary)', borderRadius: '8px' }}>
-                    <label className="form-label" style={{ marginBottom: 12 }}>Product Variants (Optional)</label>
-                    <div style={{ marginBottom: 16 }}>
-                      <label className="form-label text-sm text-muted">Sizes</label>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        {['XS', 'S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '6', '7', '8', '9', '10', '11', '12'].map(size => {
-                          const isActive = productForm.variants.find(v => v.type === 'Size')?.values.includes(size);
-                          return (
-                            <button
-                              type="button"
-                              key={size}
-                              className={`variant-size-box ${isActive ? 'active' : ''}`}
-                              onClick={() => handleToggleVariant('Size', size)}
-                            >
-                              {size}
-                            </button>
-                          );
-                        })}
+                        <div className="form-group mb-4">
+                          <label className="form-label">Description *</label>
+                          <textarea className="form-input" rows={6} required value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} placeholder="Describe your product in detail..." />
+                        </div>
                       </div>
-                    </div>
-                    <div>
-                      <label className="form-label text-sm text-muted">Colors</label>
-                      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '6px' }}>
-                        {['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Brown', 'Grey'].map(color => {
-                          const isActive = productForm.variants.find(v => v.type === 'Color')?.values.includes(color);
-                          const colorHexMap = { Black:'#000', White:'#FFF', Red:'#FF3B30', Blue:'#007AFF', Green:'#34C759', Yellow:'#FFCC00', Brown:'#A2845E', Grey:'#8E8E93' };
-                          const hex = colorHexMap[color] || color;
-                          return (
-                            <div
-                              key={color}
-                              className={`variant-color-circle-wrap ${isActive ? 'active' : ''}`}
-                              onClick={() => handleToggleVariant('Color', color)}
-                              title={color}
-                            >
-                              <div className="variant-color-circle" style={{ backgroundColor: hex }} />
+                    )}
+
+                    {activeProductTab === 'pricing' && (
+                      <div className="animate-in fade-in">
+                        <div className="form-row mb-4">
+                          <div className="form-group">
+                            <label className="form-label">Price (₹) *</label>
+                            <div className="input-with-prefix">
+                              <span className="input-prefix">₹</span>
+                              <input type="number" step="0.01" className="form-input" required value={productForm.price} onChange={e => setProductForm({ ...productForm, price: e.target.value })} placeholder="0.00" />
                             </div>
-                          );
-                        })}
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Discount Price (₹)</label>
+                            <div className="input-with-prefix">
+                              <span className="input-prefix">₹</span>
+                              <input type="number" step="0.01" className="form-input" value={productForm.discount_price} onChange={e => setProductForm({ ...productForm, discount_price: e.target.value })} placeholder="0.00" />
+                            </div>
+                            <small className="text-muted mt-1" style={{ fontSize: 11 }}>Optional. Will display alongside a strikethrough original price.</small>
+                          </div>
+                        </div>
+                        <div className="form-group mb-4">
+                          <label className="form-label">Stock Quantity *</label>
+                          <input type="number" className="form-input" required value={productForm.stock} onChange={e => setProductForm({ ...productForm, stock: e.target.value })} placeholder="e.g. 50" />
+                        </div>
                       </div>
-                    </div>
+                    )}
+
+                    {activeProductTab === 'media' && (
+                      <div className="animate-in fade-in">
+                        <div className="form-group mb-4">
+                          <label className="form-label">Product Images * (1–5)</label>
+                          <div className="dropzone-area">
+                            <Package size={32} color="var(--text-muted)" style={{ marginBottom: 12 }} />
+                            <p style={{ fontWeight: 600, marginBottom: 4 }}>Drag & drop images here</p>
+                            <p className="text-muted" style={{ fontSize: 12, marginBottom: 16 }}>or click to browse from your device</p>
+                            <input type="file" className="dropzone-input" accept="image/*" multiple required onChange={handleImageChange} id="product-images-input" />
+                            <button type="button" className="btn btn-outline btn-sm">Select Files</button>
+                          </div>
+
+                          {productImages.length > 0 && (
+                            <div className="media-preview-grid">
+                              {productImages.map((img, i) => (
+                                <div key={i} className="media-preview-item">
+                                  <img src={URL.createObjectURL(img)} alt="" />
+                                  {i === 0 && <span className="media-badge">Main</span>}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {activeProductTab === 'variants' && (
+                      <div className="animate-in fade-in">
+                        <div className="variants-section">
+                          <p className="text-muted" style={{ fontSize: 13, marginBottom: 20 }}>
+                            Add variants if your product comes in different options like sizes or colors. Customers will need to select these when purchasing.
+                          </p>
+
+                          <div style={{ marginBottom: 24 }}>
+                            <label className="form-label text-sm text-muted">Sizes</label>
+                            <div className="variants-grid">
+                              {['XS', 'S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '6', '7', '8', '9', '10', '11', '12'].map(size => {
+                                const isActive = productForm.variants.find(v => v.type === 'Size')?.values.includes(size);
+                                return (
+                                  <button type="button" key={size} className={`variant-size-box ${isActive ? 'active' : ''}`} onClick={() => handleToggleVariant('Size', size)}>
+                                    {size}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="form-label text-sm text-muted">Colors</label>
+                            <div className="variants-color-grid">
+                              {['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Brown', 'Grey'].map(color => {
+                                const isActive = productForm.variants.find(v => v.type === 'Color')?.values.includes(color);
+                                const colorHexMap = { Black:'#000', White:'#FFF', Red:'#FF3B30', Blue:'#007AFF', Green:'#34C759', Yellow:'#FFCC00', Brown:'#A2845E', Grey:'#8E8E93' };
+                                const hex = colorHexMap[color] || color;
+                                return (
+                                  <div key={color} className={`variant-color-circle-wrap ${isActive ? 'active' : ''}`} onClick={() => handleToggleVariant('Color', color)} title={color}>
+                                    <div className="variant-color-circle" style={{ backgroundColor: hex }} />
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                <div className="form-group mb-4">
-                  <label className="form-label">Description *</label>
-                  <textarea className="form-input" rows={3} required value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} />
-                </div>
-                <div className="modal-actions">
-                  <button type="button" className="btn btn-ghost" onClick={() => setShowProductModal(false)}>Cancel</button>
-                  <button type="submit" className="btn btn-primary" disabled={savingProduct} id="submit-product-btn">
-                    {savingProduct ? 'Adding...' : <><Plus size={16} /> Add Product</>}
-                  </button>
-                </div>
-              </form>
+                  <div className="product-modal-footer">
+                    <button type="button" className="btn btn-ghost" onClick={() => setShowProductModal(false)}>Cancel</button>
+                    <div style={{ display: 'flex', gap: 12 }}>
+                      {activeProductTab !== 'variants' ? (
+                        <button type="button" className="btn btn-outline" onClick={() => {
+                          const tabs = ['basic', 'pricing', 'media', 'variants'];
+                          const nextTab = tabs[tabs.indexOf(activeProductTab) + 1];
+                          setActiveProductTab(nextTab);
+                        }}>Next Step</button>
+                      ) : (
+                        <button type="submit" className="btn btn-primary" disabled={savingProduct} id="submit-product-btn">
+                          {savingProduct ? 'Saving...' : <><Save size={16} /> Publish Product</>}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
