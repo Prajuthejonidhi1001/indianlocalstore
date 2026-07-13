@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Store, Package, ShoppingBag, Plus, Save, X, Truck, Hash, ToggleLeft, ToggleRight } from 'lucide-react';
+import { Store, Package, ShoppingBag, Plus, Save, X, Truck, Hash, ToggleLeft, ToggleRight, Settings, Star, TrendingUp, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { shopAPI, productAPI, orderAPI } from '../api';
 import toast from 'react-hot-toast';
@@ -7,7 +7,7 @@ import './SellerDashboardPage.css';
 
 export default function SellerDashboardPage() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
   const [sellerOrders, setSellerOrders] = useState([]);
@@ -238,19 +238,90 @@ export default function SellerDashboardPage() {
         <div className="dashboard-layout">
           {/* Sidebar */}
           <div className="dashboard-sidebar card">
-            <button className={`dsb-link ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')} id="tab-overview">
-              <Store size={18} /> Shop Settings
+            <button className={`dsb-link ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')} id="tab-dashboard">
+              <Store size={18} /> Dashboard
             </button>
             <button className={`dsb-link ${activeTab === 'products' ? 'active' : ''}`} onClick={() => setActiveTab('products')} id="tab-products">
-              <Package size={18} /> Products
+              <Package size={18} /> Inventory
             </button>
             <button className={`dsb-link ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')} id="tab-orders">
               <ShoppingBag size={18} /> Orders
+            </button>
+            <button className={`dsb-link ${activeTab === 'marketing' ? 'active' : ''}`} onClick={() => setActiveTab('marketing')} id="tab-marketing">
+              <Star size={18} /> Marketing
+            </button>
+            <button className={`dsb-link ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')} id="tab-overview">
+              <Settings size={18} /> Settings
             </button>
           </div>
 
           {/* Content */}
           <div className="dashboard-content">
+
+            {/* ── DASHBOARD / ANALYTICS ── */}
+            {activeTab === 'dashboard' && (
+              <div className="card ds-card animate-in fade-in">
+                <div className="ds-header">
+                  <h2>Dashboard Overview</h2>
+                  <p>Track your shop's performance and recent activity</p>
+                </div>
+                
+                <div className="analytics-grid mb-4">
+                  <div className="analytics-card">
+                    <div className="ac-icon"><TrendingUp size={20} color="#2ECC71" /></div>
+                    <div className="ac-info">
+                      <h4>Total Revenue</h4>
+                      <h2>₹{sellerOrders.reduce((acc, o) => acc + (o.order_status !== 'cancelled' ? parseFloat(o.total_amount || 0) : 0), 0).toFixed(2)}</h2>
+                    </div>
+                  </div>
+                  <div className="analytics-card">
+                    <div className="ac-icon"><ShoppingBag size={20} color="var(--primary)" /></div>
+                    <div className="ac-info">
+                      <h4>Total Orders</h4>
+                      <h2>{sellerOrders.length}</h2>
+                    </div>
+                  </div>
+                  <div className="analytics-card">
+                    <div className="ac-icon"><Package size={20} color="var(--saffron)" /></div>
+                    <div className="ac-info">
+                      <h4>Active Products</h4>
+                      <h2>{products.filter(p => p.is_active).length}</h2>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="dashboard-widgets">
+                  <div className="widget-card">
+                    <h3>Low Stock Alerts <AlertTriangle size={16} color="#E74C3C" /></h3>
+                    {products.filter(p => p.stock < 5).length > 0 ? (
+                      <ul className="alert-list">
+                        {products.filter(p => p.stock < 5).slice(0,5).map(p => (
+                          <li key={p.id}>
+                            <span>{p.name}</span>
+                            <strong style={{ color: p.stock === 0 ? '#E74C3C' : '#F39C12' }}>{p.stock} left</strong>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-muted mt-2" style={{ fontSize: '0.9rem' }}>All products are well stocked.</p>
+                    )}
+                  </div>
+                  <div className="widget-card">
+                    <h3>Recent Orders</h3>
+                    {sellerOrders.slice(0,3).map(o => (
+                      <div key={o.id} className="recent-order-item">
+                        <div>
+                          <strong>{o.order_id}</strong>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{o.delivery_city}</div>
+                        </div>
+                        <span className={`badge badge-${o.order_status === 'pending' ? 'orange' : 'blue'}`}>{o.order_status}</span>
+                      </div>
+                    ))}
+                    {sellerOrders.length === 0 && <p className="text-muted mt-2" style={{ fontSize: '0.9rem' }}>No recent orders.</p>}
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ── SHOP SETTINGS ── */}
             {activeTab === 'overview' && (
@@ -443,6 +514,23 @@ export default function SellerDashboardPage() {
                 )}
               </div>
             )}
+
+            {/* ── MARKETING ── */}
+            {activeTab === 'marketing' && (
+              <div className="card ds-card animate-in fade-in">
+                <div className="ds-header mb-0">
+                  <h2>Marketing & Promotions</h2>
+                  <p>Boost your sales with campaigns and discounts</p>
+                </div>
+                
+                <div className="empty-state mt-4">
+                  <div className="empty-state-icon">🎉</div>
+                  <h3>Create your first campaign</h3>
+                  <p>Coming Soon! You will be able to create store-wide coupons and run flash sales to attract more customers.</p>
+                  <button className="btn btn-primary mt-3" disabled>Create Coupon (Coming Soon)</button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -551,7 +639,7 @@ export default function SellerDashboardPage() {
                           <div style={{ marginBottom: 24 }}>
                             <label className="form-label text-sm text-muted">Sizes</label>
                             <div className="variants-grid">
-                              {['XS', 'S', 'M', 'L', 'XL', 'XXL', '38', '40', '42', '6', '7', '8', '9', '10', '11', '12'].map(size => {
+                              {['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '3XL', '4XL', '28', '30', '32', '34', '36', '38', '40', '42', '44', '5', '6', '7', '8', '9', '10', '11', '12', 'Free Size'].map(size => {
                                 const isActive = productForm.variants.find(v => v.type === 'Size')?.values.includes(size);
                                 return (
                                   <button type="button" key={size} className={`variant-size-box ${isActive ? 'active' : ''}`} onClick={() => handleToggleVariant('Size', size)}>
