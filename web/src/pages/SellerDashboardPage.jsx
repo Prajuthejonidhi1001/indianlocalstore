@@ -30,6 +30,7 @@ export default function SellerDashboardPage() {
     category: '', subcategory: '', variants: []
   });
   const [productImages, setProductImages] = useState([]);
+  const [customVariant, setCustomVariant] = useState({ type: '', value: '' });
   const [savingProduct, setSavingProduct] = useState(false);
   const [allCategories, setAllCategories] = useState([]);
   const [productSubcats, setProductSubcats] = useState([]);
@@ -653,9 +654,9 @@ export default function SellerDashboardPage() {
                           <div>
                             <label className="form-label text-sm text-muted">Colors</label>
                             <div className="variants-color-grid">
-                              {['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Brown', 'Grey'].map(color => {
+                              {['Black', 'White', 'Red', 'Blue', 'Green', 'Yellow', 'Brown', 'Grey', 'Navy', 'Pink', 'Purple', 'Orange', 'Gold', 'Silver'].map(color => {
                                 const isActive = productForm.variants.find(v => v.type === 'Color')?.values.includes(color);
-                                const colorHexMap = { Black:'#000', White:'#FFF', Red:'#FF3B30', Blue:'#007AFF', Green:'#34C759', Yellow:'#FFCC00', Brown:'#A2845E', Grey:'#8E8E93' };
+                                const colorHexMap = { Black:'#000', White:'#FFF', Red:'#FF3B30', Blue:'#007AFF', Green:'#34C759', Yellow:'#FFCC00', Brown:'#A2845E', Grey:'#8E8E93', Navy:'#000080', Pink:'#FFC0CB', Purple:'#800080', Orange:'#FFA500', Gold:'#FFD700', Silver:'#C0C0C0' };
                                 const hex = colorHexMap[color] || color;
                                 return (
                                   <div key={color} className={`variant-color-circle-wrap ${isActive ? 'active' : ''}`} onClick={() => handleToggleVariant('Color', color)} title={color}>
@@ -663,6 +664,54 @@ export default function SellerDashboardPage() {
                                   </div>
                                 );
                               })}
+                            </div>
+                          </div>
+
+                          <div style={{ marginTop: 24, padding: '16px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px solid var(--border-subtle)' }}>
+                            <label className="form-label text-sm text-muted">Add Custom Variant (e.g. Material, Storage)</label>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="Type (e.g. Storage)" 
+                                value={customVariant.type}
+                                onChange={e => setCustomVariant({...customVariant, type: e.target.value})}
+                              />
+                              <input 
+                                type="text" 
+                                className="form-input" 
+                                placeholder="Value (e.g. 128GB)" 
+                                value={customVariant.value}
+                                onChange={e => setCustomVariant({...customVariant, value: e.target.value})}
+                              />
+                              <button 
+                                type="button" 
+                                className="btn btn-outline"
+                                onClick={() => {
+                                  if(customVariant.type && customVariant.value) {
+                                    handleToggleVariant(customVariant.type, customVariant.value);
+                                    setCustomVariant({type: '', value: ''});
+                                  }
+                                }}
+                              >
+                                Add
+                              </button>
+                            </div>
+                            
+                            {/* Render active custom variants */}
+                            <div style={{ marginTop: '12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                              {productForm.variants.filter(v => v.type !== 'Size' && v.type !== 'Color').map(v => (
+                                <div key={v.type} style={{ width: '100%' }}>
+                                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', display: 'block', marginBottom: '4px' }}>{v.type}</span>
+                                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                    {v.values.map(val => (
+                                      <button type="button" key={val} className="variant-size-box active" onClick={() => handleToggleVariant(v.type, val)}>
+                                        {val} &times;
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              ))}
                             </div>
                           </div>
                         </div>
