@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, ShoppingCart, ArrowLeft, Package, Store } from 'lucide-react';
+import { Star, ShoppingCart, ArrowLeft, Package, Store, Shield, RefreshCw } from 'lucide-react';
 import { productAPI } from '../api';
 import { useCart } from '../context/CartContext';
 import toast from 'react-hot-toast';
+import ImageMagnifier from '../components/ImageMagnifier';
+import { Accordion } from '../components/Accordion';
 import './ProductDetailPage.css';
 
 export default function ProductDetailPage() {
@@ -68,15 +70,11 @@ export default function ProductDetailPage() {
           <ArrowLeft size={16} /> Back to Shops
         </Link>
 
-        <div className="pd-layout">
+        <div className="pd-grid">
           {/* Image */}
           <div className="pd-gallery">
-            <div className="pd-main-img-wrap">
-              {imgSrc ? (
-                <img src={imgSrc} alt={product.name} />
-              ) : (
-                <div className="pd-no-image"><Package size={72} /></div>
-              )}
+            <ImageMagnifier src={product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'} />
+            <div className="pd-badges">
               {discount > 0 && <span className="pd-discount-badge">{discount}% OFF</span>}
             </div>
           </div>
@@ -105,8 +103,6 @@ export default function ProductDetailPage() {
                 <span className="pd-price">₹{price.toFixed(2)}</span>
               )}
             </div>
-
-            <p className="pd-description">{product.description}</p>
 
             {product.variants && product.variants.length > 0 && (
               <div className="pd-variants" style={{ margin: '1.5rem 0' }}>
@@ -178,6 +174,40 @@ export default function ProductDetailPage() {
                 </Link>
               </>
             )}
+
+            {/* Accordions */}
+            <div style={{ marginTop: '24px' }}>
+              <Accordion items={[
+                {
+                  title: 'Product Description',
+                  content: <p style={{ color: 'var(--text-muted)', lineHeight: 1.6 }}>{product.description || 'No detailed description available.'}</p>
+                },
+                {
+                  title: 'Shipping & Delivery',
+                  content: (
+                    <div style={{ color: 'var(--text-muted)' }}>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <Package size={16} /> Usually dispatched in 24 hours.
+                      </p>
+                      <p>Estimated delivery within 2-4 business days.</p>
+                    </div>
+                  )
+                },
+                {
+                  title: 'Return Policy',
+                  content: (
+                    <div style={{ color: 'var(--text-muted)' }}>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <RefreshCw size={16} /> 7 Days Replacement Policy
+                      </p>
+                      <p style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Shield size={16} /> Secure payments guaranteed
+                      </p>
+                    </div>
+                  )
+                }
+              ]} />
+            </div>
           </div>
         </div>
 

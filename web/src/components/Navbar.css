@@ -58,7 +58,7 @@
 /* ── SEARCH ───────────────────────────────────────────────────── */
 .navbar-search {
   flex: 1;
-  max-width: 380px;
+  max-width: 550px;
   display: flex;
   align-items: center;
   gap: 0.5rem;

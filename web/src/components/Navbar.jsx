@@ -4,6 +4,7 @@ import { ShoppingCart, User, Menu, X, Store, Search, LogOut, Package, LayoutDash
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import LocationSearchBar from './LocationSearchBar';
+import CartDrawer from './CartDrawer';
 import './Navbar.css';
 
 export default function Navbar() {
@@ -13,6 +14,7 @@ export default function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
   const [search, setSearch] = useState('');
 
   const handleLogout = () => {
@@ -67,10 +69,10 @@ export default function Navbar() {
           {isAuthenticated ? (
             <>
               {/* Cart */}
-              <Link to="/cart" id="cart-btn" className="nav-icon-btn">
+              <button onClick={() => setCartDrawerOpen(true)} id="cart-btn" className="nav-icon-btn" style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
                 <ShoppingCart size={20} />
                 {cartCount > 0 && <span className="cart-badge">{cartCount}</span>}
-              </Link>
+              </button>
 
               {/* User Menu */}
               <div className="user-menu-wrapper">
@@ -140,7 +142,9 @@ export default function Navbar() {
           <Link to="/shops" className="mobile-link" onClick={() => setMenuOpen(false)}>Shops</Link>
           {isAuthenticated ? (
             <>
-              <Link to="/cart" className="mobile-link" onClick={() => setMenuOpen(false)}>Cart {cartCount > 0 && `(${cartCount})`}</Link>
+              <button className="mobile-link" style={{ textAlign: 'left', background: 'none', border: 'none', width: '100%' }} onClick={() => { setMenuOpen(false); setCartDrawerOpen(true); }}>
+                Cart {cartCount > 0 && `(${cartCount})`}
+              </button>
               <Link to="/orders" className="mobile-link" onClick={() => setMenuOpen(false)}>My Orders</Link>
               <Link to="/profile" className="mobile-link" onClick={() => setMenuOpen(false)}>Profile</Link>
               {isSeller && <Link to="/seller" className="mobile-link" onClick={() => setMenuOpen(false)}>Seller Dashboard</Link>}
@@ -154,6 +158,9 @@ export default function Navbar() {
           )}
         </div>
       )}
+
+      {/* Slide-out Cart Drawer */}
+      <CartDrawer isOpen={cartDrawerOpen} onClose={() => setCartDrawerOpen(false)} />
     </nav>
   );
 }

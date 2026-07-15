@@ -1,0 +1,34 @@
+.img-magnifier-container {
+  position: relative;
+  width: 100%;
+  padding-bottom: 100%;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  cursor: crosshair;
+}
+.img-magnifier-glass {
+  position: absolute;
+  border: 2px solid var(--border-strong);
+  border-radius: 50%;
+  cursor: none;
+  width: 150px;
+  height: 150px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  pointer-events: none;
+  background-repeat: no-repeat;
+  z-index: 10;
+  display: none;
+}
+.img-magnifier-container:hover .img-magnifier-glass {
+  display: block;
+}
+.img-magnifier-img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
