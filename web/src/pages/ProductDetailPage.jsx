@@ -58,8 +58,32 @@ export default function ProductDetailPage() {
   if (loading) return <div className="loading-center"><div className="spinner" /></div>;
   if (!product) return <div className="empty-state"><h3>Product not found</h3></div>;
 
-  const price = parseFloat(product.price);
-  const discountPrice = product.discount_price ? parseFloat(product.discount_price) : null;
+  let price = parseFloat(product.price);
+  let discountPrice = product.discount_price ? parseFloat(product.discount_price) : null;
+  let stock = product.stock;
+
+  const normalVariants = product.variants ? product.variants.filter(v => v.type !== '_MATRIX_') : [];
+  const matrixVariant = product.variants ? product.variants.find(v => v.type === '_MATRIX_') : null;
+  const matrix = matrixVariant ? matrixVariant.values : [];
+
+  // Check if selected options match a matrix combination
+  if (matrix.length > 0 && Object.keys(selectedVariants).length === normalVariants.length) {
+    const selectedKeys = normalVariants.map(v => v.type);
+    const comboRow = matrix.find(row => {
+      return selectedKeys.every(k => row.combo[k] === selectedVariants[k]);
+    });
+    
+    if (comboRow) {
+      if (comboRow.price) {
+        price = parseFloat(comboRow.price);
+        discountPrice = null; // matrix price overrides discount
+      }
+      if (comboRow.stock !== '') {
+        stock = parseInt(comboRow.stock, 10);
+      }
+    }
+  }
+
   const discount = discountPrice ? Math.round((1 - discountPrice / price) * 100) : 0;
   const imgSrc = product.image ? (product.image.startsWith('http') ? product.image : `/media/${product.image}`) : null;
 
@@ -104,9 +128,9 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {product.variants && product.variants.length > 0 && (
+            {normalVariants.length > 0 && (
               <div className="pd-variants" style={{ margin: '1.5rem 0' }}>
-                {product.variants.map((v) => (
+                {normalVariants.map((v) => (
                   <div key={v.type} style={{ marginBottom: '1rem' }}>
                     <div style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '8px', textTransform: 'uppercase' }}>
                       Select {v.type}
@@ -131,8 +155,8 @@ export default function ProductDetailPage() {
             )}
 
             <div className="pd-stock">
-              {product.stock > 0 ? (
-                <span className="badge badge-green">In Stock ({product.stock} left)</span>
+              {stock > 0 ? (
+                <span className="badge badge-green">In Stock ({stock} left)</span>
               ) : (
                 <span className="badge badge-red">Out of Stock</span>
               )}
@@ -145,13 +169,13 @@ export default function ProductDetailPage() {
                 <div className="qty-controls">
                   <button className="qty-btn" onClick={() => setQty(Math.max(1, qty - 1))}>-</button>
                   <span className="qty-val">{qty}</span>
-                  <button className="qty-btn" onClick={() => setQty(Math.min(product.stock, qty + 1))}>+</button>
+                  <button className="qty-btn" onClick={() => setQty(Math.min(stock, qty + 1))}>+</button>
                 </div>
               </div>
               <button
                 id="add-to-cart-btn"
                 className="btn btn-primary flex-1"
-                disabled={product.stock === 0}
+                disabled={stock === 0}
                 onClick={handleAddToCart}
               >
                 <ShoppingCart size={18} /> Add to Cart

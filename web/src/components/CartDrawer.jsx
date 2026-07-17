@@ -6,9 +6,11 @@ import toast from 'react-hot-toast';
 import './CartDrawer.css';
 
 export default function CartDrawer({ isOpen, onClose }) {
-  const { cartItems, updateQuantity, removeFromCart } = useCart();
+  const { cart, addToCart, removeFromCart } = useCart();
   const navigate = useNavigate();
   const [isClosing, setIsClosing] = useState(false);
+  
+  const cartItems = cart?.items || [];
 
   useEffect(() => {
     if (isOpen) {
@@ -38,7 +40,7 @@ export default function CartDrawer({ isOpen, onClose }) {
   if (!isOpen && !isClosing) return null;
 
   const totalAmount = cartItems.reduce((acc, item) => {
-    const price = item.product?.discount_price || item.product?.price || 0;
+    const price = parseFloat(item.product_price) || 0;
     return acc + price * item.quantity;
   }, 0);
 
@@ -61,19 +63,22 @@ export default function CartDrawer({ isOpen, onClose }) {
           ) : (
             <div>
               {cartItems.map((item) => {
-                const product = item.product;
-                if (!product) return null;
-                const price = product.discount_price || product.price;
+                const productId = item.product;
+                if (!productId) return null;
+                const name = item.product_name || 'Product';
+                const price = parseFloat(item.product_price) || 0;
+                const rawImg = item.product_image;
+                const imgSrc = rawImg ? (rawImg.startsWith('http') ? rawImg : `/media/${rawImg}`) : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80';
 
                 return (
                   <div key={item.id} className="cd-item">
                     <img 
-                      src={product.image || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80'} 
-                      alt={product.name} 
+                      src={imgSrc} 
+                      alt={name} 
                       className="cd-item-img" 
                     />
                     <div className="cd-item-details">
-                      <div className="cd-item-name">{product.name}</div>
+                      <div className="cd-item-name">{name}</div>
                       
                       {item.variants && Object.keys(item.variants).length > 0 && (
                         <div className="cd-item-variants">
@@ -83,7 +88,7 @@ export default function CartDrawer({ isOpen, onClose }) {
                         </div>
                       )}
                       
-                      <div className="cd-item-price">₹{price}</div>
+                      <div className="cd-item-price">₹{price.toFixed(2)}</div>
                       
                       <div className="cd-item-actions">
                         <div className="cd-qty-controls">
@@ -91,10 +96,9 @@ export default function CartDrawer({ isOpen, onClose }) {
                             className="cd-qty-btn"
                             onClick={() => {
                               if (item.quantity > 1) {
-                                updateQuantity(item.id, item.quantity - 1);
+                                addToCart(productId, item.quantity - 1, item.variants);
                               } else {
                                 removeFromCart(item.id);
-                                toast.success('Item removed');
                               }
                             }}
                           >
@@ -103,15 +107,12 @@ export default function CartDrawer({ isOpen, onClose }) {
                           <span style={{ fontWeight: 600, width: 20, textAlign: 'center' }}>{item.quantity}</span>
                           <button 
                             className="cd-qty-btn"
-                            onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                            onClick={() => addToCart(productId, item.quantity + 1, item.variants)}
                           >
                             <Plus size={14} />
                           </button>
                         </div>
-                        <button className="cd-remove" onClick={() => {
-                          removeFromCart(item.id);
-                          toast.success('Item removed');
-                        }}>
+                        <button className="cd-remove" onClick={() => removeFromCart(item.id)}>
                           <Trash2 size={16} />
                         </button>
                       </div>

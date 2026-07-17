@@ -31,6 +31,7 @@ export default function SellerDashboardPage() {
   });
   const [productImages, setProductImages] = useState([]);
   const [customVariant, setCustomVariant] = useState({ type: '', value: '' });
+  const [variantMatrix, setVariantMatrix] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
   const [allCategories, setAllCategories] = useState([]);
   const [productSubcats, setProductSubcats] = useState([]);
@@ -144,7 +145,15 @@ export default function SellerDashboardPage() {
       const subId = defaultSubId || productForm.subcategory;
       if (catId) formData.append('category', catId);
       if (subId) formData.append('subcategory', subId);
-      if (productForm.variants.length > 0) formData.append('variants', JSON.stringify(productForm.variants));
+      
+      let finalVariants = [...productForm.variants];
+      if (variantMatrix.length > 0) {
+        finalVariants.push({ type: '_MATRIX_', values: variantMatrix });
+      }
+      if (finalVariants.length > 0) {
+        formData.append('variants', JSON.stringify(finalVariants));
+      }
+      
       formData.append('image', productImages[0]);
       productImages.slice(1).forEach(img => formData.append('images', img));
 
@@ -193,7 +202,35 @@ export default function SellerDashboardPage() {
     } else {
       newVariants.push({ type: variantType, values: [variantValue] });
     }
+    
     setProductForm({ ...productForm, variants: newVariants });
+
+    // Generate Matrix
+    if (newVariants.length === 0) {
+      setVariantMatrix([]);
+      return;
+    }
+    
+    const generate = (currentIndex, currentCombo) => {
+      if (currentIndex === newVariants.length) {
+        return [currentCombo];
+      }
+      const option = newVariants[currentIndex];
+      let res = [];
+      for (let val of option.values) {
+        res = res.concat(generate(currentIndex + 1, { ...currentCombo, [option.type]: val }));
+      }
+      return res;
+    };
+    
+    const combos = generate(0, {});
+    // Preserve existing matrix values
+    const updatedMatrix = combos.map(combo => {
+      const comboKey = JSON.stringify(combo);
+      const existingRow = variantMatrix.find(row => JSON.stringify(row.combo) === comboKey);
+      return existingRow || { combo, price: '', stock: '' };
+    });
+    setVariantMatrix(updatedMatrix);
   };
 
   const activeCategoryName = allCategories.find(c => c.id === (productForm.category || defaultCatId))?.name || defaultCatName;
@@ -714,6 +751,61 @@ export default function SellerDashboardPage() {
                               ))}
                             </div>
                           </div>
+
+                          {/* Matrix Table */}
+                          {variantMatrix.length > 0 && (
+                            <div style={{ marginTop: 24 }}>
+                              <label className="form-label text-sm text-muted">Set Price and Stock per Combination</label>
+                              <div style={{ overflowX: 'auto', border: '1px solid var(--border-subtle)', borderRadius: '8px' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                                  <thead style={{ background: 'var(--bg-elevated)', borderBottom: '1px solid var(--border-subtle)' }}>
+                                    <tr>
+                                      <th style={{ padding: '12px 16px', fontWeight: 600 }}>Combination</th>
+                                      <th style={{ padding: '12px 16px', fontWeight: 600 }}>Price (₹)</th>
+                                      <th style={{ padding: '12px 16px', fontWeight: 600 }}>Stock</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {variantMatrix.map((row, i) => (
+                                      <tr key={i} style={{ borderBottom: '1px solid var(--border-subtle)' }}>
+                                        <td style={{ padding: '12px 16px', color: 'var(--text-primary)' }}>
+                                          {Object.values(row.combo).join(' - ')}
+                                        </td>
+                                        <td style={{ padding: '8px 16px' }}>
+                                          <input 
+                                            type="number" 
+                                            className="form-input" 
+                                            style={{ width: '120px', padding: '6px 12px' }}
+                                            placeholder="Default"
+                                            value={row.price}
+                                            onChange={(e) => {
+                                              const newMatrix = [...variantMatrix];
+                                              newMatrix[i].price = e.target.value;
+                                              setVariantMatrix(newMatrix);
+                                            }}
+                                          />
+                                        </td>
+                                        <td style={{ padding: '8px 16px' }}>
+                                          <input 
+                                            type="number" 
+                                            className="form-input" 
+                                            style={{ width: '120px', padding: '6px 12px' }}
+                                            placeholder="Default"
+                                            value={row.stock}
+                                            onChange={(e) => {
+                                              const newMatrix = [...variantMatrix];
+                                              newMatrix[i].stock = e.target.value;
+                                              setVariantMatrix(newMatrix);
+                                            }}
+                                          />
+                                        </td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
                     )}
