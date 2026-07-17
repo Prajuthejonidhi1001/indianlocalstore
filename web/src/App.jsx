@@ -17,7 +17,6 @@ import NearbyShopsPage from './pages/NearbyShopsPage';
 import ShopDetailPage from './pages/ShopDetailPage';
 import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
-import OrdersPage from './pages/OrdersPage';
 import ProfilePage from './pages/ProfilePage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
 
@@ -53,7 +52,7 @@ function AppRoutes() {
           <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
           <Route path="/cart" element={<PrivateRoute><CartPage /></PrivateRoute>} />
           <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
-          <Route path="/orders" element={<PrivateRoute><OrdersPage /></PrivateRoute>} />
+          <Route path="/orders" element={<Navigate to="/profile" replace />} />
           <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />
           <Route path="/seller" element={<SellerRoute><SellerDashboardPage /></SellerRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />

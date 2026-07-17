@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Store, Package, ShoppingBag, Plus, Save, X, Truck, Hash, ToggleLeft, ToggleRight, Settings, Star, TrendingUp, AlertTriangle } from 'lucide-react';
+import { Store, Package, ShoppingBag, Plus, Save, X, Truck, Hash, ToggleLeft, ToggleRight, Settings, Star, TrendingUp, AlertTriangle, CreditCard, MessageSquare } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { shopAPI, productAPI, orderAPI } from '../api';
 import toast from 'react-hot-toast';
@@ -286,11 +286,20 @@ export default function SellerDashboardPage() {
             <button className={`dsb-link ${activeTab === 'orders' ? 'active' : ''}`} onClick={() => setActiveTab('orders')} id="tab-orders">
               <ShoppingBag size={18} /> Orders
             </button>
+            <button className={`dsb-link ${activeTab === 'financials' ? 'active' : ''}`} onClick={() => setActiveTab('financials')} id="tab-financials">
+              <CreditCard size={18} /> Financials
+            </button>
+            <button className={`dsb-link ${activeTab === 'reviews' ? 'active' : ''}`} onClick={() => setActiveTab('reviews')} id="tab-reviews">
+              <MessageSquare size={18} /> Customer Reviews
+            </button>
             <button className={`dsb-link ${activeTab === 'marketing' ? 'active' : ''}`} onClick={() => setActiveTab('marketing')} id="tab-marketing">
               <Star size={18} /> Marketing
             </button>
+            
+            <div className="divider" style={{ margin: '8px 0' }}></div>
+            
             <button className={`dsb-link ${activeTab === 'overview' ? 'active' : ''}`} onClick={() => setActiveTab('overview')} id="tab-overview">
-              <Settings size={18} /> Settings
+              <Settings size={18} /> Shop Settings
             </button>
           </div>
 
@@ -395,9 +404,20 @@ export default function SellerDashboardPage() {
             {activeTab === 'overview' && (
               <div className="card ds-card animate-in">
                 <div className="ds-header">
-                  <h2>Shop Settings</h2>
-                  <p>Manage your shop status and profile</p>
+                  <h2>Storefront & Settings</h2>
+                  <p>Manage your shop identity and configuration</p>
                 </div>
+                
+                {/* Storefront Customization Mock */}
+                <div className="storefront-customization mb-4" style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px dashed var(--border-subtle)' }}>
+                  <h4 className="font-medium text-primary mb-2">Storefront Branding</h4>
+                  <p className="text-muted mb-3" style={{ fontSize: '0.85rem' }}>Upload a custom banner and logo to make your shop stand out to buyers. (Premium Feature)</p>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className="btn btn-outline btn-sm" disabled>Upload Banner</button>
+                    <button className="btn btn-outline btn-sm" disabled>Upload Logo</button>
+                  </div>
+                </div>
+
                 <form onSubmit={handleSaveShop} className="ds-form">
 
                   {/* Default category info banner */}
@@ -671,6 +691,54 @@ export default function SellerDashboardPage() {
                     </table>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* ── FINANCIALS ── */}
+            {activeTab === 'financials' && (
+              <div className="card ds-card animate-in fade-in">
+                <div className="ds-header mb-0" style={{ marginBottom: '1.5rem' }}>
+                  <h2>Financials & Payouts</h2>
+                  <p>Manage your bank accounts and view upcoming payouts</p>
+                </div>
+                
+                <div className="dashboard-widgets" style={{ gridTemplateColumns: '1fr 1fr' }}>
+                  <div className="widget-card" style={{ background: 'linear-gradient(135deg, var(--saffron), #ff8a65)', color: 'white', border: 'none' }}>
+                    <h3 style={{ color: 'white' }}>Available Balance</h3>
+                    <div style={{ fontSize: '2rem', fontWeight: '700', marginBottom: '8px' }}>₹0.00</div>
+                    <p style={{ fontSize: '0.85rem', opacity: 0.9 }}>Next payout scheduled for: N/A</p>
+                  </div>
+                  <div className="widget-card">
+                    <h3>Bank Account Details</h3>
+                    <div className="empty-state" style={{ padding: '1rem', minHeight: 'auto' }}>
+                      <p className="text-muted" style={{ fontSize: '0.85rem' }}>No bank account added.</p>
+                      <button className="btn btn-outline btn-sm mt-2">Add Bank Account</button>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--border-subtle)' }}>
+                  <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>Recent Transactions</h3>
+                  <div className="empty-state">
+                    <p className="text-muted">No payout history available.</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── CUSTOMER REVIEWS ── */}
+            {activeTab === 'reviews' && (
+              <div className="card ds-card animate-in fade-in">
+                <div className="ds-header mb-0">
+                  <h2>Customer Reviews</h2>
+                  <p>Monitor customer feedback and ratings on your products</p>
+                </div>
+                
+                <div className="empty-state mt-4">
+                  <div className="empty-state-icon">⭐</div>
+                  <h3>No reviews yet</h3>
+                  <p className="text-muted">When customers leave a rating or review on your products, they will appear here.</p>
+                </div>
               </div>
             )}
 
