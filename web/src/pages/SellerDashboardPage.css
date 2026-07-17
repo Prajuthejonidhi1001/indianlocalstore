@@ -78,6 +78,62 @@
 .ds-table td { font-size: 0.95rem; color: var(--text-secondary); }
 .font-medium { font-weight: 600; color: var(--text-primary) !important; }
 
+/* Amazon Style Table Extensions */
+.amazon-table th {
+  background: var(--bg-surface);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 2px solid var(--border-subtle);
+  font-size: 0.8rem;
+}
+.amazon-table td {
+  vertical-align: middle;
+  padding: 1.25rem 1rem;
+}
+.product-thumb-small {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 1px solid var(--border-subtle);
+}
+.product-thumb-small.placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-elevated);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+.sku-text {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: monospace;
+  margin-top: 2px;
+}
+.status-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  margin-right: 6px;
+}
+.status-dot.active { background: #2ECC71; }
+.status-dot.inactive { background: #E74C3C; }
+.btn-link {
+  background: none;
+  border: 1px solid var(--border-subtle);
+  padding: 6px 12px;
+  border-radius: 4px;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-link:hover {
+  background: var(--bg-hover);
+  border-color: var(--border-strong);
+}
+
 /* Modals */
 .modal-overlay {
   position: fixed;
@@ -119,6 +175,50 @@
   margin-top: 1.5rem;
   padding-top: 1.5rem;
   border-top: 1px solid var(--border-subtle);
+}
+
+/* Orders Pipeline Nav */
+.orders-pipeline-nav {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-subtle);
+  padding-bottom: 16px;
+  overflow-x: auto;
+}
+.pipeline-btn {
+  background: none;
+  border: none;
+  padding: 8px 16px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+.pipeline-btn:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+}
+.pipeline-btn.active {
+  background: var(--text-primary);
+  color: var(--bg-default);
+}
+.pipeline-count {
+  background: rgba(231,76,60,0.15);
+  color: #E74C3C;
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-weight: 700;
+}
+.pipeline-btn.active .pipeline-count {
+  background: #E74C3C;
+  color: #fff;
 }
 
 @media (max-width: 768px) {
@@ -709,7 +809,7 @@
 
 .dashboard-widgets {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 20px;
 }
 .widget-card {
@@ -717,6 +817,7 @@
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
 }
 .widget-card h3 {
   font-size: 1.1rem;
@@ -724,28 +825,63 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  color: var(--text-primary);
 }
 .alert-list {
   list-style: none;
   padding: 0;
   margin: 0;
 }
-.alert-list li {
+.alert-item {
   display: flex;
   justify-content: space-between;
   padding: 12px 0;
   border-bottom: 1px solid var(--border-subtle);
   font-size: 0.95rem;
 }
-.alert-list li:last-child {
+.alert-item:last-child {
   border-bottom: none;
 }
-.recent-order-item {
+.cursor-pointer { cursor: pointer; }
+
+/* CSS Bar Chart */
+.css-bar-chart {
   display: flex;
+  align-items: flex-end;
   justify-content: space-between;
+  height: 140px;
+  padding-top: 10px;
+  gap: 12px;
+}
+.bar-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   align-items: center;
-  padding: 12px;
-  background: var(--bg-elevated);
-  border-radius: 8px;
-  margin-bottom: 8px;
+  gap: 8px;
+  height: 100%;
+}
+.bar-fill {
+  width: 100%;
+  max-width: 28px;
+  background: linear-gradient(180deg, var(--saffron) 0%, rgba(255,107,53,0.5) 100%);
+  border-radius: 4px 4px 0 0;
+  transition: height 0.5s ease-out;
+}
+.bar-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* Quick Links */
+.quick-links-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.quick-links-grid .btn {
+  justify-content: flex-start;
+  padding: 10px 16px;
+  font-size: 0.95rem;
 }
