@@ -70,6 +70,11 @@ export default function CartDrawer({ isOpen, onClose }) {
                 const rawImg = item.product_image;
                 const imgSrc = rawImg ? (rawImg.startsWith('http') ? rawImg : `/media/${rawImg}`) : 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=200&q=80';
 
+                let itemVariants = item.variants || {};
+                if (typeof itemVariants === 'string') {
+                  try { itemVariants = JSON.parse(itemVariants); } catch(e) { itemVariants = {}; }
+                }
+
                 return (
                   <div key={item.id} className="cd-item">
                     <img 
@@ -80,9 +85,9 @@ export default function CartDrawer({ isOpen, onClose }) {
                     <div className="cd-item-details">
                       <div className="cd-item-name">{name}</div>
                       
-                      {item.variants && Object.keys(item.variants).length > 0 && (
+                      {Object.keys(itemVariants).length > 0 && (
                         <div className="cd-item-variants">
-                          {Object.entries(item.variants).map(([k, v]) => (
+                          {Object.entries(itemVariants).map(([k, v]) => (
                             <span key={k} style={{ marginRight: 8 }}>{k}: {v}</span>
                           ))}
                         </div>

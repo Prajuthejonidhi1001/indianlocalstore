@@ -48,6 +48,11 @@ export default function CartPage() {
                 const imgSrc = rawImg
                   ? (rawImg.startsWith('http') ? rawImg : `/media/${rawImg}`)
                   : null;
+                  
+                let itemVariants = item.variants || {};
+                if (typeof itemVariants === 'string') {
+                  try { itemVariants = JSON.parse(itemVariants); } catch(e) { itemVariants = {}; }
+                }
 
                 return (
                   <div key={item.id} className="cart-item" id={`cart-item-${item.id}`}>
@@ -66,9 +71,9 @@ export default function CartPage() {
                         ₹{price.toFixed(2)}
                       </p>
                       
-                      {item.variants && Object.keys(item.variants).length > 0 && (
+                      {Object.keys(itemVariants).length > 0 && (
                         <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-                          {Object.entries(item.variants).map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                          {Object.entries(itemVariants).map(([k, v]) => `${k}: ${v}`).join(' | ')}
                         </div>
                       )}
 

@@ -62,8 +62,16 @@ export default function ProductDetailPage() {
   let discountPrice = product.discount_price ? parseFloat(product.discount_price) : null;
   let stock = product.stock;
 
-  const normalVariants = product.variants ? product.variants.filter(v => v.type !== '_MATRIX_') : [];
-  const matrixVariant = product.variants ? product.variants.find(v => v.type === '_MATRIX_') : null;
+  // Safely parse variants in case backend returns a string
+  let parsedVariants = [];
+  if (Array.isArray(product.variants)) {
+    parsedVariants = product.variants;
+  } else if (typeof product.variants === 'string') {
+    try { parsedVariants = JSON.parse(product.variants); } catch(e) {}
+  }
+
+  const normalVariants = parsedVariants.filter(v => v.type !== '_MATRIX_');
+  const matrixVariant = parsedVariants.find(v => v.type === '_MATRIX_');
   const matrix = matrixVariant ? matrixVariant.values : [];
 
   // Check if selected options match a matrix combination
