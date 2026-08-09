@@ -1,336 +1,290 @@
 import { useState, useEffect } from 'react';
-import { Link, useSearchParams } from 'react-router-dom';
-import { MapPin, Navigation, Star, Phone, Search, Grid } from 'lucide-react';
+import { useSearchParams, Link, useNavigate } from 'react-router-dom';
+import { Search, MapPin, Navigation, Star, ChevronDown, Filter, ChevronRight, Store, SlidersHorizontal, Check } from 'lucide-react';
 import { shopAPI, productAPI } from '../api';
 import { useLocation } from '../context/LocationContext';
 import './NearbyShopsPage.css';
 
 const CAT_EMOJIS = {
-  'Vegetables': '🥬', 'Fruits': '🍎', 'Dairy': '🥛',
-  'Spices': '🌿', 'Grains': '🌾', 'Snacks': '🥜',
-  'Meat': '🍖', 'Beverages': '🧃', 'Bakery': '🍞',
-  'Personal Care': '🧴', 'Home & Living': '🏠', 'Electronics': '📱',
-  'Clothing': '👕', 'Stationery': '📚', 'Pharmacy': '💊',
+  'Vegetables': '🥬', 'Fruits': '🍎', 'Dairy': '🥛', 'Spices': '🌿',
+  'Grains': '🌾', 'Snacks': '🥜', 'Meat': '🍖', 'Beverages': '🧃',
+  'Bakery': '🍞', 'Personal Care': '🧴', 'Home & Living': '🏠',
+  'Electronics': '📱', 'Clothing': '👕', 'Pharmacy': '💊',
+  'Fashion': '👗', 'Agriculture': '🌱', 'Automobile': '🚗',
+  'Construction': '🏗️', 'Furniture': '🪑', 'Furnitures': '🪑',
+  'Mart': '🏪', 'Traders': '📦', 'Event Management': '🎉',
+  'Second Hand Vehicles': '🚙',
 };
 
-export default function NearbyShopsPage() {
-  const [searchParams] = useSearchParams();
-  const { location } = useLocation();
-  const [shops, setShops] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [subcategories, setSubcategories] = useState([]);
-  
-  const initialCat = searchParams.get('category');
-  const [selectedCategory, setSelectedCategory] = useState(
-    initialCat ? (isNaN(initialCat) ? initialCat : parseInt(initialCat, 10)) : null
-  );
-  
-  const initialSubCat = searchParams.get('subcategory');
-  const [selectedSubcategory, setSelectedSubcategory] = useState(
-    initialSubCat ? parseInt(initialSubCat, 10) : null
-  );
-  
-  const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState(searchParams.get('search') || '');
-  const [locating, setLocating] = useState(false);
-  const [coords, setCoords] = useState(null);
+const CAT_GRADIENTS = [
+  'linear-gradient(135deg,#FF6B35,#FF8C42)',
+  'linear-gradient(135deg,#5521FF,#7C3AED)',
+  'linear-gradient(135deg,#00C896,#00A878)',
+  'linear-gradient(135deg,#FFB627,#FF9500)'
+];
 
-  // Fetch categories once
-  useEffect(() => {
-    productAPI.getCategories()
-      .then(res => setCategories(res.data.results || res.data))
-      .catch(() => {});
-  }, []);
-
-  // Fetch subcategories when category changes
-  useEffect(() => {
-    if (selectedCategory) {
-      productAPI.getSubCategories(selectedCategory)
-        .then(res => setSubcategories(res.data.results || res.data))
-        .catch(() => setSubcategories([]));
-    } else {
-      setSubcategories([]);
-    }
-  }, [selectedCategory]);
-
-  const fetchShops = async () => {
-    setLoading(true);
-    try {
-      let res;
-      if (coords?.lat && coords?.lng) {
-        res = await shopAPI.getNearbyShops({ 
-          latitude: coords.lat, 
-          longitude: coords.lng,
-          category: selectedCategory,
-          subcategory: selectedSubcategory
-        });
-      } else {
-        const params = { page_size: 50 };
-        if (location?.district) params.city = location.district;
-        if (selectedCategory) params.category = selectedCategory;
-        if (selectedSubcategory) params.subcategory = selectedSubcategory;
-        res = await shopAPI.getShops(params);
-      }
-      setShops(res.data.results || res.data);
-    } catch {
-      setShops([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { fetchShops(); }, [location?.district, selectedCategory, selectedSubcategory, coords]);
-
-  const handleLocationSearch = () => {
-    if (!navigator.geolocation) return;
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCoords({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocating(false);
-      },
-      () => {
-        setLocating(false);
-      }
-    );
-  };
-
-  // Auto locate on mount
-  useEffect(() => {
-    handleLocationSearch();
-  }, []);
-
-  const filteredShops = shops.filter(s =>
-    s.name.toLowerCase().includes(search.toLowerCase()) ||
-    s.city.toLowerCase().includes(search.toLowerCase())
-  );
-
+function ShopSkeleton() {
   return (
-    <div className="page">
-      <div className="container" style={{ paddingTop: '2.5rem', paddingBottom: '3rem' }}>
-        <div className="shops-header">
-          <div>
-            <div className="section-label"><MapPin size={14} /> Find Local</div>
-            <h1 id="shops-heading">
-              {location ? `Shops in ${location.name}` : 'Nearby Shops'}
-            </h1>
-            <p className="section-subtitle">
-              {location
-                ? `Showing all registered shops and sellers in ${location.district}, ${location.state}`
-                : 'Support your neighbourhood businesses'}
-            </p>
-          </div>
-          <div className="shops-search-row mt-3">
-            <div className="shops-search-wrap">
-              <Search size={15} className="shops-search-icon" />
-              <input
-                id="shop-search"
-                type="text"
-                placeholder="Search by name or city..."
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-              />
-            </div>
-            <button
-              id="locate-me-btn"
-              className="btn btn-primary btn-sm"
-              onClick={handleLocationSearch}
-              disabled={locating}
-            >
-              <Navigation size={14} /> {locating ? 'Locating...' : 'Use My Location'}
-            </button>
+    <div className="shop-card-skeleton card">
+      <div className="sks-banner shimmer" />
+      <div className="sks-body">
+        <div className="sks-row">
+          <div className="sks-avatar shimmer" />
+          <div className="sks-lines">
+            <div className="sks-line shimmer" style={{ width: '70%' }} />
+            <div className="sks-line shimmer" style={{ width: '40%', height: '10px', marginTop: '6px' }} />
           </div>
         </div>
-
-        {/* Category Filter Row */}
-        {categories.length > 0 && (
-          <div style={{
-            display: 'flex', gap: '0.6rem', overflowX: 'auto', paddingBottom: '0.75rem',
-            marginBottom: selectedCategory ? '0.5rem' : '1.5rem', scrollbarWidth: 'none'
-          }}>
-            <button
-              onClick={() => { setSelectedCategory(null); setSelectedSubcategory(null); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                padding: '0.45rem 1rem', borderRadius: '999px', border: '1.5px solid',
-                cursor: 'pointer', fontSize: '0.85rem', fontWeight: '600', transition: 'all 0.2s',
-                borderColor: selectedCategory === null ? 'var(--primary-color)' : 'var(--border-color)',
-                background: selectedCategory === null ? 'var(--primary-color)' : 'transparent',
-                color: selectedCategory === null ? '#fff' : 'var(--text-gray)',
-              }}
-            >
-              <Grid size={13} /> All
-            </button>
-
-            {categories.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => {
-                  setSelectedCategory(selectedCategory === cat.id ? null : cat.id);
-                  setSelectedSubcategory(null);
-                }}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                  padding: '0.45rem 1rem', borderRadius: '999px', border: '1.5px solid',
-                  cursor: 'pointer', fontSize: '0.85rem', fontWeight: '500', transition: 'all 0.2s',
-                  borderColor: selectedCategory === cat.id ? 'var(--primary-color)' : 'var(--border-color)',
-                  background: selectedCategory === cat.id ? 'var(--primary-color)' : 'transparent',
-                  color: selectedCategory === cat.id ? '#fff' : 'var(--text-light)',
-                }}
-              >
-                {cat.icon
-                  ? <img src={cat.icon} alt="" style={{ width: 16, height: 16, borderRadius: '4px', objectFit: 'cover' }} />
-                  : <span style={{ fontSize: '1rem' }}>{CAT_EMOJIS[cat.name] || '🛍️'}</span>
-                }
-                {cat.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {/* Subcategory Filter Row */}
-        {selectedCategory && subcategories.length > 0 && (
-          <div style={{
-            display: 'flex', gap: '0.5rem', overflowX: 'auto', paddingBottom: '0.75rem',
-            marginBottom: '1.5rem', scrollbarWidth: 'none'
-          }}>
-            <button
-              onClick={() => setSelectedSubcategory(null)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                padding: '0.35rem 0.8rem', borderRadius: '8px', border: '1px solid',
-                cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500', transition: 'all 0.2s',
-                borderColor: selectedSubcategory === null ? 'var(--secondary-color)' : 'var(--border-color)',
-                background: selectedSubcategory === null ? 'rgba(255, 182, 39, 0.1)' : 'transparent',
-                color: selectedSubcategory === null ? 'var(--secondary-color)' : 'var(--text-light)',
-              }}
-            >
-              All Types
-            </button>
-            {subcategories.map(sub => (
-              <button
-                key={sub.id}
-                onClick={() => setSelectedSubcategory(selectedSubcategory === sub.id ? null : sub.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: '0.4rem', flexShrink: 0,
-                  padding: '0.35rem 0.8rem', borderRadius: '8px', border: '1px solid',
-                  cursor: 'pointer', fontSize: '0.8rem', fontWeight: '500', transition: 'all 0.2s',
-                  borderColor: selectedSubcategory === sub.id ? 'var(--secondary-color)' : 'var(--border-color)',
-                  background: selectedSubcategory === sub.id ? 'rgba(255, 182, 39, 0.1)' : 'transparent',
-                  color: selectedSubcategory === sub.id ? 'var(--secondary-color)' : 'var(--text-light)',
-                }}
-              >
-                {sub.icon && <img src={sub.icon} alt="" style={{ width: 14, height: 14, borderRadius: '3px', objectFit: 'cover' }} />}
-                {sub.name}
-              </button>
-            ))}
-          </div>
-        )}
-
-        {loading ? (
-          <div className="loading-center"><div className="spinner" /></div>
-        ) : filteredShops.length === 0 ? (
-          <div className="empty-state">
-            <div className="empty-state-icon">🏪</div>
-            <h3>No shops found</h3>
-            <p>No shops in this particular field or categories</p>
-          </div>
-        ) : (
-          <>
-            {(() => {
-              const nearby = filteredShops.filter(s => s.distance == null || s.distance <= 5);
-              const distant = filteredShops.filter(s => s.distance != null && s.distance > 5);
-
-              const renderCards = (shopList) => (
-                <div className="shops-cards-grid">
-                  {shopList.map((shop, i) => {
-                    const avatarColor = `hsl(${(shop.name.charCodeAt(0) * 37) % 360}, 60%, 42%)`;
-                    const logoSrc = shop.logo ? (shop.logo.startsWith('http') ? shop.logo : `/media/${shop.logo}`) : null;
-
-                    return (
-                      <Link
-                        to={`/shops/${shop.id}`}
-                        key={shop.id}
-                        className={`shop-card-ns animate-in stagger-${(i % 10) + 1}`}
-                        id={`shop-card-${shop.id}`}
-                      >
-                        <div className="scn-banner">
-                          {logoSrc && <img src={logoSrc} alt={shop.name} />}
-                          <div className="scn-banner-overlay" />
-                          <div className="scn-tags">
-                            <span className="scn-open-tag">
-                              <span className="scn-open-dot" />
-                              {shop.is_open ? 'Open' : 'Closed'}
-                            </span>
-                            {shop.verification_status === 'verified' && (
-                              <span className="scn-verified-tag">✓ Verified</span>
-                            )}
-                          </div>
-                        </div>
-
-                        <div className="scn-body">
-                          <div className="scn-row1">
-                            <div className="scn-avatar" style={{ background: avatarColor }}>
-                              {logoSrc ? <img src={logoSrc} alt={shop.name} /> : shop.name[0].toUpperCase()}
-                            </div>
-                            <div className="scn-info">
-                              <div className="scn-name">{shop.name}</div>
-                              <div className="scn-city">
-                                <MapPin size={11} /> {shop.city}
-                                {shop.distance != null && <span style={{ marginLeft: 6, color: 'var(--primary)' }}>({shop.distance}km)</span>}
-                              </div>
-                            </div>
-                            <div className="scn-rating">
-                              <Star size={13} fill="currentColor" />
-                              {shop.rating?.toFixed(1) || '0.0'}
-                            </div>
-                          </div>
-
-                          <div className="scn-footer">
-                            <span className="scn-phone">
-                              <Phone size={12} />
-                              {shop.reviews_count || 0} review{shop.reviews_count !== 1 ? 's' : ''}
-                            </span>
-                            <span className="scn-cta">
-                              Visit Shop →
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              );
-
-              return (
-                <div>
-                  {nearby.length === 0 && distant.length > 0 && (
-                    <div className="empty-state" style={{ padding: '2rem 1rem' }}>
-                      <div className="empty-state-icon" style={{ fontSize: '3rem' }}>📍</div>
-                      <h3 style={{ margin: '0.5rem 0' }}>No shops in your location</h3>
-                      <p>We couldn't find any shops within 5km of your area.</p>
-                    </div>
-                  )}
-
-                  {nearby.length > 0 && renderCards(nearby)}
-
-                  {distant.length > 0 && (
-                    <>
-                      <div style={{ margin: '3rem 0 1.5rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                        <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
-                        <h3 style={{ fontSize: '1.2rem', color: 'var(--text-color)' }}>Distant Shops</h3>
-                        <div style={{ flex: 1, height: 1, background: 'var(--border-color)' }} />
-                      </div>
-                      {renderCards(distant)}
-                    </>
-                  )}
-                </div>
-              );
-            })()}
-          </>
-        )}
       </div>
     </div>
   );
 }
 
+export default function NearbyShopsPage() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { location } = useLocation();
+  const navigate = useNavigate();
+
+  const [shops, setShops] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [locating, setLocating] = useState(false);
+
+  // Filters State
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('q') || '');
+  const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || null);
+  const [selectedRating, setSelectedRating] = useState(null);
+  const [sortBy, setSortBy] = useState('relevance');
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
+
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      setLoading(true);
+      try {
+        const [catRes, shopRes] = await Promise.all([
+          productAPI.getCategories(),
+          shopAPI.getShops({ city: location?.district })
+        ]);
+        setCategories(catRes.data.results || catRes.data);
+        setShops(shopRes.data.results || shopRes.data);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchInitialData();
+  }, [location?.district]);
+
+  const handleLocationSearch = () => {
+    if (!navigator.geolocation) return;
+    setLocating(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        try {
+          const res = await shopAPI.getNearbyShops(pos.coords.latitude, pos.coords.longitude);
+          setShops(res.data.results || res.data);
+        } catch { setShops([]); } finally { setLocating(false); }
+      },
+      () => { setLocating(false); }
+    );
+  };
+
+  const handleCategorySelect = (id) => {
+    setSelectedCategory(id === selectedCategory ? null : id);
+    const newParams = new URLSearchParams(searchParams);
+    if (id === selectedCategory) newParams.delete('category');
+    else newParams.set('category', id);
+    setSearchParams(newParams);
+  };
+
+  // Advanced Filtering
+  let filteredShops = shops.filter(s => {
+    let match = true;
+    if (searchQuery) {
+      match = s.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+              s.city.toLowerCase().includes(searchQuery.toLowerCase());
+    }
+    if (selectedCategory && match) {
+      match = s.category == selectedCategory || s.categories?.includes(parseInt(selectedCategory));
+    }
+    if (selectedRating && match) {
+      match = (s.rating || 4.5) >= selectedRating;
+    }
+    return match;
+  });
+
+  // Sorting
+  if (sortBy === 'rating') {
+    filteredShops.sort((a, b) => (b.rating || 4.5) - (a.rating || 4.5));
+  } else if (sortBy === 'newest') {
+    filteredShops.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+  }
+
+  return (
+    <div className="page plp-page">
+      <div className="container" style={{ paddingTop: '2rem', paddingBottom: '4rem' }}>
+        
+        {/* Breadcrumb & Header */}
+        <div className="breadcrumb mb-3 text-sm text-muted">
+          <Link to="/home">Home</Link> <ChevronRight size={14}/>
+          <span className="text-primary font-medium">Shops Directory</span>
+        </div>
+
+        <div className="plp-header-banner mb-4">
+          <div className="plp-hb-content">
+            <h1>{location ? `Local Shops in ${location.name}` : 'Explore Local Shops'}</h1>
+            <p>Support your neighbourhood businesses and discover amazing local products.</p>
+          </div>
+          <div className="plp-hb-actions">
+            <button className="btn btn-primary" onClick={handleLocationSearch} disabled={locating}>
+              <Navigation size={16} /> {locating ? 'Locating...' : 'Use My Location'}
+            </button>
+          </div>
+        </div>
+
+        <div className="plp-layout">
+          
+          {/* ── SIDEBAR FILTERS ── */}
+          <aside className={`plp-sidebar ${showMobileFilters ? 'show' : ''}`}>
+            <div className="plp-sidebar-inner">
+              <div className="flex-between mb-4 d-md-none">
+                <h3 className="font-medium">Filters</h3>
+                <button className="btn-icon" onClick={() => setShowMobileFilters(false)}>×</button>
+              </div>
+
+              {/* Categories */}
+              <div className="filter-group">
+                <h4 className="filter-title">Categories</h4>
+                <div className="filter-list">
+                  <label className="filter-checkbox">
+                    <input 
+                      type="checkbox" 
+                      checked={selectedCategory === null} 
+                      onChange={() => handleCategorySelect(selectedCategory)} 
+                    />
+                    <span className="chk-box"><Check size={12}/></span>
+                    <span className="chk-label">All Categories</span>
+                  </label>
+                  {categories.map(cat => (
+                    <label key={cat.id} className="filter-checkbox">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedCategory == cat.id} 
+                        onChange={() => handleCategorySelect(cat.id)} 
+                      />
+                      <span className="chk-box"><Check size={12}/></span>
+                      <span className="chk-label">{cat.name}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ratings */}
+              <div className="filter-group">
+                <h4 className="filter-title">Customer Ratings</h4>
+                <div className="filter-list">
+                  {[4, 3, 2, 1].map(rating => (
+                    <label key={rating} className="filter-checkbox">
+                      <input 
+                        type="radio" 
+                        name="rating_filter"
+                        checked={selectedRating === rating} 
+                        onChange={() => setSelectedRating(rating)} 
+                      />
+                      <span className="chk-box radio"><Check size={12}/></span>
+                      <span className="chk-label flex-center gap-1">
+                        {[1,2,3,4,5].map(s => <Star key={s} size={14} className={s <= rating ? 'star-filled' : 'star-empty'} fill="currentColor"/>)}
+                        <span className="text-muted ml-1">& Up</span>
+                      </span>
+                    </label>
+                  ))}
+                  <label className="filter-checkbox">
+                    <input 
+                      type="radio" 
+                      name="rating_filter"
+                      checked={selectedRating === null} 
+                      onChange={() => setSelectedRating(null)} 
+                    />
+                    <span className="chk-box radio"><Check size={12}/></span>
+                    <span className="chk-label">Any Rating</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </aside>
+
+          {/* ── MAIN CONTENT ── */}
+          <main className="plp-main">
+            
+            {/* Toolbar */}
+            <div className="plp-toolbar mb-4">
+              <div className="plp-search-box">
+                <Search size={18} className="text-muted" />
+                <input 
+                  type="text" 
+                  placeholder="Search shops by name..." 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+
+              <div className="plp-toolbar-actions">
+                <div className="plp-results-count text-muted text-sm d-none d-sm-block">
+                  Showing {filteredShops.length} results
+                </div>
+                
+                <button className="btn btn-outline btn-sm d-md-none" onClick={() => setShowMobileFilters(true)}>
+                  <Filter size={14} /> Filters
+                </button>
+
+                <div className="plp-sort">
+                  <span className="text-muted text-sm">Sort by:</span>
+                  <select className="form-select plp-sort-select" value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                    <option value="relevance">Relevance</option>
+                    <option value="rating">Top Rated</option>
+                    <option value="newest">Newest Arrivals</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* Grid */}
+            <div className="shops-grid">
+              {loading ? (
+                Array(6).fill(0).map((_, i) => <ShopSkeleton key={i} />)
+              ) : filteredShops.length > 0 ? (
+                filteredShops.map((shop, i) => (
+                  <div key={shop.id} className="shop-card card" onClick={() => navigate(`/shops/${shop.id}`)}>
+                    <div className="sc-banner">
+                      {shop.banner ? <img src={shop.banner} alt={shop.name} /> : <div className="sc-banner-fallback" style={{ background: CAT_GRADIENTS[i % CAT_GRADIENTS.length] }} />}
+                      <div className="sc-rating"><Star size={12} fill="currentColor" /> {shop.rating || '4.5'}</div>
+                    </div>
+                    <div className="sc-body">
+                      <div className="sc-row">
+                        <div className="sc-avatar">{shop.logo ? <img src={shop.logo} alt="logo" /> : (shop.name?.[0] || 'S')}</div>
+                        <div className="sc-info">
+                          <h3 className="sc-name truncate">{shop.name}</h3>
+                          <p className="sc-desc truncate">{shop.description || 'Premium local seller'}</p>
+                          <div className="text-xs text-muted mt-2 flex-center gap-1"><MapPin size={12}/> {shop.city}</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="empty-state" style={{ gridColumn: '1 / -1', padding: '4rem 2rem' }}>
+                  <Store size={48} className="text-muted mb-3" />
+                  <h3>No shops found</h3>
+                  <p className="text-muted">Try adjusting your filters or searching for something else.</p>
+                  <button className="btn btn-outline mt-3" onClick={() => { setSearchQuery(''); setSelectedCategory(null); setSelectedRating(null); }}>Clear All Filters</button>
+                </div>
+              )}
+            </div>
+
+          </main>
+        </div>
+      </div>
+    </div>
+  );
+}

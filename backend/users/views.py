@@ -19,11 +19,19 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .models import OTPVerification
+import uuid
+import firebase_admin
+from firebase_admin import credentials, auth
+import os
 
+# Initialize Firebase Admin
+if not firebase_admin._apps:
+    cred_path = os.path.join(settings.BASE_DIR, 'firebase-admin.json')
+    cred = credentials.Certificate(cred_path)
+    firebase_admin.initialize_app(cred)
 
 class AuthRateThrottle(AnonRateThrottle):
     rate = '10/minute'
-
 
 class UserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.all()
@@ -32,47 +40,132 @@ class UserViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
     def send_otp(self, request):
-        email = request.data.get('email')
-        if not email:
-            return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+        phone = request.data.get('phone')
+        email = request.data.get('email', '').strip()
         
-        # Check if email is already registered
-        if User.objects.filter(email=email).exists():
-            return Response({'error': 'A user with this email already exists'}, status=status.HTTP_400_BAD_REQUEST)
+        if not phone:
+            return Response({'error': 'Phone number is required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Clean phone number
+        phone = phone.replace(' ', '').replace('-', '')
+        if not phone.startswith('+91'):
+            if len(phone) == 10:
+                phone = '+91' + phone
+            else:
+                return Response({'error': 'Please enter a valid 10-digit Indian phone number.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # With Firebase, the frontend handles the phone SMS directly.
+        # This endpoint is now ONLY for generating the Email OTP.
+        if not email:
+            return Response({'message': 'No email provided.'}, status=status.HTTP_200_OK)
             
-        otp_code = f"{random.randint(100000, 999999)}"
+        email_otp = f"{random.randint(100000, 999999)}"
         expires_at = timezone.now() + timedelta(minutes=10)
         
-        OTPVerification.objects.create(email=email, otp_code=otp_code, expires_at=expires_at)
-        
-        # Beautiful HTML Email Template
-        html_message = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-            <h2 style="color: #FF6B35; text-align: center;">Indian Local Store</h2>
-            <p style="font-size: 16px; color: #333;">Hello,</p>
-            <p style="font-size: 16px; color: #333;">Please use the verification code below to complete your registration. This code is valid for 10 minutes.</p>
-            <div style="margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px; text-align: center;">
-                <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #FF6B35;">{otp_code}</span>
-            </div>
-            <p style="font-size: 14px; color: #888; text-align: center;">If you didn't request this, please ignore this email.</p>
-        </div>
-        """
-        plain_message = strip_tags(html_message)
-        
-        try:
-            send_mail(
-                'Your Verification Code - Indian Local Store',
-                plain_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                html_message=html_message,
-                fail_silently=False,
-            )
-        except Exception as e:
-            print("Email sending failed:", str(e))
-            return Response({'error': f"Failed to send email: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        OTPVerification.objects.create(
+            phone=phone, 
+            email=email,
+            phone_otp=None, # Not used anymore, Firebase handles it
+            email_otp=email_otp, 
+            expires_at=expires_at
+        )
             
-        return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+        # ── EMAIL INTEGRATION ──
+        if email:
+            html_message = f"""
+            <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px;">
+                <h2 style="color: #FF6B35; text-align: center;">Indian Local Store</h2>
+                <p>Hello,</p>
+                <p>Your email verification code is:</p>
+                <div style="margin: 30px 0; padding: 20px; background-color: #f9f9f9; text-align: center;">
+                    <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #FF6B35;">{email_otp}</span>
+                </div>
+            </div>
+            """
+            try:
+                send_mail(
+                    'Your Verification Code',
+                    strip_tags(html_message),
+                    settings.DEFAULT_FROM_EMAIL,
+                    [email],
+                    html_message=html_message,
+                    fail_silently=True,
+                )
+            except Exception as e:
+                print("Email sending failed:", str(e))
+                
+        return Response({'message': 'OTPs sent successfully.'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
+    def verify_otp(self, request):
+        firebase_token = request.data.get('firebase_token')
+        email_otp = request.data.get('email_otp')
+        
+        if not firebase_token:
+            return Response({'error': 'Firebase token is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            # 1. Verify the Firebase token
+            decoded_token = auth.verify_id_token(firebase_token)
+            phone = decoded_token.get('phone_number')
+            
+            if not phone:
+                return Response({'error': 'Token does not contain a valid phone number.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Format phone just in case, Firebase usually returns it with +91 already
+            phone = phone.replace(' ', '').replace('-', '')
+            
+            # 2. If email_otp was provided, verify it against our database
+            verified_email = ''
+            if email_otp:
+                try:
+                    otp_record = OTPVerification.objects.filter(phone=phone).latest('created_at')
+                    
+                    if otp_record.expires_at < timezone.now():
+                        return Response({'error': 'Email OTP has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
+                        
+                    if not otp_record.email:
+                        return Response({'error': 'No email was registered for this session.'}, status=status.HTTP_400_BAD_REQUEST)
+                        
+                    if otp_record.email_otp != email_otp:
+                        return Response({'error': 'Invalid Email OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
+                        
+                    verified_email = otp_record.email
+                    otp_record.delete()
+                except OTPVerification.DoesNotExist:
+                    return Response({'error': 'Please request an Email OTP first.'}, status=status.HTTP_400_BAD_REQUEST)
+                    
+            # Both valid (or only phone required). Get or create user.
+            user, created = User.objects.get_or_create(
+                phone=phone,
+                defaults={
+                    'username': f"user_{uuid.uuid4().hex[:8]}",
+                    'email': verified_email,
+                    'role': 'customer'
+                }
+            )
+            
+            # Update email if they provided one now but didn't have one before
+            if verified_email and not user.email:
+                user.email = verified_email
+                user.save()
+            
+            refresh = RefreshToken.for_user(user)
+            
+            return Response({
+                'access': str(refresh.access_token),
+                'refresh': str(refresh),
+                'user': UserSerializer(user).data,
+                'is_new_user': created
+            }, status=status.HTTP_200_OK)
+            
+        except auth.InvalidIdTokenError:
+            return Response({'error': 'Invalid Firebase ID Token.'}, status=status.HTTP_401_UNAUTHORIZED)
+        except auth.ExpiredIdTokenError:
+            return Response({'error': 'Firebase ID Token has expired.'}, status=status.HTTP_401_UNAUTHORIZED)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
     def register(self, request):
@@ -113,93 +206,6 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'message': 'Logged out successfully.'}, status=status.HTTP_200_OK)
         except TokenError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
-    def forgot_password(self, request):
-        """Generate a 6-digit OTP and send to the user's email."""
-        email = request.data.get('email', '')
-        if not email:
-            return Response({'error': 'Provide email.'}, status=400)
-            
-        try:
-            user = User.objects.get(email=email)
-        except User.DoesNotExist:
-            return Response({'error': 'This email is not registered. Please create an account first.'}, status=404)
-            
-        otp_code = f"{random.randint(100000, 999999)}"
-        expires_at = timezone.now() + timedelta(minutes=10)
-        OTPVerification.objects.create(email=email, otp_code=otp_code, expires_at=expires_at)
-
-        html_message = f"""
-        <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto; padding: 20px; border: 1px solid #eaeaea; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
-            <h2 style="color: #FF6B35; text-align: center;">Password Reset</h2>
-            <p style="font-size: 16px; color: #333;">Hello,</p>
-            <p style="font-size: 16px; color: #333;">Please use the verification code below to reset your password. This code is valid for 10 minutes.</p>
-            <div style="margin: 30px 0; padding: 20px; background-color: #f9f9f9; border-radius: 8px; text-align: center;">
-                <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #FF6B35;">{otp_code}</span>
-            </div>
-            <p style="font-size: 14px; color: #888; text-align: center;">If you didn't request this, please ignore this email.</p>
-        </div>
-        """
-        plain_message = strip_tags(html_message)
-        
-        try:
-            send_mail(
-                'Password Reset Code - Indian Local Store',
-                plain_message,
-                settings.DEFAULT_FROM_EMAIL,
-                [email],
-                html_message=html_message,
-                fail_silently=False,
-            )
-        except Exception as e:
-            print("Email sending failed:", str(e))
-            return Response({'error': f"Failed to send email: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
-        return Response({
-            'message': 'OTP generated successfully.',
-            'username': user.username,
-        })
-
-    @action(detail=False, methods=['post'], permission_classes=[AllowAny])
-    def reset_password(self, request):
-        """Reset password using OTP verification."""
-        email = request.data.get('email', '')
-        otp = request.data.get('otp', '')
-        new_password = request.data.get('new_password', '')
-        
-        if not email or not otp or not new_password:
-            return Response({'error': 'email, otp, and new_password are required.'}, status=400)
-            
-        import re
-        if len(new_password) < 8:
-            return Response({'error': 'Password must be at least 8 characters.'}, status=400)
-        if not re.search(r'[A-Z]', new_password):
-            return Response({'error': 'Password must contain at least one uppercase letter.'}, status=400)
-        if not re.search(r'[a-z]', new_password):
-            return Response({'error': 'Password must contain at least one lowercase letter.'}, status=400)
-        if not re.search(r'[0-9]', new_password):
-            return Response({'error': 'Password must contain at least one number.'}, status=400)
-        if not re.search(r'[^A-Za-z0-9]', new_password):
-            return Response({'error': 'Password must contain at least one special character.'}, status=400)
-            
-        try:
-            otp_record = OTPVerification.objects.filter(email=email).latest('created_at')
-            if otp_record.otp_code != otp:
-                return Response({'error': 'Invalid OTP code.'}, status=400)
-            if otp_record.expires_at < timezone.now():
-                return Response({'error': 'OTP has expired.'}, status=400)
-                
-            user = User.objects.get(email=email)
-            user.set_password(new_password)
-            user.save()
-            otp_record.delete()
-            return Response({'message': 'Password has been reset successfully.'})
-        except OTPVerification.DoesNotExist:
-            return Response({'error': 'Please request an OTP first.'}, status=400)
-        except User.DoesNotExist:
-            return Response({'error': 'User not found.'}, status=404)
-
 
 class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer

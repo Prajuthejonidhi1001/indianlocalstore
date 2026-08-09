@@ -1,11 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
-const LOCAL_API_URL = 'http://10.245.191.172:8000/api';
-const RENDER_API_URL = 'https://indianlocalstore-api-cjiq.onrender.com/api';
-
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || RENDER_API_URL;
-
 const firebaseConfig = {
   apiKey: "AIzaSyC4Yhpk0zw-Om-mNWSFn4mwQOy97tufzHE",
   authDomain: "indianlocalstore-36105.firebaseapp.com",
@@ -18,9 +13,3 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-
-export default {
-  API_BASE_URL,
-  RAZORPAY_KEY: process.env.REACT_APP_RAZORPAY_KEY || '',
-  firebaseConfig
-};

@@ -45,16 +45,16 @@ api.interceptors.response.use(
 
 // ── Auth ──────────────────────────────────────────────
 export const authAPI = {
-  sendOtp: (email) => api.post('/users/send_otp/', { email }),
+  sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
+  verifyPhoneOtp: (phone, phone_otp, email_otp) => api.post('/users/verify_otp/', { phone, phone_otp, email_otp }),
+  // Legacy register for testing if needed
   register: (data) => api.post('/users/register/', data),
-  login: (username, password) => api.post('/users/token/', { username, password }),
+  // Standard tokens
   refreshToken: (refresh) => api.post('/users/token/refresh/', { refresh }),
   logout: (refresh) => api.post('/users/logout/', { refresh }),
   getProfile: () => api.get('/users/me/'),
   updateProfile: (data) => api.put('/users/update_profile/', data),
   getSellers: () => api.get('/users/sellers/'),
-  forgotPassword: (email) => api.post('/users/forgot_password/', { email }),
-  resetPassword: (email, otp, new_password) => api.post('/users/reset_password/', { email, otp, new_password }),
 };
 
 // ── Products ──────────────────────────────────────────

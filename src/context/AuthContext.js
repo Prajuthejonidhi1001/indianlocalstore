@@ -30,33 +30,17 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, [fetchUser]);
 
-  const login = async (username, password) => {
+  const loginWithPhoneOTP = async (firebase_token, email_otp) => {
     try {
       setLoading(true);
-      const { data } = await authAPI.login(username, password);
+      const { data } = await authAPI.verifyOtp(firebase_token, email_otp);
       await AsyncStorage.setItem('access_token', data.access);
       await AsyncStorage.setItem('refresh_token', data.refresh);
       await fetchUser();
-      return { success: true };
+      return { success: true, is_new_user: data.is_new_user, data };
     } catch (error) {
       console.error('Login error:', error.response?.data || error.message);
-      const message = error.response?.data?.detail || 'Invalid username or password';
-      return { success: false, error: message };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const register = async (formData) => {
-    try {
-      setLoading(true);
-      const { data } = await authAPI.register(formData);
-      return { success: true, data };
-    } catch (error) {
-      console.error('Register error:', error.response?.data || error.message);
-      const message = error.response?.data?.username?.[0] || 
-                      error.response?.data?.email?.[0] || 
-                      'Registration failed';
+      const message = error.response?.data?.error || 'Invalid OTP';
       return { success: false, error: message };
     } finally {
       setLoading(false);
@@ -84,8 +68,7 @@ export const AuthProvider = ({ children }) => {
       loading, 
       isAuthenticated, 
       isSeller, 
-      login, 
-      register, 
+      loginWithPhoneOTP, 
       logout, 
       updateUser, 
       refetchUser: fetchUser 

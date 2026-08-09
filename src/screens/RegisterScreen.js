@@ -11,9 +11,10 @@ import * as Location from 'expo-location';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useAuth } from '../context/AuthContext';
 import { authAPI, shopAPI, productAPI } from '../utils/api';
-
+import config from '../config';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 export default function RegisterScreen({ navigation }) {
-  const { register, login } = useAuth();
+  const { loginWithPhoneOTP } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
   const [showConfirmPass, setShowConfirmPass] = useState(false);
@@ -24,6 +25,11 @@ export default function RegisterScreen({ navigation }) {
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
+
+  // Firebase Phone Auth
+  if (!window.recaptchaVerifierRef) {
+    window.recaptchaVerifierRef = React.createRef();
+  }
 
   // OTP State
   const [step, setStep] = useState(1);
@@ -144,14 +150,8 @@ export default function RegisterScreen({ navigation }) {
   };
 
   const handleRegister = async () => {
-    if (!form.username || !form.email || !form.first_name || !form.last_name || !form.phone || !form.password) {
-      triggerShake(); return Alert.alert('Missing Fields', 'Please fill all basic details.');
-    }
-    if (form.password.length < 8) {
-      triggerShake(); return Alert.alert('Weak Password', 'Minimum 8 characters required.');
-    }
-    if (form.password !== confirmPassword) {
-      triggerShake(); return Alert.alert('Password Mismatch', 'Passwords do not match. Please try again.');
+    if (!form.first_name || !form.last_name || !form.phone) {
+      triggerShake(); return Alert.alert('Missing Fields', 'Please fill name and phone number.');
     }
     if (form.role === 'seller' && (!form.shopName || !form.shopAddress || !form.pincode || !form.state)) {
       triggerShake(); return Alert.alert('Missing Info', 'Fill all shop details.');
@@ -163,14 +163,35 @@ export default function RegisterScreen({ navigation }) {
     setLoading(true);
     try {
       if (step === 1) {
-        await authAPI.sendOtp(form.email);
+        const { PhoneAuthProvider } = require('firebase/auth');
+        const { auth } = require('../config');
+        
+        const phoneNumber = `+91${form.phone}`;
+        const phoneProvider = new PhoneAuthProvider(auth);
+        
+        // Ensure recaptcha is mounted
+        if (!window.recaptchaVerifierRef) {
+          throw new Error('Recaptcha not ready');
+        }
+
+        const verificationId = await phoneProvider.verifyPhoneNumber(
+          phoneNumber,
+          window.recaptchaVerifierRef.current
+        );
+        window.verificationId = verificationId;
+
+        if (form.email) {
+          await authAPI.sendPhoneOtp(phoneNumber, form.email);
+        }
+
         setStep(2);
-        setResendCooldown(60);
-        Alert.alert('Verification Code Sent', `We sent a code to ${form.email}`);
+        setResendCooldown(30);
+        Alert.alert('OTP Sent', form.email ? 'OTPs sent to phone and email!' : 'OTP sent to your phone!');
       }
-    } catch {
+    } catch (err) {
+      console.error("FIREBASE ERROR:", err);
       triggerShake();
-      Alert.alert('Error', 'Failed to send verification code. Email might be in use.');
+      Alert.alert('Error', err.message || 'Failed to send OTP. Try again.');
     } finally {
       setLoading(false);
     }
@@ -179,9 +200,19 @@ export default function RegisterScreen({ navigation }) {
   const handleResendOTP = async () => {
     if (resendCooldown > 0) return;
     try {
-      await authAPI.sendOtp(form.email);
-      setResendCooldown(60);
-      Alert.alert('OTP Sent', 'A new verification code has been sent to your email.');
+      const { auth } = require('../config');
+      const { PhoneAuthProvider } = require('firebase/auth');
+      const phoneProvider = new PhoneAuthProvider(auth);
+      const phoneNumber = `+91${form.phone}`;
+      const verificationId = await phoneProvider.verifyPhoneNumber(
+        phoneNumber,
+        window.recaptchaVerifierRef.current
+      );
+      window.verificationId = verificationId;
+
+      if (form.email) await authAPI.sendPhoneOtp(phoneNumber, form.email);
+      setResendCooldown(30);
+      Alert.alert('OTP Sent', 'A new verification code has been sent.');
     } catch (err) {
       Alert.alert('Error', 'Failed to resend OTP. Please try again.');
     }
@@ -214,18 +245,29 @@ export default function RegisterScreen({ navigation }) {
   const verifyAndRegister = async (code) => {
     setLoading(true);
     try {
-      const userData = {
-        username: form.username, email: form.email, password: form.password,
-        first_name: form.first_name, last_name: form.last_name,
-        phone: form.phone, role: form.role, otp: code,
-        address: form.shopAddress, city: form.district, state: form.state, pincode: form.pincode
-      };
-      const res = await authAPI.register(userData);
-      // Assuming register returns AxiosResponse
-      if (res.status !== 201 && res.status !== 200) { throw new Error('Registration failed'); }
+      const { auth } = require('../config');
+      const { PhoneAuthProvider, signInWithCredential } = require('firebase/auth');
+      
+      // 1. Verify Phone OTP via Firebase
+      const credential = PhoneAuthProvider.credential(window.verificationId, code);
+      const result = await signInWithCredential(auth, credential);
+      const idToken = await result.user.getIdToken();
+
+      // 2. Login to Django Backend
+      const { data } = await authAPI.verifyOtp(idToken, '');
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      await AsyncStorage.setItem('access_token', data.access);
+      await AsyncStorage.setItem('refresh_token', data.refresh);
+      
+      // Update Profile with Role and Names
+      await authAPI.updateProfile({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        role: form.role,
+        email: form.email
+      });
 
       if (form.role === 'seller') {
-        await login(form.username, form.password);
         const shopData = new FormData();
         shopData.append('name', form.shopName);
         shopData.append('email', form.email);
@@ -247,9 +289,13 @@ export default function RegisterScreen({ navigation }) {
         await shopAPI.createShop(shopData);
         Alert.alert('🎉 Welcome!', 'Account & Shop created successfully!');
       } else {
-        Alert.alert('✅ Done!', 'Account created! Please log in.');
-        navigation.goBack();
+        Alert.alert('✅ Done!', 'Account created successfully!');
       }
+      
+      const { authAPI: authApiInternal } = require('../utils/api');
+      await authApiInternal.getProfile();
+      navigation.reset({ index: 0, routes: [{ name: 'Main' }] });
+
     } catch {
       triggerShake();
       Alert.alert('Error', 'Registration failed. Username or email may already be taken.');
@@ -280,6 +326,11 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
+      <FirebaseRecaptchaVerifierModal
+        ref={window.recaptchaVerifierRef}
+        firebaseConfig={config.firebaseConfig}
+        attemptInvisibleVerification={true}
+      />
       {/* Background gradient orb */}
       <View style={styles.bgOrb1} />
       <View style={styles.bgOrb2} />

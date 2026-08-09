@@ -23,12 +23,12 @@ export function AuthProvider({ children }) {
 
   useEffect(() => { fetchUser(); }, [fetchUser]);
 
-  const login = async (username, password) => {
-    const { data } = await authAPI.login(username, password);
+  const loginWithPhoneOTP = async (phone, phone_otp, email_otp) => {
+    const { data } = await authAPI.verifyPhoneOtp(phone, phone_otp, email_otp);
     localStorage.setItem('access_token', data.access);
     localStorage.setItem('refresh_token', data.refresh);
     await fetchUser();
-    return data;
+    return data; // contains user info and is_new_user flag
   };
 
   const register = async (formData) => {
@@ -54,7 +54,7 @@ export function AuthProvider({ children }) {
   const isAdmin = user?.is_staff || user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated, isSeller, isAdmin, login, register, logout, updateUser, refetchUser: fetchUser }}>
+    <AuthContext.Provider value={{ user, loading, isAuthenticated, isSeller, isAdmin, loginWithPhoneOTP, register, logout, updateUser, refetchUser: fetchUser }}>
       {children}
     </AuthContext.Provider>
   );

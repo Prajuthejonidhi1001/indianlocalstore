@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, 
   ScrollView, Alert, Animated, Easing, KeyboardAvoidingView, Platform, Dimensions, Vibration
@@ -7,34 +7,42 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../utils/api';
+import config, { auth } from '../config';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { PhoneAuthProvider } from 'firebase/auth';
 
 const { width, height } = Dimensions.get('window');
 
-export default function LoginScreen({ navigation, route }) {
-  const [username, setUsername] = useState(route.params?.prefillEmail || '');
-  const [password, setPassword] = useState(route.params?.prefillPassword || '');
-  const [showPass, setShowPass] = useState(false);
-  const [focusedInput, setFocusedInput] = useState(null);
+export default function LoginScreen({ navigation }) {
+  const [step, setStep] = useState(1);
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   
-  const { login, loading } = useAuth();
-  const passwordRef = useRef(null);
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  const [verificationId, setVerificationId] = useState(null);
+  
+  const [focusedInput, setFocusedInput] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  
+  const recaptchaVerifier = useRef(null);
+  const { loginWithPhoneOTP } = useAuth();
 
-  // -- Hyper Unique Animation Engines --
+  // Animations
   const cardScale = useRef(new Animated.Value(0.8)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
   const logoRot = useRef(new Animated.Value(0)).current;
   const blobShape = useRef(new Animated.Value(0)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
 
-  // Render Pipeline
   useEffect(() => {
-    // 1. Enter the Main Card
     Animated.parallel([
       Animated.spring(cardScale, { toValue: 1, friction: 5, tension: 40, useNativeDriver: true }),
       Animated.timing(cardOpacity, { toValue: 1, duration: 600, useNativeDriver: true })
     ]).start();
 
-    // 2. Ambient Liquid Background Morphing
     Animated.loop(
       Animated.sequence([
         Animated.timing(blobShape, { toValue: 1, duration: 4000, easing: Easing.inOut(Easing.sin), useNativeDriver: false }),
@@ -42,11 +50,17 @@ export default function LoginScreen({ navigation, route }) {
       ])
     ).start();
 
-    // 3. Logo 3D Flip
     Animated.loop(
       Animated.timing(logoRot, { toValue: 1, duration: 6000, easing: Easing.linear, useNativeDriver: true })
     ).start();
   }, []);
+
+  useEffect(() => {
+    if (resendCooldown > 0) {
+      const timer = setTimeout(() => setResendCooldown(resendCooldown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [resendCooldown]);
 
   const triggerErrorShake = () => {
     Vibration.vibrate(100);
@@ -58,22 +72,96 @@ export default function LoginScreen({ navigation, route }) {
     ]).start();
   };
 
-  const handleLogin = async () => {
-    if (!username || !password) { triggerErrorShake(); Alert.alert('Error', 'Please fill all fields'); return; }
-    const result = await login(username, password);
-    if (!result.success) {
+  const handleSendOTP = async () => {
+    if (!phone || phone.length < 10) { 
+      triggerErrorShake(); 
+      Alert.alert('Error', 'Please enter a valid 10-digit phone number'); 
+      return; 
+    }
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) {
       triggerErrorShake();
-      Alert.alert('Login Failed', result.error);
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const phoneNumber = `+91${phone}`;
+      const phoneProvider = new PhoneAuthProvider(auth);
+      const verificationId = await phoneProvider.verifyPhoneNumber(
+        phoneNumber,
+        recaptchaVerifier.current
+      );
+      setVerificationId(verificationId);
+
+      if (email) {
+        await authAPI.sendPhoneOtp(phoneNumber, email);
+      }
+
+      setStep(2);
+      setResendCooldown(30);
+      Alert.alert('OTP Sent', email ? 'OTPs sent to phone and email!' : 'OTP sent to your phone!');
+    } catch (err) {
+      console.error("FIREBASE ERROR:", err);
+      Alert.alert('Error', err.message || 'Failed to send OTP. Try again.');
+      triggerErrorShake();
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Interpolations
+  const handleVerifyOTP = async () => {
+    if (phoneOtp.length !== 6) {
+      triggerErrorShake();
+      Alert.alert('Error', 'Please enter a valid 6-digit phone OTP');
+      return;
+    }
+    if (email && emailOtp.length !== 6) {
+      triggerErrorShake();
+      Alert.alert('Error', 'Please enter a valid 6-digit email OTP');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      // Create credential from verificationId and OTP
+      const credential = PhoneAuthProvider.credential(verificationId, phoneOtp);
+      // Wait, we need the firebase idToken
+      // Unfortunately we must sign in to get the token, but we are using Firebase Auth
+      // In expo-firebase-recaptcha flow, usually you call auth.signInWithCredential(credential)
+      // Wait, React Native Firebase v9 uses `signInWithCredential`
+      const { signInWithCredential } = require('firebase/auth');
+      const result = await signInWithCredential(auth, credential);
+      const idToken = await result.user.getIdToken();
+
+      const res = await loginWithPhoneOTP(idToken, emailOtp);
+      
+      if (!res.success) {
+        triggerErrorShake();
+        Alert.alert('Verification Failed', res.error);
+      } else {
+        Alert.alert('Success', res.is_new_user ? 'Account created!' : 'Logged in!');
+      }
+    } catch (err) {
+      console.error(err);
+      triggerErrorShake();
+      Alert.alert('Error', 'Invalid or expired OTP');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const logoRotation = logoRot.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
   const blobBorderRadius = blobShape.interpolate({ inputRange: [0, 1], outputRange: [200, 50] });
 
   return (
     <SafeAreaView style={styles.container}>
-      {/* Hyper-Animated Liquid Background Matrices */}
+      <FirebaseRecaptchaVerifierModal
+        ref={recaptchaVerifier}
+        firebaseConfig={config.firebaseConfig}
+        attemptInvisibleVerification={true}
+      />
+      
       <Animated.View style={[styles.liquidBlob, { 
         backgroundColor: '#FF6B00', top: -100, left: -50,
         transform: [{ scaleX: blobShape.interpolate({ inputRange: [0, 1], outputRange: [1, 1.5] }) }],
@@ -87,11 +175,9 @@ export default function LoginScreen({ navigation, route }) {
       
       <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          
-          {/* Opacity-only outer wrapper — scale/perspective transforms break touch targets */}
           <Animated.View style={[styles.card, { opacity: cardOpacity }]}>
-            {/* Error shake applies only here, briefly, on auth failure */}
             <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
+            
             <View style={styles.headerRow}>
               <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                 <Ionicons name="arrow-back" size={24} color="#FFF" />
@@ -105,57 +191,74 @@ export default function LoginScreen({ navigation, route }) {
               </View>
             </View>
 
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Unlock your local marketplace</Text>
+            <Text style={styles.title}>{step === 1 ? 'Welcome Back' : 'Verify Identity'}</Text>
+            <Text style={styles.subtitle}>{step === 1 ? 'Sign in with your phone number' : 'Enter the code sent to your phone'}</Text>
 
-            {/* Username & Password — plain Views for correct touch targeting */}
-            <View style={[styles.inputContainer, focusedInput === 'username' && styles.inputFocused]}>
-              <Ionicons name="person" size={20} color={focusedInput === 'username' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
-              <TextInput 
-                placeholder="Username" value={username} onChangeText={setUsername} 
-                style={styles.input} autoCapitalize="none" placeholderTextColor={COLORS.borderStrong}
-                onFocus={() => setFocusedInput('username')} onBlur={() => setFocusedInput(null)}
-                returnKeyType="next"
-                onSubmitEditing={() => passwordRef.current?.focus()}
-                blurOnSubmit={false}
-              />
-            </View>
+            {step === 1 ? (
+              <>
+                <View style={[styles.inputContainer, focusedInput === 'phone' && styles.inputFocused]}>
+                  <Ionicons name="call" size={20} color={focusedInput === 'phone' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+                  <Text style={{color: COLORS.text, fontSize: 17, marginRight: 8, fontWeight: '500'}}>+91</Text>
+                  <TextInput 
+                    placeholder="10-digit number" value={phone} onChangeText={t => setPhone(t.replace(/\D/g, '').slice(0,10))} 
+                    style={styles.input} keyboardType="phone-pad" placeholderTextColor={COLORS.borderStrong}
+                    onFocus={() => setFocusedInput('phone')} onBlur={() => setFocusedInput(null)}
+                  />
+                </View>
 
-            <View style={[styles.inputContainer, focusedInput === 'password' && styles.inputFocused]}>
-              <Ionicons name="finger-print" size={20} color={focusedInput === 'password' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
-              <TextInput 
-                ref={passwordRef}
-                placeholder="Secure Password" value={password} onChangeText={setPassword} 
-                style={styles.input} secureTextEntry={!showPass} placeholderTextColor={COLORS.borderStrong}
-                onFocus={() => setFocusedInput('password')} onBlur={() => setFocusedInput(null)}
-                returnKeyType="done"
-                onSubmitEditing={handleLogin}
-              />
-              <TouchableOpacity onPress={() => setShowPass(!showPass)} style={styles.eyeBtn}>
-                <Ionicons name={showPass ? 'eye-off' : 'eye'} size={22} color={showPass ? '#FF6B00' : COLORS.textMuted} />
-              </TouchableOpacity>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10, marginBottom: 20 }}>
-              <TouchableOpacity onPress={() => navigation.navigate('ForgotPassword')} style={styles.forgotBtn}>
-                <Text style={styles.forgotText}>Forgot Password?</Text>
-              </TouchableOpacity>
-            </View>
+                <View style={[styles.inputContainer, focusedInput === 'email' && styles.inputFocused]}>
+                  <Ionicons name="mail" size={20} color={focusedInput === 'email' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+                  <TextInput 
+                    placeholder="Email (Optional for extra security)" value={email} onChangeText={setEmail} 
+                    style={styles.input} keyboardType="email-address" autoCapitalize="none" placeholderTextColor={COLORS.borderStrong}
+                    onFocus={() => setFocusedInput('email')} onBlur={() => setFocusedInput(null)}
+                  />
+                </View>
 
-            <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading} activeOpacity={0.85}>
-              <View style={styles.btnHologram} />
-              <Text style={styles.loginBtnText}>{loading ? 'Authenticating...' : 'Sign In Now'}</Text>
-              {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
-            </TouchableOpacity>
+                <TouchableOpacity style={styles.loginBtn} onPress={handleSendOTP} disabled={loading} activeOpacity={0.85}>
+                  <View style={styles.btnHologram} />
+                  <Text style={styles.loginBtnText}>{loading ? 'Sending OTP...' : 'Get OTP'}</Text>
+                  {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
+                </TouchableOpacity>
+              </>
+            ) : (
+              <>
+                <View style={[styles.inputContainer, focusedInput === 'phoneOtp' && styles.inputFocused]}>
+                  <Ionicons name="key" size={20} color={focusedInput === 'phoneOtp' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+                  <TextInput 
+                    placeholder="Phone OTP (6 digits)" value={phoneOtp} onChangeText={t => setPhoneOtp(t.replace(/\D/g, '').slice(0,6))} 
+                    style={[styles.input, {letterSpacing: 8, fontSize: 20}]} keyboardType="number-pad" placeholderTextColor={COLORS.borderStrong}
+                    onFocus={() => setFocusedInput('phoneOtp')} onBlur={() => setFocusedInput(null)}
+                    maxLength={6}
+                  />
+                </View>
 
-            <Animated.View style={[styles.footer, { opacity: cardOpacity }]}>
-              <Text style={styles.footerText}>New to IndianLocalStore? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-                <Text style={styles.footerAction}>Join Free</Text>
-              </TouchableOpacity>
-            </Animated.View>
+                {email ? (
+                  <View style={[styles.inputContainer, focusedInput === 'emailOtp' && styles.inputFocused]}>
+                    <Ionicons name="mail" size={20} color={focusedInput === 'emailOtp' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+                    <TextInput 
+                      placeholder="Email OTP (6 digits)" value={emailOtp} onChangeText={t => setEmailOtp(t.replace(/\D/g, '').slice(0,6))} 
+                      style={[styles.input, {letterSpacing: 8, fontSize: 20}]} keyboardType="number-pad" placeholderTextColor={COLORS.borderStrong}
+                      onFocus={() => setFocusedInput('emailOtp')} onBlur={() => setFocusedInput(null)}
+                      maxLength={6}
+                    />
+                  </View>
+                ) : null}
+
+                <TouchableOpacity style={styles.loginBtn} onPress={handleVerifyOTP} disabled={loading} activeOpacity={0.85}>
+                  <View style={styles.btnHologram} />
+                  <Text style={styles.loginBtnText}>{loading ? 'Verifying...' : 'Verify & Login'}</Text>
+                  {!loading && <Ionicons name="checkmark-circle" size={20} color="#FFF" />}
+                </TouchableOpacity>
+                
+                <TouchableOpacity onPress={() => setStep(1)} style={{marginTop: 20, alignItems: 'center'}}>
+                  <Text style={styles.footerAction}>Change Phone Number</Text>
+                </TouchableOpacity>
+              </>
+            )}
+
             </Animated.View>
           </Animated.View>
-
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -178,13 +281,8 @@ const styles = StyleSheet.create({
   inputFocused: { borderColor: '#FF6B00', backgroundColor: 'rgba(255, 107, 0, 0.05)' },
   icon: { marginRight: 14 },
   input: { flex: 1, color: COLORS.text, fontSize: 17, height: '100%', fontWeight: '500' },
-  eyeBtn: { padding: 8 },
   loginBtn: { height: 60, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 12, backgroundColor: '#FF6B00', overflow: 'hidden' },
   btnHologram: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(255,255,255,0.1)' },
   loginBtnText: { color: '#FFF', fontSize: 17, fontWeight: '800', marginRight: 10, letterSpacing: 0.5 },
-  footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 20 },
-  footerText: { color: COLORS.textMuted, fontSize: 15 },
   footerAction: { color: '#00D4FF', fontSize: 15, fontWeight: '800' },
-  forgotBtn: { alignItems: 'center', paddingVertical: 4 },
-  forgotText: { color: 'rgba(255,107,53,0.8)', fontSize: 14, fontWeight: '700' },
 });

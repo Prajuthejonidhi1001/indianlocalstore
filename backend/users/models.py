@@ -48,8 +48,10 @@ class User(AbstractUser):
         return f"{self.username} ({self.get_role_display()})"
 
 class OTPVerification(models.Model):
-    email = models.EmailField()
-    otp_code = models.CharField(max_length=6)
+    phone = models.CharField(max_length=15)
+    email = models.EmailField(null=True, blank=True)
+    phone_otp = models.CharField(max_length=6, null=True, blank=True)
+    email_otp = models.CharField(max_length=6, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
     is_verified = models.BooleanField(default=False)
@@ -58,4 +60,4 @@ class OTPVerification(models.Model):
         ordering = ['-created_at']
 
     def __str__(self):
-        return f"{self.email} - {self.otp_code}"
+        return f"{self.phone} - PhoneOTP: {self.phone_otp} | EmailOTP: {self.email_otp}"

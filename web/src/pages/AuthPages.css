@@ -95,9 +95,28 @@
 .form-label-row .form-label {
   margin-bottom: 0;
 }
-
 /* Input with icon (password toggle) */
 .input-with-icon {
+  position: relative;
+}
+
+/* Phone input styling */
+.auth-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.auth-input-icon {
+  position: absolute;
+  left: 14px;
+  color: var(--text-muted);
+}
+.phone-prefix {
+  position: absolute;
+  left: 40px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
   position: relative;
 }
 .input-with-icon .form-input {
