@@ -117,8 +117,6 @@
   font-weight: 500;
   color: var(--text-secondary);
 }
-  position: relative;
-}
 .input-with-icon .form-input {
   padding-right: 2.8rem;
 }
