@@ -46,7 +46,8 @@ api.interceptors.response.use(
 // ── Auth ──────────────────────────────────────────────
 export const authAPI = {
   sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
-  verifyPhoneOtp: (phone, phone_otp, email_otp) => api.post('/users/verify_otp/', { phone, phone_otp, email_otp }),
+  verifyPhoneOtp: (firebase_token, email_otp, role, first_name, last_name) => 
+    api.post('/users/verify_otp/', { firebase_token, email_otp, role, first_name, last_name }),
   // Legacy register for testing if needed
   register: (data) => api.post('/users/register/', data),
   // Standard tokens

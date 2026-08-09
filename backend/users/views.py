@@ -141,7 +141,9 @@ class UserViewSet(viewsets.ModelViewSet):
                 defaults={
                     'username': f"user_{uuid.uuid4().hex[:8]}",
                     'email': verified_email,
-                    'role': 'customer'
+                    'role': request.data.get('role', 'customer'),
+                    'first_name': request.data.get('first_name', ''),
+                    'last_name': request.data.get('last_name', '')
                 }
             )
             
