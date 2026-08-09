@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import './Accordion.css';
 
-export function Accordion({ items }) {
+export default function Accordion({ items }) {
   const [openIndex, setOpenIndex] = useState(0); // first item open by default
 
   return (
