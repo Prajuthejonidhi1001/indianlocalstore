@@ -22,14 +22,25 @@ api.interceptors.response.use(
   async (error) => {
     const original = error.config;
     if (error.response?.status === 401 && !original._retry) {
-      if (original.url?.includes('/users/token/')) {
+      if (
+        original.url?.includes('/users/token/') ||
+        original.url?.includes('/users/verify_otp/') ||
+        original.url?.includes('/users/send_otp/')
+      ) {
         return Promise.reject(error);
       }
       original._retry = true;
       try {
         const refresh = localStorage.getItem('refresh_token');
         if (!refresh) throw new Error('No refresh token');
-        const { data } = await axios.post(`${import.meta.env.VITE_API_URL}/users/token/refresh/`, { refresh });
+        
+        // Use the configured api instance but skip the interceptor loop
+        // by making sure the URL matches the skip condition above
+        const { data } = await axios.post(
+          `${api.defaults.baseURL}/users/token/refresh/`, 
+          { refresh }
+        );
+        
         localStorage.setItem('access_token', data.access);
         original.headers.Authorization = `Bearer ${data.access}`;
         return api(original);

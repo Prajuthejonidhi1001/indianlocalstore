@@ -161,9 +161,11 @@ class UserViewSet(viewsets.ModelViewSet):
                 'is_new_user': created
             }, status=status.HTTP_200_OK)
             
-        except auth.InvalidIdTokenError:
-            return Response({'error': 'Invalid Firebase ID Token.'}, status=status.HTTP_401_UNAUTHORIZED)
-        except auth.ExpiredIdTokenError:
+        except auth.InvalidIdTokenError as e:
+            print(f"FIREBASE INVALID TOKEN ERROR: {e}")
+            return Response({'error': f'Invalid Firebase ID Token: {e}'}, status=status.HTTP_401_UNAUTHORIZED)
+        except auth.ExpiredIdTokenError as e:
+            print(f"FIREBASE EXPIRED TOKEN ERROR: {e}")
             return Response({'error': 'Firebase ID Token has expired.'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
