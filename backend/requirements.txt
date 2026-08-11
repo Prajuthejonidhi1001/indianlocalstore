@@ -1,4 +1,4 @@
-﻿absl-py==2.3.1
+absl-py==2.3.1
 aiofiles==25.1.0
 annotated-doc==0.0.4
 annotated-types==0.7.0
@@ -30,7 +30,6 @@ duckduckgo_search==8.1.1
 ecdsa==0.19.1
 email-validator==2.3.0
 fastapi==0.128.0
-firebase_admin==7.5.0
 flatbuffers==25.9.23
 fonttools==4.60.1
 gast==0.6.0
@@ -69,7 +68,6 @@ ml_dtypes==0.5.3
 motor==3.7.1
 MouseInfo==0.1.3
 msgpack==1.2.1
-mysql-connector-python==8.0.33
 namex==0.1.0
 numpy==2.3.4
 opt_einsum==3.4.0

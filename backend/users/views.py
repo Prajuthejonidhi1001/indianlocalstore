@@ -20,15 +20,9 @@ from django.template.loader import render_to_string
 from django.utils.html import strip_tags
 from .models import OTPVerification
 import uuid
-import firebase_admin
-from firebase_admin import credentials, auth
 import os
-
-# Initialize Firebase Admin
-if not firebase_admin._apps:
-    cred_path = os.path.join(settings.BASE_DIR, 'firebase-admin.json')
-    cred = credentials.Certificate(cred_path)
-    firebase_admin.initialize_app(cred)
+import requests
+from decouple import config
 
 class AuthRateThrottle(AnonRateThrottle):
     rate = '10/minute'
@@ -105,9 +99,17 @@ class UserViewSet(viewsets.ModelViewSet):
             return Response({'error': 'Firebase token is required'}, status=status.HTTP_400_BAD_REQUEST)
             
         try:
-            # 1. Verify the Firebase token
-            decoded_token = auth.verify_id_token(firebase_token)
-            phone = decoded_token.get('phone_number')
+            # 1. Verify the Firebase token using REST API
+            firebase_api_key = config('VITE_FIREBASE_API_KEY', default='AIzaSyC4Yhpk0zw-Om-mNWSFn4mwQOy97tufzHE')
+            url = f'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={firebase_api_key}'
+            resp = requests.post(url, json={'idToken': firebase_token})
+            
+            if resp.status_code != 200:
+                error_msg = resp.json().get('error', {}).get('message', 'INVALID_ID_TOKEN')
+                return Response({'error': f'Invalid Firebase ID Token: {error_msg}'}, status=status.HTTP_401_UNAUTHORIZED)
+                
+            user_data = resp.json().get('users', [{}])[0]
+            phone = user_data.get('phoneNumber')
             
             if not phone:
                 return Response({'error': 'Token does not contain a valid phone number.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -161,12 +163,6 @@ class UserViewSet(viewsets.ModelViewSet):
                 'is_new_user': created
             }, status=status.HTTP_200_OK)
             
-        except auth.InvalidIdTokenError as e:
-            print(f"FIREBASE INVALID TOKEN ERROR: {e}")
-            return Response({'error': f'Invalid Firebase ID Token: {e}'}, status=status.HTTP_401_UNAUTHORIZED)
-        except auth.ExpiredIdTokenError as e:
-            print(f"FIREBASE EXPIRED TOKEN ERROR: {e}")
-            return Response({'error': 'Firebase ID Token has expired.'}, status=status.HTTP_401_UNAUTHORIZED)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
