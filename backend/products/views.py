@@ -19,7 +19,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [AllowAny]
 
 
-class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class SubCategoryViewSet(viewsets.ModelViewSet):
     """Get subcategories by category"""
     queryset = SubCategory.objects.all()
     serializer_class = SubCategorySerializer
