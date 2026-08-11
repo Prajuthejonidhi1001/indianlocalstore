@@ -12,14 +12,14 @@ from .serializers import (
 )
 
 
-class CategoryViewSet(viewsets.ModelViewSet):
+class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Get all categories and subcategories"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
 
 
-class SubCategoryViewSet(viewsets.ModelViewSet):
+class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Get subcategories by category"""
     queryset = SubCategory.objects.all()
     serializer_class = SubCategorySerializer
