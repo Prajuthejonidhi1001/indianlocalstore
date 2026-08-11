@@ -12,17 +12,18 @@ from .serializers import (
 )
 
 
-class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class CategoryViewSet(viewsets.ModelViewSet):
     """Get all categories and subcategories"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
 
 
-class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
+class SubCategoryViewSet(viewsets.ModelViewSet):
     """Get subcategories by category"""
     queryset = SubCategory.objects.all()
     serializer_class = SubCategorySerializer
+    permission_classes = [AllowAny]
     permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['category']
