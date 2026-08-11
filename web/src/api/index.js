@@ -10,7 +10,17 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('access_token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    
+    // Don't attach token to auth endpoints, to prevent expired tokens from 
+    // causing a 401 on endpoints that are meant to be AllowAny
+    const isAuthEndpoint = config.url?.includes('/users/verify_otp/') || 
+                           config.url?.includes('/users/send_otp/') || 
+                           config.url?.includes('/users/token/') ||
+                           config.url?.includes('/users/register/');
+                           
+    if (token && !isAuthEndpoint) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
     return config;
   },
   (error) => Promise.reject(error)
