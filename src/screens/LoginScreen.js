@@ -30,6 +30,8 @@ export default function LoginScreen({ navigation }) {
   const recaptchaVerifier = useRef(null);
   const { loginWithPhoneOTP } = useAuth();
 
+  const [recaptchaKey, setRecaptchaKey] = useState(0);
+
   // Animations
   const cardScale = useRef(new Animated.Value(0.8)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
@@ -105,6 +107,7 @@ export default function LoginScreen({ navigation }) {
       console.error("FIREBASE ERROR:", err);
       Alert.alert('Error', err.message || 'Failed to send OTP. Try again.');
       triggerErrorShake();
+      setRecaptchaKey(prev => prev + 1);
     } finally {
       setLoading(false);
     }
@@ -139,6 +142,7 @@ export default function LoginScreen({ navigation }) {
       if (!res.success) {
         triggerErrorShake();
         Alert.alert('Verification Failed', res.error);
+        setRecaptchaKey(prev => prev + 1);
       } else {
         Alert.alert('Success', res.is_new_user ? 'Account created!' : 'Logged in!');
       }
@@ -157,6 +161,7 @@ export default function LoginScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <FirebaseRecaptchaVerifierModal
+        key={`recaptcha-${recaptchaKey}`}
         ref={recaptchaVerifier}
         firebaseConfig={config.firebaseConfig}
         attemptInvisibleVerification={true}
@@ -251,7 +256,7 @@ export default function LoginScreen({ navigation }) {
                   {!loading && <Ionicons name="checkmark-circle" size={20} color="#FFF" />}
                 </TouchableOpacity>
                 
-                <TouchableOpacity onPress={() => setStep(1)} style={{marginTop: 20, alignItems: 'center'}}>
+                <TouchableOpacity onPress={() => { setStep(1); setRecaptchaKey(prev => prev + 1); }} style={{marginTop: 20, alignItems: 'center'}}>
                   <Text style={styles.footerAction}>Change Phone Number</Text>
                 </TouchableOpacity>
               </>

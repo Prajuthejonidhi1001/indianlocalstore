@@ -22,6 +22,7 @@ export default function RegisterScreen({ navigation }) {
   const [focusedInput, setFocusedInput] = useState(null);
   const [passwordStrength, setPasswordStrength] = useState(0);
 
+  const [recaptchaKey, setRecaptchaKey] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(40)).current;
   const shakeAnim = useRef(new Animated.Value(0)).current;
@@ -192,6 +193,7 @@ export default function RegisterScreen({ navigation }) {
       console.error("FIREBASE ERROR:", err);
       triggerShake();
       Alert.alert('Error', err.message || 'Failed to send OTP. Try again.');
+      setRecaptchaKey(prev => prev + 1);
     } finally {
       setLoading(false);
     }
@@ -215,6 +217,7 @@ export default function RegisterScreen({ navigation }) {
       Alert.alert('OTP Sent', 'A new verification code has been sent.');
     } catch (err) {
       Alert.alert('Error', 'Failed to resend OTP. Please try again.');
+      setRecaptchaKey(prev => prev + 1);
     }
   };
 
@@ -299,6 +302,7 @@ export default function RegisterScreen({ navigation }) {
     } catch {
       triggerShake();
       Alert.alert('Error', 'Registration failed. Username or email may already be taken.');
+      setRecaptchaKey(prev => prev + 1);
     } finally {
       setLoading(false);
     }
@@ -327,6 +331,7 @@ export default function RegisterScreen({ navigation }) {
   return (
     <SafeAreaView style={styles.container}>
       <FirebaseRecaptchaVerifierModal
+        key={`recaptcha-${recaptchaKey}`}
         ref={window.recaptchaVerifierRef}
         firebaseConfig={config.firebaseConfig}
         attemptInvisibleVerification={true}
@@ -586,7 +591,7 @@ export default function RegisterScreen({ navigation }) {
 
                 {loading && <ActivityIndicator color="#FF6B00" style={{ marginTop: 20 }} />}
 
-                <TouchableOpacity style={styles.backToRegBtn} onPress={() => { setStep(1); setOtp(['','','','','','']); }}>
+                <TouchableOpacity style={styles.backToRegBtn} onPress={() => { setStep(1); setOtp(['','','','','','']); setRecaptchaKey(prev => prev + 1); }}>
                   <Ionicons name="arrow-back" size={16} color={COLORS.textMuted} style={{ marginRight: 6 }} />
                   <Text style={styles.backToRegText}>Back to Registration</Text>
                 </TouchableOpacity>
