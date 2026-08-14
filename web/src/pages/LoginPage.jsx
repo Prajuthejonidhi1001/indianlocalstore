@@ -127,11 +127,11 @@ export default function LoginPage() {
   return (
     <div className="auth-page animate-in">
       <div className="auth-container card">
-        <Link to="/" className="auth-logo">
-          <div className="logo-icon-lg">
+        <Link to="/" className="auth-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', textDecoration: 'none', marginBottom: '1.5rem' }}>
+          <div className="logo-icon-lg" style={{ width: '50px', height: '50px', flexShrink: 0, margin: 0, position: 'static' }}>
             <Store size={28} />
           </div>
-          <h2>Indian<span className="text-saffron">LocalStore</span></h2>
+          <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Indian<span className="text-saffron">LocalStore</span></h2>
         </Link>
         <p className="auth-subtitle">Welcome back! Sign in to continue.</p>
 
