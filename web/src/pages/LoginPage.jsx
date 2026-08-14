@@ -126,7 +126,7 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page animate-in">
-      <div className="auth-container card">
+      <div className="auth-card glass-card">
         <Link to="/" className="auth-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', textDecoration: 'none', marginBottom: '1.5rem' }}>
           <div className="logo-icon-lg" style={{ width: '50px', height: '50px', flexShrink: 0, margin: 0, position: 'static' }}>
             <Store size={28} />
