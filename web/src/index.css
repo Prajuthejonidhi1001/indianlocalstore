@@ -98,6 +98,39 @@ body::before {
 }
 
 img { max-width: 100%; height: auto; display: block; }
+
+/* ── MODERN UTILITIES ── */
+.hover-lift {
+  transition: transform var(--transition-spring), box-shadow var(--transition-spring);
+}
+.hover-lift:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: var(--shadow-xl);
+}
+
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--saffron), var(--purple));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
+
+.text-saffron { color: var(--saffron); }
+
+/* ── CUSTOM SCROLLBAR ── */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(15, 23, 42, 0.15); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(15, 23, 42, 0.25); }
 a { color: inherit; text-decoration: none; }
 button { cursor: pointer; border: none; background: none; font-family: inherit; }
 input, textarea, select { font-family: inherit; }

@@ -14,6 +14,7 @@
   /* 3D perspective */
   transform-style: preserve-3d;
   perspective: 1000px;
+  box-shadow: var(--shadow-sm);
 }
 
 /* Glow on hover */
@@ -31,7 +32,7 @@
   transform: translateY(-8px) scale(1.01);
   border-color: rgba(255,107,53,0.4);
   box-shadow:
-    0 20px 60px rgba(0,0,0,0.6),
+    var(--shadow-xl),
     0 0 30px rgba(255,107,53,0.15),
     0 0 60px rgba(255,107,53,0.05);
 }

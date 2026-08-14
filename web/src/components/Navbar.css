@@ -1,14 +1,17 @@
 /* ── NAVBAR BASE ── */
 .navbar {
   position: sticky;
-  top: 0;
+  top: 1rem;
   z-index: 500;
   height: 72px; /* Slightly taller for premium feel */
-  background: rgba(255, 255, 255, 0.95);
+  background: var(--glass-bg);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border-bottom: 1px solid var(--border-subtle);
-  transition: background 0.3s;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  margin: 0 1rem;
+  box-shadow: var(--shadow-lg);
+  transition: background 0.3s, transform 0.3s;
 }
 
 .navbar-inner {
