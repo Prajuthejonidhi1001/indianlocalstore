@@ -174,7 +174,7 @@ export default function Navbar() {
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
                 >
                   <div className="avatar">
-                    {user?.username?.[0]?.toUpperCase() || 'U'}
+                    {(user?.first_name?.[0] || user?.username?.[0] || 'U').toUpperCase()}
                   </div>
                 </button>
                 {userMenuOpen && (

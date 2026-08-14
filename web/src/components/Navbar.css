@@ -1,16 +1,14 @@
 /* ── NAVBAR BASE ── */
 .navbar {
   position: sticky;
-  top: 1rem;
+  top: 0;
   z-index: 500;
   height: 72px; /* Slightly taller for premium feel */
   background: var(--glass-bg);
   backdrop-filter: blur(24px) saturate(180%);
   -webkit-backdrop-filter: blur(24px) saturate(180%);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
-  margin: 0 1rem;
-  box-shadow: var(--shadow-lg);
+  border-bottom: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-sm);
   transition: background 0.3s, transform 0.3s;
 }
 
