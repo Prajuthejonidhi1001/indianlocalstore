@@ -5,6 +5,7 @@ import {
   KeyboardAvoidingView, Platform, Vibration
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
@@ -14,6 +15,7 @@ import { authAPI, shopAPI, productAPI } from '../utils/api';
 import config from '../config';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 export default function RegisterScreen({ navigation }) {
+  const isFocused = useIsFocused();
   const { loginWithPhoneOTP } = useAuth();
   const [loading, setLoading] = useState(false);
   const [showPass, setShowPass] = useState(false);
@@ -330,12 +332,14 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FirebaseRecaptchaVerifierModal
-        key={`recaptcha-${recaptchaKey}`}
-        ref={window.recaptchaVerifierRef}
-        firebaseConfig={config.firebaseConfig}
-        attemptInvisibleVerification={true}
-      />
+      {isFocused && (
+        <FirebaseRecaptchaVerifierModal
+          key={`recaptcha-${recaptchaKey}`}
+          ref={window.recaptchaVerifierRef}
+          firebaseConfig={config.firebaseConfig}
+          attemptInvisibleVerification={true}
+        />
+      )}
       {/* Background gradient orb */}
       <View style={styles.bgOrb1} />
       <View style={styles.bgOrb2} />

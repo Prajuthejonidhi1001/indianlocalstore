@@ -4,6 +4,7 @@ import {
   ScrollView, Alert, Animated, Easing, KeyboardAvoidingView, Platform, Dimensions, Vibration
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useAuth } from '../context/AuthContext';
@@ -15,6 +16,7 @@ import { PhoneAuthProvider } from 'firebase/auth';
 const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen({ navigation }) {
+  const isFocused = useIsFocused();
   const [step, setStep] = useState(1);
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
@@ -160,12 +162,14 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <FirebaseRecaptchaVerifierModal
-        key={`recaptcha-${recaptchaKey}`}
-        ref={recaptchaVerifier}
-        firebaseConfig={config.firebaseConfig}
-        attemptInvisibleVerification={true}
-      />
+      {isFocused && (
+        <FirebaseRecaptchaVerifierModal
+          key={`recaptcha-${recaptchaKey}`}
+          ref={recaptchaVerifier}
+          firebaseConfig={config.firebaseConfig}
+          attemptInvisibleVerification={true}
+        />
+      )}
       
       <Animated.View style={[styles.liquidBlob, { 
         backgroundColor: '#FF6B00', top: -100, left: -50,
