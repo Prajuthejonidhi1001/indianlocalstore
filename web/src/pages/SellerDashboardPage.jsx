@@ -146,9 +146,15 @@ export default function SellerDashboardPage() {
       formData.append('price', productForm.price);
       if (productForm.discount_price) formData.append('discount_price', productForm.discount_price);
       formData.append('stock', productForm.stock);
-      // Use default category from signup (stored in localStorage)
-      const catId = defaultCatId || productForm.category;
-      const subId = defaultSubId || productForm.subcategory;
+      // Validate local storage category against actual DB categories
+      let validDefaultCat = defaultCatId;
+      if (validDefaultCat && !allCategories.find(c => String(c.id) === String(validDefaultCat))) {
+        validDefaultCat = null;
+      }
+      
+      const catId = productForm.category || validDefaultCat || (allCategories[0]?.id);
+      const subId = productForm.subcategory || defaultSubId;
+      
       if (catId) formData.append('category', catId);
       if (subId) formData.append('subcategory', subId);
       
@@ -839,6 +845,26 @@ export default function SellerDashboardPage() {
                         <div className="form-group mb-4">
                           <label className="form-label">Description *</label>
                           <textarea className="form-input" rows={6} required value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} placeholder="Describe your product in detail..." />
+                        </div>
+                        <div className="form-row mb-4">
+                          <div className="form-group">
+                            <label className="form-label">Category *</label>
+                            <select className="form-input" required value={productForm.category || defaultCatId || ''} onChange={e => handleProductCatChange(e.target.value)}>
+                              <option value="" disabled>Select Category</option>
+                              {allCategories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Subcategory</label>
+                            <select className="form-input" value={productForm.subcategory || defaultSubId || ''} onChange={e => setProductForm({ ...productForm, subcategory: e.target.value })}>
+                              <option value="">None</option>
+                              {productSubcats.map(sub => (
+                                <option key={sub.id} value={sub.id}>{sub.name}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                       </div>
                     )}
