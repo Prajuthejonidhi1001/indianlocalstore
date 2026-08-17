@@ -529,7 +529,13 @@ export default function SellerDashboardPage() {
                   </div>
                 </div>
                 {!shop ? (
-                  <div className="empty-state mt-4"><h3>Setup your shop first</h3></div>
+                  <div className="empty-state mt-4">
+                    <h3>Setup your shop first</h3>
+                    <p style={{ color: 'var(--text-muted)' }}>You must configure your shop settings before adding inventory.</p>
+                    <button className="btn btn-primary mt-3" onClick={() => setActiveTab('overview')}>
+                      Go to Shop Settings
+                    </button>
+                  </div>
                 ) : products.length === 0 ? (
                   <div className="empty-state mt-4">
                     <div className="empty-state-icon">📦</div>
