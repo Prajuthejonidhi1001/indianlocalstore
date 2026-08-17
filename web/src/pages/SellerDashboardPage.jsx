@@ -149,7 +149,11 @@ export default function SellerDashboardPage() {
   const handleSaveProduct = async (e) => {
     e.preventDefault();
     if (!shop) { toast.error('Please complete shop setup first'); return; }
-    if (productImages.length === 0) { toast.error('At least 1 product image is required'); return; }
+    
+    // Require image only for new products
+    const isEdit = !!productForm.id;
+    if (!isEdit && productImages.length === 0) { toast.error('At least 1 product image is required'); return; }
+    
     setSavingProduct(true);
     try {
       const formData = new FormData();
@@ -178,17 +182,25 @@ export default function SellerDashboardPage() {
         formData.append('variants', JSON.stringify(finalVariants));
       }
       
-      formData.append('image', productImages[0]);
-      productImages.slice(1).forEach(img => formData.append('images', img));
+      if (productImages.length > 0) {
+        formData.append('image', productImages[0]);
+        productImages.slice(1).forEach(img => formData.append('images', img));
+      }
 
-      await productAPI.createProduct(formData);
+      if (isEdit) {
+        await productAPI.updateProduct(productForm.id, formData);
+        toast.success('✅ Product updated!');
+      } else {
+        await productAPI.createProduct(formData);
+        toast.success('✅ Product added!');
+      }
+      
       const freshProducts = await productAPI.getMyProducts();
       setProducts(freshProducts.data.results || freshProducts.data);
       setShowProductModal(false);
       setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', category: '', subcategory: '', variants: [] });
       setProductImages([]);
       setProductSubcats([]);
-      toast.success('✅ Product added!');
     } catch (err) {
       const data = err?.response?.data;
       const msg = data ? Object.values(data)[0]?.[0] || JSON.stringify(data) : 'Failed to add product';
@@ -624,8 +636,20 @@ export default function SellerDashboardPage() {
                             </td>
                             <td style={{ textAlign: 'right' }}>
                               <button className="btn-link" onClick={() => {
-                                // For now, we reuse the product modal. An advanced inline edit would go here.
-                                toast.error('Inline editing requires backend endpoint, opening full editor instead.');
+                                setProductForm({
+                                  id: p.id,
+                                  name: p.name,
+                                  description: p.description,
+                                  price: p.price,
+                                  discount_price: p.discount_price || '',
+                                  stock: p.stock,
+                                  category: p.category?.id || p.category || '',
+                                  subcategory: p.subcategory?.id || p.subcategory || '',
+                                  variants: typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || [])
+                                });
+                                setProductImages([]); // Need re-upload if changing images for now
+                                setActiveProductTab('basic');
+                                setShowProductModal(true);
                               }}>Edit ▾</button>
                             </td>
                           </tr>
@@ -830,8 +854,8 @@ export default function SellerDashboardPage() {
             <div className="modal-content product-modal-container">
               <div className="product-modal-sidebar">
                 <div className="pms-header">
-                  <h3>Add Product</h3>
-                  <p>List a new item for sale</p>
+                  <h3>{productForm.id ? 'Edit Product' : 'Add Product'}</h3>
+                  <p>{productForm.id ? 'Update your product details' : 'List a new item for sale'}</p>
                 </div>
                 <nav className="pms-nav">
                   <button type="button" className={`pms-nav-item ${activeProductTab === 'basic' ? 'active' : ''}`} onClick={() => setActiveProductTab('basic')}>Basic Info</button>
@@ -916,12 +940,12 @@ export default function SellerDashboardPage() {
                     {activeProductTab === 'media' && (
                       <div className="animate-in fade-in">
                         <div className="form-group mb-4">
-                          <label className="form-label">Product Images * (1–5)</label>
+                          <label className="form-label">Product Images (1–5) {productForm.id && <span className="text-muted" style={{ fontWeight: 400, fontSize: '11px' }}>(Leave empty to keep existing images)</span>}</label>
                           <div className="dropzone-area">
                             <Package size={32} color="var(--text-muted)" style={{ marginBottom: 12 }} />
                             <p style={{ fontWeight: 600, marginBottom: 4 }}>Drag & drop images here</p>
                             <p className="text-muted" style={{ fontSize: 12, marginBottom: 16 }}>or click to browse from your device</p>
-                            <input type="file" className="dropzone-input" accept="image/*" multiple required onChange={handleImageChange} id="product-images-input" />
+                            <input type="file" className="dropzone-input" accept="image/*" multiple required={!productForm.id} onChange={handleImageChange} id="product-images-input" />
                             <button type="button" className="btn btn-outline btn-sm">Select Files</button>
                           </div>
 
@@ -1085,19 +1109,9 @@ export default function SellerDashboardPage() {
 
                   <div className="product-modal-footer">
                     <button type="button" className="btn btn-ghost" onClick={() => setShowProductModal(false)}>Cancel</button>
-                    <div style={{ display: 'flex', gap: 12 }}>
-                      {activeProductTab !== 'variants' ? (
-                        <button type="button" className="btn btn-outline" onClick={() => {
-                          const tabs = ['basic', 'pricing', 'media', 'variants'];
-                          const nextTab = tabs[tabs.indexOf(activeProductTab) + 1];
-                          setActiveProductTab(nextTab);
-                        }}>Next Step</button>
-                      ) : (
-                        <button type="submit" className="btn btn-primary" disabled={savingProduct} id="submit-product-btn">
-                          {savingProduct ? 'Saving...' : <><Save size={16} /> Publish Product</>}
-                        </button>
-                      )}
-                    </div>
+                    <button type="submit" className="btn btn-primary" disabled={savingProduct} id="publish-product-btn">
+                      {savingProduct ? 'Saving...' : (productForm.id ? 'Update Product' : 'Publish Product')}
+                    </button>
                   </div>
                 </form>
               </div>
