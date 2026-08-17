@@ -21,6 +21,8 @@ export default function SellerDashboardPage() {
     is_open: true,
     online_delivery_enabled: false,
   });
+  const [shopLogo, setShopLogo] = useState(null);
+  const [shopBanner, setShopBanner] = useState(null);
   const [savingShop, setSavingShop] = useState(false);
 
   // Product Form
@@ -93,17 +95,27 @@ export default function SellerDashboardPage() {
     e.preventDefault();
     setSavingShop(true);
     try {
+      const payloadObj = {
+        ...shopForm,
+        latitude: shop?.latitude || 20.5937,
+        longitude: shop?.longitude || 78.9629
+      };
+
+      const formData = new FormData();
+      Object.keys(payloadObj).forEach(key => {
+        if (payloadObj[key] !== null && payloadObj[key] !== undefined) {
+          formData.append(key, payloadObj[key]);
+        }
+      });
+      if (shopLogo) formData.append('logo', shopLogo);
+      if (shopBanner) formData.append('banner', shopBanner);
+
       if (shop) {
-        const res = await shopAPI.updateShop(shop.id, shopForm);
+        const res = await shopAPI.updateShop(shop.id, formData);
         setShop(res.data);
         toast.success('Shop details updated');
       } else {
-        const payload = {
-          ...shopForm,
-          latitude: 20.5937,
-          longitude: 78.9629
-        };
-        const res = await shopAPI.createShop(payload);
+        const res = await shopAPI.createShop(formData);
         setShop(res.data);
         toast.success('Shop created successfully');
       }
@@ -422,10 +434,16 @@ export default function SellerDashboardPage() {
                 {/* Storefront Customization Mock */}
                 <div className="storefront-customization mb-4" style={{ padding: '16px', background: 'var(--bg-elevated)', borderRadius: '8px', border: '1px dashed var(--border-subtle)' }}>
                   <h4 className="font-medium text-primary mb-2">Storefront Branding</h4>
-                  <p className="text-muted mb-3" style={{ fontSize: '0.85rem' }}>Upload a custom banner and logo to make your shop stand out to buyers. (Premium Feature)</p>
-                  <div style={{ display: 'flex', gap: '12px' }}>
-                    <button className="btn btn-outline btn-sm" disabled>Upload Banner</button>
-                    <button className="btn btn-outline btn-sm" disabled>Upload Logo</button>
+                  <p className="text-muted mb-3" style={{ fontSize: '0.85rem' }}>Upload a custom banner and logo to make your shop stand out to buyers.</p>
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+                      <label className="form-label" style={{ fontSize: '0.8rem' }}>Upload Banner</label>
+                      <input type="file" className="form-input" accept="image/*" onChange={(e) => setShopBanner(e.target.files[0])} style={{ padding: '0.4rem' }} />
+                    </div>
+                    <div className="form-group" style={{ flex: 1, minWidth: '200px' }}>
+                      <label className="form-label" style={{ fontSize: '0.8rem' }}>Upload Logo</label>
+                      <input type="file" className="form-input" accept="image/*" onChange={(e) => setShopLogo(e.target.files[0])} style={{ padding: '0.4rem' }} />
+                    </div>
                   </div>
                 </div>
 
