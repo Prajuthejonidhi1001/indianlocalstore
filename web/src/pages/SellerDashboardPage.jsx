@@ -169,10 +169,19 @@ export default function SellerDashboardPage() {
       }
       
       const catId = productForm.category || validDefaultCat || (allCategories[0]?.id);
-      const subId = productForm.subcategory || defaultSubId;
+      
+      let validSubId = productForm.subcategory || defaultSubId;
+      const selectedCatObj = allCategories.find(c => String(c.id) === String(catId));
+      if (validSubId && selectedCatObj) {
+        // Ensure subcategory belongs to the selected category
+        const subExists = selectedCatObj.subcategories?.find(s => String(s.id) === String(validSubId));
+        if (!subExists) validSubId = null;
+      } else {
+        validSubId = null;
+      }
       
       if (catId) formData.append('category', catId);
-      if (subId) formData.append('subcategory', subId);
+      if (validSubId) formData.append('subcategory', validSubId);
       
       let finalVariants = [...productForm.variants];
       if (variantMatrix.length > 0) {
