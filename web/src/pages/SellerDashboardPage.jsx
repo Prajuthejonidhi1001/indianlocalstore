@@ -98,7 +98,12 @@ export default function SellerDashboardPage() {
         setShop(res.data);
         toast.success('Shop details updated');
       } else {
-        const res = await shopAPI.createShop(shopForm);
+        const payload = {
+          ...shopForm,
+          latitude: 20.5937,
+          longitude: 78.9629
+        };
+        const res = await shopAPI.createShop(payload);
         setShop(res.data);
         toast.success('Shop created successfully');
       }
