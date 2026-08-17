@@ -523,7 +523,14 @@ export default function SellerDashboardPage() {
                     <div className="search-bar-inline">
                       <input type="text" placeholder="Search SKU, Title..." className="form-input" style={{ width: 250 }} />
                     </div>
-                    <button className="btn btn-primary btn-sm" onClick={() => setShowProductModal(true)} disabled={!shop} id="add-product-btn">
+                    <button className="btn btn-primary btn-sm" onClick={() => {
+                      if (!shop) {
+                        toast.error('Please add your shop details first!');
+                        setActiveTab('overview');
+                      } else {
+                        setShowProductModal(true);
+                      }
+                    }} id="add-product-btn">
                       <Plus size={16} /> Add a Product
                     </button>
                   </div>
