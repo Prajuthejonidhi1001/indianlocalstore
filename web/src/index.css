@@ -19,37 +19,37 @@
   --purple: #D500F9;
 
   /* ── Background System ── */
-  --bg-base: #F8FAFC;
-  --bg-surface: #FFFFFF;
-  --bg-card: #FFFFFF;
-  --bg-elevated: #F1F5F9;
-  --bg-hover: #F1F5F9;
-  --bg-overlay: rgba(255, 255, 255, 0.85);
+  --bg-base: #0B0F19;
+  --bg-surface: #131B2F;
+  --bg-card: #1A243D;
+  --bg-elevated: #233050;
+  --bg-hover: #2C3C63;
+  --bg-overlay: rgba(11, 15, 25, 0.85);
 
   /* ── Text ── */
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
-  --text-muted: #94A3B8;
-  --text-inverse: #FFFFFF;
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+  --text-inverse: #0F172A;
 
   /* ── Borders ── */
-  --border-subtle: rgba(15, 23, 42, 0.06);
-  --border-default: rgba(15, 23, 42, 0.1);
-  --border-strong: rgba(15, 23, 42, 0.2);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-default: rgba(255, 255, 255, 0.15);
+  --border-strong: rgba(255, 255, 255, 0.3);
   --border-brand: rgba(255, 107, 53, 0.5);
 
   /* ── Shadows (Apple-like softness) ── */
-  --shadow-sm: 0 2px 4px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
-  --shadow-lg: 0 12px 24px rgba(15, 23, 42, 0.08);
-  --shadow-xl: 0 24px 48px rgba(15, 23, 42, 0.1);
-  --shadow-brand: 0 8px 24px rgba(255, 107, 53, 0.25);
-  --shadow-gold: 0 8px 24px rgba(255, 182, 39, 0.25);
+  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.2);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 24px rgba(0, 0, 0, 0.4);
+  --shadow-xl: 0 24px 48px rgba(0, 0, 0, 0.5);
+  --shadow-brand: 0 8px 24px rgba(255, 107, 53, 0.3);
+  --shadow-gold: 0 8px 24px rgba(255, 182, 39, 0.3);
 
   /* ── Glass ── */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-shine: rgba(255, 255, 255, 0.8);
+  --glass-bg: rgba(19, 27, 47, 0.6);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shine: rgba(255, 255, 255, 0.05);
 
   /* ── Typography ── */
   --font-heading: 'Inter', system-ui, sans-serif;
@@ -91,8 +91,8 @@ body::before {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle 800px at 10% 20%, rgba(255,107,53,0.03) 0%, transparent 100%),
-    radial-gradient(circle 600px at 90% 80%, rgba(255,182,39,0.03) 0%, transparent 100%);
+    radial-gradient(circle 800px at 10% 20%, rgba(255,107,53,0.08) 0%, transparent 100%),
+    radial-gradient(circle 600px at 90% 80%, rgba(213,0,249,0.06) 0%, transparent 100%);
   pointer-events: none;
   z-index: 0;
 }

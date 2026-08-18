@@ -69,5 +69,6 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['category', 'subcategory', 'name', 'description', 'price',
                   'discount_price', 'stock', 'variants', 'image']
+        read_only_fields = ['category', 'subcategory']
         # is_active is intentionally excluded — new products are always active
         # Sellers can deactivate via a separate admin/edit flow
