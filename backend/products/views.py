@@ -54,16 +54,6 @@ class ProductViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # Force is_active=True so new products are immediately visible in shops
         product = serializer.save(seller=self.request.user, is_active=True)
-        
-        # Auto-assign category from shop if it exists
-        if hasattr(self.request.user, 'shop'):
-            shop = self.request.user.shop
-            if shop.category:
-                product.category = shop.category
-            if shop.subcategory:
-                product.subcategory = shop.subcategory
-            product.save()
-
         # Save additional uploaded images (up to 5 total)
         images = self.request.FILES.getlist('images')
         for i, img in enumerate(images[:5]):

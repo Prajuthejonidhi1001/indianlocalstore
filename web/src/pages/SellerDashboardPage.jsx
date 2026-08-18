@@ -162,6 +162,26 @@ export default function SellerDashboardPage() {
       formData.append('price', productForm.price);
       if (productForm.discount_price) formData.append('discount_price', productForm.discount_price);
       formData.append('stock', productForm.stock);
+      // Validate local storage category against actual DB categories
+      let validDefaultCat = defaultCatId;
+      if (validDefaultCat && !allCategories.find(c => String(c.id) === String(validDefaultCat))) {
+        validDefaultCat = null;
+      }
+      
+      const catId = productForm.category || validDefaultCat || (allCategories[0]?.id);
+      
+      let validSubId = productForm.subcategory || defaultSubId;
+      const selectedCatObj = allCategories.find(c => String(c.id) === String(catId));
+      if (validSubId && selectedCatObj) {
+        // Ensure subcategory belongs to the selected category
+        const subExists = selectedCatObj.subcategories?.find(s => String(s.id) === String(validSubId));
+        if (!subExists) validSubId = null;
+      } else {
+        validSubId = null;
+      }
+      
+      if (catId) formData.append('category', catId);
+      if (validSubId) formData.append('subcategory', validSubId);
       
       let finalVariants = [...productForm.variants];
       if (variantMatrix.length > 0) {
@@ -187,8 +207,9 @@ export default function SellerDashboardPage() {
       const freshProducts = await productAPI.getMyProducts();
       setProducts(freshProducts.data.results || freshProducts.data);
       setShowProductModal(false);
-      setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', variants: [] });
+      setProductForm({ name: '', description: '', price: '', discount_price: '', stock: '', category: '', subcategory: '', variants: [] });
       setProductImages([]);
+      setProductSubcats([]);
     } catch (err) {
       const data = err?.response?.data;
       const msg = data ? Object.values(data)[0]?.[0] || JSON.stringify(data) : 'Failed to add product';
@@ -198,7 +219,17 @@ export default function SellerDashboardPage() {
     }
   };
 
-
+  // Only needed if seller wants to manually pick category (fallback)
+  const handleProductCatChange = async (catId) => {
+    setProductForm(f => ({ ...f, category: catId, subcategory: '' }));
+    setProductSubcats([]);
+    if (catId) {
+      try {
+        const r = await productAPI.getSubCategories(catId);
+        setProductSubcats(r.data.results || r.data);
+      } catch {}
+    }
+  };
 
   const handleToggleVariant = (variantType, variantValue) => {
     const existing = productForm.variants.find(v => v.type === variantType);
@@ -621,6 +652,8 @@ export default function SellerDashboardPage() {
                                   price: p.price,
                                   discount_price: p.discount_price || '',
                                   stock: p.stock,
+                                  category: p.category?.id || p.category || '',
+                                  subcategory: p.subcategory?.id || p.subcategory || '',
                                   variants: typeof p.variants === 'string' ? JSON.parse(p.variants) : (p.variants || [])
                                 });
                                 setProductImages([]); // Need re-upload if changing images for now
@@ -863,6 +896,26 @@ export default function SellerDashboardPage() {
                         <div className="form-group mb-4">
                           <label className="form-label">Description *</label>
                           <textarea className="form-input" rows={6} required value={productForm.description} onChange={e => setProductForm({ ...productForm, description: e.target.value })} placeholder="Describe your product in detail..." />
+                        </div>
+                        <div className="form-row mb-4">
+                          <div className="form-group">
+                            <label className="form-label">Category *</label>
+                            <select className="form-input" required value={productForm.category || defaultCatId || ''} onChange={e => handleProductCatChange(e.target.value)}>
+                              <option value="" disabled>Select Category</option>
+                              {allCategories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                              ))}
+                            </select>
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label">Subcategory</label>
+                            <select className="form-input" value={productForm.subcategory || defaultSubId || ''} onChange={e => setProductForm({ ...productForm, subcategory: e.target.value })}>
+                              <option value="">None</option>
+                              {productSubcats.map(sub => (
+                                <option key={sub.id} value={sub.id}>{sub.name}</option>
+                              ))}
+                            </select>
+                          </div>
                         </div>
                       </div>
                     )}
