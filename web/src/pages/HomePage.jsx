@@ -24,6 +24,15 @@ const HERO_BANNERS = [
   { id: 3, title: 'Fashion Clearance', subtitle: 'Trendy Styles at Unbeatable Prices', color: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)', image: '/media/fashion_cat_1781148912233.png' }
 ];
 
+const CAT_GRADIENTS = [
+  'linear-gradient(135deg, #FF9A9E 0%, #FECFEF 100%)',
+  'linear-gradient(135deg, #a18cd1 0%, #fbc2eb 100%)',
+  'linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)',
+  'linear-gradient(135deg, #fccb90 0%, #d57eeb 100%)',
+  'linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%)',
+];
+
+
 function ShopSkeleton() {
   return (
     <div className="shop-card-skeleton card">
