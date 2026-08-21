@@ -193,7 +193,13 @@ export default function HomePage() {
           <div className="premium-categories-grid">
             {categories.slice(0, 10).map((cat) => (
               <Link to={`/categories?id=${cat.id}`} key={cat.id} className="premium-cat-card">
-                <div className="cat-icon-lg">{CAT_EMOJIS[cat.name] || '🏷️'}</div>
+                <div className="cat-icon-lg">
+                  {cat.icon ? (
+                    <img src={cat.icon?.startsWith('http') ? cat.icon : `/media/${cat.icon}`} alt={cat.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    CAT_EMOJIS[cat.name] || '🏷️'
+                  )}
+                </div>
                 <span className="cat-name">{cat.name}</span>
               </Link>
             ))}
