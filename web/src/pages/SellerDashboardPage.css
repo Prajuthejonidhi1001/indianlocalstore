@@ -205,8 +205,10 @@
   color: var(--text-primary);
 }
 .pipeline-btn.active {
-  background: var(--text-primary);
-  color: var(--bg-default);
+  background: rgba(255,107,53,0.1);
+  color: var(--saffron);
+  box-shadow: inset 0 -2px 0 var(--saffron);
+  border-radius: 4px 4px 0 0;
 }
 .pipeline-count {
   background: rgba(231,76,60,0.15);
@@ -738,11 +740,55 @@
   flex-wrap: wrap;
   gap: 10px;
 }
+.variant-size-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 6px;
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.variant-size-box:hover {
+  border-color: var(--saffron-light);
+  color: var(--saffron);
+}
+.variant-size-box.active {
+  background: var(--saffron);
+  border-color: var(--saffron);
+  color: white;
+}
+
 .variants-color-grid {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
   margin-top: 8px;
+}
+.variant-color-circle-wrap {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.variant-color-circle-wrap:hover {
+  transform: scale(1.1);
+}
+.variant-color-circle-wrap.active {
+  border-color: var(--saffron);
+}
+.variant-color-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(0,0,0,0.1);
 }
 
 @media (max-width: 768px) {
