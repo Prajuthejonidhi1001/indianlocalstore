@@ -167,16 +167,21 @@ export default function Navbar() {
               </button>
 
               {/* User Menu */}
-              <div className="user-menu-wrapper">
-                <button
+              <div 
+                className="user-menu-wrapper"
+                onMouseEnter={() => setUserMenuOpen(true)}
+                onMouseLeave={() => setUserMenuOpen(false)}
+              >
+                <Link
                   id="user-menu-btn"
                   className="user-avatar-btn"
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  to="/profile"
+                  style={{ textDecoration: 'none' }}
                 >
                   <div className="avatar">
                     {(user?.first_name?.[0] || user?.username?.[0] || 'U').toUpperCase()}
                   </div>
-                </button>
+                </Link>
                 {userMenuOpen && (
                   <div className="user-dropdown shadow-lg" id="user-dropdown">
                     <div className="dropdown-header">

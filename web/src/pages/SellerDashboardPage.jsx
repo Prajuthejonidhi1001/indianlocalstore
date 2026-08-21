@@ -197,7 +197,19 @@ export default function SellerDashboardPage() {
       setSavingProduct(false);
     }
   };
-
+  
+  const toggleProductStatus = async (product) => {
+    try {
+      const formData = new FormData();
+      formData.append('is_active', !product.is_active);
+      await productAPI.updateProduct(product.id, formData);
+      toast.success(product.is_active ? 'Product deactivated' : 'Product activated');
+      const freshProducts = await productAPI.getMyProducts();
+      setProducts(freshProducts.data.results || freshProducts.data);
+    } catch (err) {
+      toast.error('Failed to update status');
+    }
+  };
 
 
   const handleToggleVariant = (variantType, variantValue) => {
@@ -586,8 +598,10 @@ export default function SellerDashboardPage() {
                           <tr key={p.id}>
                             <td><input type="checkbox" /></td>
                             <td>
-                              <span className={`status-dot ${p.is_active ? 'active' : 'inactive'}`}></span>
-                              {p.is_active ? 'Active' : 'Inactive'}
+                              <button onClick={() => toggleProductStatus(p)} className="btn-link" style={{textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer'}}>
+                                <span className={`status-dot ${p.is_active ? 'active' : 'inactive'}`}></span>
+                                {p.is_active ? 'Active' : 'Inactive'}
+                              </button>
                             </td>
                             <td>
                               <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
