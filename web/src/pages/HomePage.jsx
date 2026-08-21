@@ -19,9 +19,9 @@ const CAT_EMOJIS = {
 
 // Premium Hero Images (Mocked with random colorful gradients/patterns if no backend image)
 const HERO_BANNERS = [
-  { id: 1, title: 'Mega Electronics Sale', subtitle: 'Up to 40% Off on Top Brands', color: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)', image: '/media/electronics_cat_1781148957487.png' },
-  { id: 2, title: 'Fresh Groceries Delivered', subtitle: 'In 30 Minutes or Less', color: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', image: '/media/cat_agriculture_1780936159975.png' },
-  { id: 3, title: 'Fashion Clearance', subtitle: 'Trendy Styles at Unbeatable Prices', color: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)', image: '/media/fashion_cat_1781148912233.png' }
+  { id: 1, title: 'Mega Electronics Sale', subtitle: 'Up to 40% Off on Top Brands', color: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)', image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=800&auto=format&fit=crop' },
+  { id: 2, title: 'Fresh Groceries Delivered', subtitle: 'In 30 Minutes or Less', color: 'linear-gradient(135deg, #11998e 0%, #38ef7d 100%)', image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800&auto=format&fit=crop' },
+  { id: 3, title: 'Fashion Clearance', subtitle: 'Trendy Styles at Unbeatable Prices', color: 'linear-gradient(135deg, #ff9a9e 0%, #fecfef 99%, #fecfef 100%)', image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop' }
 ];
 
 const CAT_GRADIENTS = [
