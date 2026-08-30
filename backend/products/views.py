@@ -1,3 +1,5 @@
+from django.utils.decorators import method_decorator
+from django.views.decorators.cache import cache_page
 from rest_framework import viewsets, status, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
@@ -18,15 +20,22 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [AllowAny]
 
+    @method_decorator(cache_page(60 * 15))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
+
 
 class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Get subcategories by category"""
     queryset = SubCategory.objects.all()
     serializer_class = SubCategorySerializer
     permission_classes = [AllowAny]
-    permission_classes = [AllowAny]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['category']
+
+    @method_decorator(cache_page(60 * 15))
+    def list(self, request, *args, **kwargs):
+        return super().list(request, *args, **kwargs)
 
 
 class ProductViewSet(viewsets.ModelViewSet):
@@ -37,6 +46,11 @@ class ProductViewSet(viewsets.ModelViewSet):
     search_fields = ['name', 'description']
     ordering_fields = ['price', 'rating', 'created_at']
     ordering = ['-created_at']
+
+    @method_decorator(cache_page(60 * 5))
+    def list(self, request, *args, **kwargs):
+        # 5 minute cache for products to balance performance with freshness
+        return super().list(request, *args, **kwargs)
 
     def get_permissions(self):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
