@@ -126,14 +126,17 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page animate-in">
-      <div className="auth-card glass-card">
-        <Link to="/" className="auth-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', textDecoration: 'none', marginBottom: '1.5rem' }}>
-          <div className="logo-icon-lg" style={{ width: '50px', height: '50px', flexShrink: 0, margin: 0, position: 'static' }}>
-            <Store size={28} />
-          </div>
-          <h2 style={{ margin: 0, fontSize: '1.75rem', fontWeight: 800 }}>Indian<span className="text-saffron">LocalStore</span></h2>
-        </Link>
-        <p className="auth-subtitle">Welcome back! Sign in to continue.</p>
+      <div className="auth-bg"></div>
+      <div className="auth-card glass-card" style={{ boxShadow: '0 20px 40px rgba(255, 107, 53, 0.15), 0 1px 3px rgba(0,0,0,0.05)', border: '1px solid rgba(255, 107, 53, 0.2)', backdropFilter: 'blur(10px)' }}>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <Link to="/" className="auth-logo" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '12px', textDecoration: 'none', margin: '0 auto 1rem auto' }}>
+            <div className="logo-icon-lg" style={{ width: '56px', height: '56px', flexShrink: 0, margin: 0, position: 'static', borderRadius: '16px', background: 'linear-gradient(135deg, #FF6B35 0%, #F9A826 100%)', boxShadow: '0 8px 16px rgba(255, 107, 53, 0.3)' }}>
+              <Store size={30} color="white" />
+            </div>
+          </Link>
+          <h2 style={{ margin: '0 0 0.5rem 0', fontSize: '1.8rem', fontWeight: 800, color: 'var(--text-primary)' }}>Indian<span style={{ color: '#FF6B35' }}>LocalStore</span></h2>
+          <p className="auth-subtitle" style={{ fontSize: '0.95rem', margin: 0 }}>Welcome back! Sign in to continue your journey.</p>
+        </div>
 
         {step === 1 ? (
           <form onSubmit={handleSendOTP} className="auth-form" id="login-form">

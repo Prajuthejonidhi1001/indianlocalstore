@@ -409,6 +409,17 @@ export default function RegisterPage() {
           {/* ── Seller Fields ── */}
           {form.role === 'seller' && (
             <div className="reg-seller-section">
+              <div style={{ background: 'rgba(255,107,53,0.08)', border: '1px dashed var(--saffron)', borderRadius: '12px', padding: '16px', marginBottom: '20px' }}>
+                <h4 style={{ color: 'var(--saffron)', fontSize: '1rem', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Store size={18} /> Grow Your Local Business
+                </h4>
+                <ul style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', paddingLeft: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <li>Reach thousands of local customers in your city.</li>
+                  <li>Zero onboarding fees—set up your shop in minutes.</li>
+                  <li>Manage your inventory and orders seamlessly.</li>
+                </ul>
+              </div>
+
               <div className="reg-seller-header">
                 <ShoppingBag size={16} />
                 <span>Business Details</span>

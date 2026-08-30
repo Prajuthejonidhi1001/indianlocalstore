@@ -49,20 +49,26 @@ export default function Footer() {
                 Connecting you with the best local Indian shops and products. Support local businesses, shop fresh, live better.
               </p>
               <div className="footer-contact">
-                <a href="mailto:support@indianlocalstore.in" className="footer-contact-item">
-                  <Mail size={14} /> support@indianlocalstore.in
+                <a href="mailto:stiratechindianlocalstore@gmail.com" className="footer-contact-item">
+                  <Mail size={14} /> stiratechindianlocalstore@gmail.com
                 </a>
-                <a href="tel:+919876543210" className="footer-contact-item">
-                  <Phone size={14} /> +91 98765 43210
+                <a href="tel:+919686068979" className="footer-contact-item">
+                  <Phone size={14} /> +91 96860 68979 (Support & WhatsApp)
                 </a>
-                <span className="footer-contact-item">
+                <span className="footer-contact-item" style={{display: 'flex', flexDirection: 'column', gap: '4px'}}>
+                  <span style={{display: 'flex', alignItems: 'center', gap: '8px'}}><Phone size={14} /> Customer Support:</span>
+                  <span style={{paddingLeft: '22px', fontSize: '13px', opacity: 0.8}}>+91 63606 42663</span>
+                  <span style={{paddingLeft: '22px', fontSize: '13px', opacity: 0.8}}>+91 86184 71245</span>
+                  <span style={{paddingLeft: '22px', fontSize: '13px', opacity: 0.8}}>+91 74830 82241</span>
+                </span>
+                <span className="footer-contact-item mt-2">
                   <MapPin size={14} /> India 🇮🇳
                 </span>
               </div>
               <div className="footer-social">
-                <a href="#" className="social-btn" aria-label="Instagram"><Instagram size={16} /></a>
-                <a href="#" className="social-btn" aria-label="YouTube"><Youtube size={16} /></a>
-                <a href="#" className="social-btn" aria-label="Twitter"><Twitter size={16} /></a>
+                <a href="https://www.instagram.com/indian_local_store?utm_source=qr&igsi=MTY4N3o0MHcwbTg2aQ==" target="_blank" rel="noreferrer" className="social-btn" aria-label="Instagram"><Instagram size={16} /></a>
+                <a href="https://youtube.com/@indian_local_stores?si=LO0eDB43-fnL2zD_" target="_blank" rel="noreferrer" className="social-btn" aria-label="YouTube"><Youtube size={16} /></a>
+                <a href="https://x.com/_indian_stores" target="_blank" rel="noreferrer" className="social-btn" aria-label="Twitter"><Twitter size={16} /></a>
               </div>
             </div>
 
