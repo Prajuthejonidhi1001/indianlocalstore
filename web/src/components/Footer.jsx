@@ -42,8 +42,7 @@ export default function Footer() {
             {/* Brand */}
             <div className="footer-brand">
               <div className="footer-logo">
-                <div className="logo-icon"><Store size={18} /></div>
-                <span className="logo-text">Indian<span className="logo-accent">LocalStore</span></span>
+                <img src="/logo.png" alt="Indian Local Store" style={{ height: '45px', objectFit: 'contain' }} />
               </div>
               <p className="footer-desc">
                 Connecting you with the best local Indian shops and products. Support local businesses, shop fresh, live better.

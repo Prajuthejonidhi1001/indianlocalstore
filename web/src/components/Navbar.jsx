@@ -75,11 +75,8 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="container navbar-inner">
         {/* Logo */}
-        <Link to={isAuthenticated ? '/home' : '/'} className="navbar-logo">
-          <div className="logo-icon">
-            <Store size={22} />
-          </div>
-          <span className="logo-text">Indian<span className="logo-accent">LocalStore</span></span>
+        <Link to={isAuthenticated ? '/home' : '/'} className="navbar-logo" style={{ textDecoration: 'none' }}>
+          <img src="/logo.png" alt="Indian Local Store" style={{ height: '40px', objectFit: 'contain' }} />
         </Link>
 
         {/* Location Search API Integration */}
