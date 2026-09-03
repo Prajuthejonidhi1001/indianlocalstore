@@ -276,8 +276,8 @@ export default function RegisterPage() {
     <div className="auth-page">
       <div className="auth-bg" />
       <div className="auth-card auth-card-wide glass-card animate-in">
-        <div className="auth-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1.5rem' }}>
-          <img src="/logo.png" alt="Indian Local Store" style={{ height: '70px', objectFit: 'contain' }} />
+        <div className="auth-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
+          <img src="/logo.png" alt="Indian Local Store" style={{ height: '70px', width: 'auto', borderRadius: '12px' }} />
         </div>
         <h2 className="auth-title">Create Account</h2>
         <p className="auth-subtitle">Join thousands of local shoppers & sellers</p>

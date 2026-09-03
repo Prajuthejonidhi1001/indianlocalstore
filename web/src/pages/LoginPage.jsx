@@ -129,8 +129,8 @@ export default function LoginPage() {
       <div className="auth-bg"></div>
       <div className="auth-card glass-card" style={{ boxShadow: '0 20px 40px rgba(255, 107, 53, 0.15), 0 1px 3px rgba(0,0,0,0.05)', border: '1px solid rgba(255, 107, 53, 0.2)', backdropFilter: 'blur(10px)' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <Link to="/" className="auth-logo" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', textDecoration: 'none', margin: '0 auto 1rem auto' }}>
-            <img src="/logo.png" alt="Indian Local Store" style={{ height: '70px', objectFit: 'contain' }} />
+          <Link to="/" className="auth-logo" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '12px', textDecoration: 'none', margin: '0 auto 1rem auto' }}>
+            <img src="/logo.png" alt="Indian Local Store" style={{ height: '70px', width: 'auto', borderRadius: '12px' }} />
           </Link>
           <p className="auth-subtitle" style={{ fontSize: '0.95rem', margin: 0 }}>Welcome back! Sign in to continue your journey.</p>
         </div>

@@ -75,8 +75,8 @@ export default function Navbar() {
     <nav className="navbar">
       <div className="container navbar-inner">
         {/* Logo */}
-        <Link to={isAuthenticated ? '/home' : '/'} className="navbar-logo" style={{ textDecoration: 'none' }}>
-          <img src="/logo.png" alt="Indian Local Store" style={{ height: '40px', objectFit: 'contain' }} />
+        <Link to={isAuthenticated ? '/home' : '/'} className="navbar-logo" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img src="/logo.png" alt="Indian Local Store" style={{ height: '36px', width: 'auto', borderRadius: '6px' }} />
         </Link>
 
         {/* Location Search API Integration */}
