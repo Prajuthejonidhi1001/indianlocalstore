@@ -154,7 +154,7 @@ export default function LoginPage() {
   return (
     <div className="auth-page animate-in">
       <div className="auth-bg"></div>
-      <div className="auth-card">
+      <div className="auth-card glass-card" style={{ boxShadow: '0 20px 40px rgba(255, 107, 53, 0.15), 0 1px 3px rgba(0,0,0,0.05)', border: '1px solid rgba(255, 107, 53, 0.2)', backdropFilter: 'blur(10px)' }}>
         <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
           <Link to="/" className="auth-logo" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '12px', textDecoration: 'none', margin: '0 auto 1rem auto' }}>
             <img src="/logo.png" alt="Indian Local Store" style={{ height: '70px', width: 'auto', borderRadius: '12px' }} />
@@ -164,21 +164,23 @@ export default function LoginPage() {
 
         {step === 1 ? (
           <div className="auth-form" id="login-form">
-            <div className="role-card-grid">
+            <div className="role-card-grid" style={{ marginBottom: '1.5rem', gap: '10px', display: 'flex' }}>
               <button
                 type="button"
                 className={`role-card ${loginMethod === 'email' ? 'active' : ''}`}
                 onClick={() => { setLoginMethod('email'); setIdentifier(''); }}
+                style={{ flex: 1, padding: '10px', textAlign: 'center' }}
               >
-                <Mail size={20} />
+                <Mail size={20} style={{ marginBottom: '5px', color: loginMethod === 'email' ? 'var(--saffron)' : 'inherit' }} />
                 <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Email</div>
               </button>
               <button
                 type="button"
                 className={`role-card ${loginMethod === 'phone' ? 'active' : ''}`}
                 onClick={() => { setLoginMethod('phone'); setIdentifier(''); }}
+                style={{ flex: 1, padding: '10px', textAlign: 'center' }}
               >
-                <Smartphone size={20} />
+                <Smartphone size={20} style={{ marginBottom: '5px', color: loginMethod === 'phone' ? 'var(--saffron)' : 'inherit' }} />
                 <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Phone</div>
               </button>
             </div>
