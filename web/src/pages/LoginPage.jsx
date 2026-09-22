@@ -151,14 +151,14 @@ export default function LoginPage() {
         {step === 1 ? (
           <form onSubmit={handleSendOTP} className="auth-form" id="login-form">
             <div className="form-group">
-              <label className="form-label">Phone Number or Email</label>
+              <label className="form-label">Email or Phone Number (Preferred: Email)</label>
               <div className="auth-input-wrapper">
                 <User size={18} className="auth-input-icon" />
                 <input
                   id="identifier-input"
                   type="text"
                   className="form-input"
-                  placeholder="Enter 10-digit number or email"
+                  placeholder="Enter email or 10-digit number"
                   value={identifier}
                   onChange={(e) => setIdentifier(e.target.value)}
                   style={{ paddingLeft: '40px' }}
