@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { shopAPI, productAPI } from '../utils/api';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import toast from 'react-hot-toast';
 
 const { width } = Dimensions.get('window');
 
@@ -13,7 +15,19 @@ export default function ShopProductsScreen({ route, navigation }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
+  const [wishlistItems, setWishlistItems] = useState(new Set());
   const { addToCart, cartCount } = useCart();
+  const { user, toggleWishlist, getWishlist } = useAuth();
+
+  // Fetch wishlist on mount and when user changes
+  useEffect(() => {
+    if (user) {
+      getWishlist().then(items => {
+        const wishlistProductIds = new Set(items.map(item => item.product));
+        setWishlistItems(wishlistProductIds);
+      }).catch(err => console.error('Failed to fetch wishlist:', err));
+    }
+  }, [user, getWishlist]);
 
   useEffect(() => {
     fetchShopData();
@@ -33,6 +47,33 @@ export default function ShopProductsScreen({ route, navigation }) {
       console.error('Error fetching shop detail:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleWishlist = async (e, productId) => {
+    e?.stopPropagation?.();
+
+    if (!user) {
+      alert('Please login to add items to wishlist');
+      return;
+    }
+
+    try {
+      const success = await toggleWishlist(productId);
+      if (success) {
+        setWishlistItems(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(productId)) {
+            newSet.delete(productId);
+          } else {
+            newSet.add(productId);
+          }
+          return newSet;
+        });
+      }
+    } catch (err) {
+      console.error('Failed to toggle wishlist:', err);
+      alert('Failed to update wishlist');
     }
   };
 
@@ -126,42 +167,90 @@ export default function ShopProductsScreen({ route, navigation }) {
           </View>
           
           {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-            products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((item) => (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.productCard}
-                onPress={() => navigation.navigate('ProductDetail', { product: item })}
-                activeOpacity={0.85}
-              >
-                <TouchableOpacity
-                  onPress={() => navigation.navigate('ProductDetail', { product: item })}
-                  activeOpacity={0.9}
-                >
-                  <Image
-                    source={{ uri: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80' }}
-                    style={styles.productImage}
-                  />
-                </TouchableOpacity>
-                <View style={styles.productDetails}>
-                  <Text style={styles.productName}>{item.name}</Text>
-                  <Text style={styles.productCategory}>{item.category_name}</Text>
-                  <View style={styles.priceRow}>
-                    <Text style={styles.price}>₹{item.price}</Text>
-                    <View style={styles.productActions}>
+            products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((item) => {
+              const isInWishlist = wishlistItems.has(item.id);
+              return (
+                <View key={item.id} style={{ marginBottom: 12 }}>
+                  <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={() => navigation.navigate('ProductDetail', { product: item })}
+                    style={styles.productCard}
+                  >
+                    <View style={{ position: 'relative', flexDirection: 'row' }}>
                       <TouchableOpacity
-                        style={styles.detailBtn}
                         onPress={() => navigation.navigate('ProductDetail', { product: item })}
+                        activeOpacity={0.9}
                       >
-                        <Text style={styles.detailBtnText}>View</Text>
+                        <Image
+                          source={{ uri: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80' }}
+                          style={styles.productImage}
+                        />
                       </TouchableOpacity>
-                      <TouchableOpacity style={styles.addBtn} onPress={() => addToCart(item.id)}>
-                        <Ionicons name="cart-outline" size={16} color="#fff" />
+
+                      {/* Wishlist Button */}
+                      <TouchableOpacity
+                        activeOpacity={0.7}
+                        onPress={async (e) => {
+                          e.stopPropagation();
+
+                          if (!user) {
+                            alert('Please login to save items to wishlist');
+                            return;
+                          }
+
+                          try {
+                            const success = await toggleWishlist(item.id);
+                            if (success) {
+                              setWishlistItems(prev => {
+                                const newSet = new Set(prev);
+                                if (newSet.has(item.id)) {
+                                  newSet.delete(item.id);
+                                } else {
+                                  newSet.add(item.id);
+                                }
+                                return newSet;
+                              });
+                            }
+                          } catch (err) {
+                            console.error('Failed to toggle wishlist:', err);
+                            alert('Failed to update wishlist');
+                          }
+                        }}
+                        style={[
+                          styles.wishlistButton,
+                          isInWishlist && styles.wishlistButtonActive
+                        ]}
+                      >
+                        <Ionicons
+                          name={isInWishlist ? 'heart' : 'heart-outline'}
+                          size={20}
+                          color={isInWishlist ? COLORS.primary : COLORS.textMuted}
+                        />
                       </TouchableOpacity>
                     </View>
-                  </View>
+
+                    <View style={styles.productDetails}>
+                      <Text style={styles.productName}>{item.name}</Text>
+                      <Text style={styles.productCategory}>{item.category_name}</Text>
+                      <View style={styles.priceRow}>
+                        <Text style={styles.price}>₹{item.price}</Text>
+                        <View style={styles.productActions}>
+                          <TouchableOpacity
+                            style={styles.detailBtn}
+                            onPress={() => navigation.navigate('ProductDetail', { product: item })}
+                          >
+                            <Text style={styles.detailBtnText}>View</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity style={styles.addBtn} onPress={() => addToCart(item.id)}>
+                            <Ionicons name="cart-outline" size={16} color="#fff" />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
                 </View>
-              </TouchableOpacity>
-            ))
+              );
+            })
           ) : (
             <Text style={styles.emptyText}>No products listed yet.</Text>
           )}
@@ -241,5 +330,23 @@ const styles = StyleSheet.create({
   emptyText: { color: COLORS.textMuted, textAlign: 'center', marginTop: 30 },
   errorText: { color: COLORS.text, fontSize: 18, marginBottom: 20 },
   backBtnLarge: { backgroundColor: COLORS.primary, paddingHorizontal: 30, paddingVertical: 12, borderRadius: 10 },
-  backBtnText: { color: '#fff', fontWeight: '700' }
+  backBtnText: { color: '#fff', fontWeight: '700' },
+
+  // Wishlist Button
+  wishlistButton: {
+    position: 'absolute',
+    top: 8,
+    right: 8,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.sm,
+    zIndex: 10,
+  },
+  wishlistButtonActive: {
+    backgroundColor: 'rgba(255,107,53,0.15)',
+  },
 });

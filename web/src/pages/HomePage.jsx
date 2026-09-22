@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingBag, MapPin, Star, ArrowRight, Navigation, Grid, TrendingUp, Clock, Zap, ChevronRight, Store, ChevronLeft, Heart } from 'lucide-react';
-import { productAPI, shopAPI } from '../api';
+import { productAPI, shopAPI, authAPI } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
+import toast from 'react-hot-toast';
 import './HomePage.css';
 
 const CAT_EMOJIS = {
@@ -64,7 +65,7 @@ function ProductSkeleton() {
 }
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, isAuthenticated } = useAuth();
   const { location } = useLocation();
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
@@ -73,6 +74,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [locating, setLocating] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [wishlistItems, setWishlistItems] = useState(new Set());
 
   // Countdown timer for Flash Deals
   const [timeLeft, setTimeLeft] = useState(3600 * 5); // 5 hours
@@ -89,6 +91,18 @@ export default function HomePage() {
     }, 5000);
     return () => clearInterval(slideTimer);
   }, []);
+
+  // Fetch wishlist on mount and when user changes
+  useEffect(() => {
+    if (isAuthenticated) {
+      authAPI.getWishlist()
+        .then(res => {
+          const wishlistProductIds = new Set(res.data.map(item => item.product));
+          setWishlistItems(wishlistProductIds);
+        })
+        .catch(err => console.error('Failed to fetch wishlist:', err));
+    }
+  }, [isAuthenticated, user]);
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -130,6 +144,34 @@ export default function HomePage() {
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
     return `${h.toString().padStart(2, '0')}h : ${m.toString().padStart(2, '0')}m : ${s.toString().padStart(2, '0')}s`;
+  };
+
+  const handleToggleWishlist = async (e, productId) => {
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.error('Please login to add items to wishlist');
+      navigate('/login');
+      return;
+    }
+
+    try {
+      await authAPI.toggleWishlist(productId);
+      setWishlistItems(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(productId)) {
+          newSet.delete(productId);
+          toast.success('Removed from wishlist');
+        } else {
+          newSet.add(productId);
+          toast.success('Added to wishlist');
+        }
+        return newSet;
+      });
+    } catch (err) {
+      console.error('Failed to toggle wishlist:', err);
+      toast.error('Failed to update wishlist');
+    }
   };
 
   return (
@@ -223,20 +265,37 @@ export default function HomePage() {
           <div className="flash-deals-scroll">
             {loading ? (
               Array(4).fill(0).map((_,i) => <ProductSkeleton key={i} />)
-            ) : trendingProducts.slice(0, 5).map(prod => (
+            ) : trendingProducts.slice(0, 5).map(prod => {
+              const price = parseFloat(prod.price);
+              const discountPrice = prod.discount_price ? parseFloat(prod.discount_price) : null;
+              const discount = discountPrice ? Math.round((1 - discountPrice / price) * 100) : 0;
+              const isInWishlist = wishlistItems.has(prod.id);
+              return (
               <div key={prod.id} className="flash-deal-card card" onClick={() => navigate(`/products/${prod.id}`)}>
-                <button className="wishlist-btn"><Heart size={16} /></button>
-                <div className="fd-discount-badge">-{(Math.random() * 20 + 10).toFixed(0)}%</div>
+                <button
+                  className={`wishlist-btn ${isInWishlist ? 'active' : ''}`}
+                  onClick={(e) => handleToggleWishlist(e, prod.id)}
+                  title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  <Heart size={16} fill={isInWishlist ? "var(--saffron)" : "none"} />
+                </button>
+                {discount > 0 && <div className="fd-discount-badge">-{discount}%</div>}
                 <img src={prod.image?.startsWith('http') ? prod.image : `/media/${prod.image}`} alt={prod.name} className="fd-img" onError={(e) => { e.target.src = 'https://placehold.co/300x300/131920/FFF?text=No+Image' }} />
                 <div className="fd-info">
                   <h4 className="fd-name truncate">{prod.name}</h4>
                   <div className="fd-pricing">
-                    <span className="fd-price">₹{prod.price}</span>
-                    <span className="fd-old-price">₹{(parseFloat(prod.price) * 1.2).toFixed(2)}</span>
+                    {discountPrice ? (
+                      <>
+                        <span className="fd-price">₹{discountPrice.toFixed(2)}</span>
+                        <span className="fd-old-price">₹{price.toFixed(2)}</span>
+                      </>
+                    ) : (
+                      <span className="fd-price">₹{price.toFixed(2)}</span>
+                    )}
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </section>
 
@@ -289,9 +348,17 @@ export default function HomePage() {
           <div className="premium-products-grid">
              {loading ? (
               Array(8).fill(0).map((_,i) => <ProductSkeleton key={i} />)
-            ) : trendingProducts.slice(5, 13).map(prod => (
+            ) : trendingProducts.slice(5, 13).map(prod => {
+              const isInWishlist = wishlistItems.has(prod.id);
+              return (
               <div key={prod.id} className="premium-product-card card" onClick={() => navigate(`/products/${prod.id}`)}>
-                <button className="wishlist-btn"><Heart size={16} /></button>
+                <button
+                  className={`wishlist-btn ${isInWishlist ? 'active' : ''}`}
+                  onClick={(e) => handleToggleWishlist(e, prod.id)}
+                  title={isInWishlist ? "Remove from wishlist" : "Add to wishlist"}
+                >
+                  <Heart size={16} fill={isInWishlist ? "var(--saffron)" : "none"} />
+                </button>
                 <div className="ppc-img-wrapper">
                   <img src={prod.image?.startsWith('http') ? prod.image : `/media/${prod.image}`} alt={prod.name} onError={(e) => { e.target.src = 'https://placehold.co/300x300/131920/FFF?text=Product' }} />
                 </div>
@@ -314,7 +381,8 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            ))}
+            );
+            })}
           </div>
         </section>
 

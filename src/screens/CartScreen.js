@@ -12,6 +12,10 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useCart } from '../context/CartContext';
+import { resolveMediaUrl } from '../config';
+
+const PLACEHOLDER_IMAGE =
+  'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80';
 
 export default function CartScreen({ navigation }) {
   const { cart, cartLoading, cartTotal, addToCart, removeFromCart, clearCart } = useCart();
@@ -77,7 +81,7 @@ export default function CartScreen({ navigation }) {
               const productId = item.product;
               const name = item.product_name || 'Product';
               const price = item.product_price || 0;
-              const imgSrc = item.product_image ? (item.product_image.startsWith('http') ? item.product_image : `http://10.0.2.2:8000${item.product_image}`) : 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=400&q=80';
+              const imgSrc = resolveMediaUrl(item.product_image, PLACEHOLDER_IMAGE);
               
               return (
                 <View key={item.id} style={styles.cartCard}>

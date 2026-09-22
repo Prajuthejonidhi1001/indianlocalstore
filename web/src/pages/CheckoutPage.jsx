@@ -29,28 +29,54 @@ export default function CheckoutPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const required = ['delivery_address', 'delivery_city', 'delivery_state', 'delivery_pincode'];
-    for (const f of required) {
-      if (!form[f]) { toast.error('Please fill all address fields'); return; }
+
+    if (!form.delivery_address.trim()) {
+      toast.error('Please enter your delivery address');
+      return;
+    }
+    if (!form.delivery_city.trim() || !form.delivery_state.trim()) {
+      toast.error('Please enter your city and state');
+      return;
+    }
+    if (!/^\d{6}$/.test(form.delivery_pincode.trim())) {
+      toast.error('Please enter a valid 6-digit pincode');
+      return;
     }
 
     setLoading(true);
     try {
-      const orderData = {
-        ...form,
-        total_amount: cartTotal,
-        final_amount: cartTotal, // Adding shipping/discount logic could go here
-      };
-      
-      const res = await orderAPI.createOrder(orderData);
-      
-      // Since we chose COD / simulated payment for now
-      toast.success(`Order placed successfully! ID: ${res.data.order_id}`);
+      // Amounts are deliberately not sent. The API recomputes every total from
+      // the server-side cart, so anything posted here would be ignored.
+      const res = await orderAPI.createOrder({
+        delivery_address: form.delivery_address.trim(),
+        delivery_city: form.delivery_city.trim(),
+        delivery_state: form.delivery_state.trim(),
+        delivery_pincode: form.delivery_pincode.trim(),
+        payment_method: form.payment_method,
+      });
+
+      const orderNumber = res.data?.order_id || res.data?.id;
+      toast.success(
+        orderNumber
+          ? `Order ${orderNumber} placed. Pay cash on delivery.`
+          : 'Order placed. Pay cash on delivery.'
+      );
       await clearCart();
-      navigate('/orders');
-      
+      navigate('/profile');
+
     } catch (err) {
-      toast.error(err.response?.data?.error || 'Failed to place order');
+      // DRF sends either {error: "..."} or {field: ["..."]}. Show whichever
+      // came back so the customer knows what to change.
+      const data = err.response?.data;
+      let message = 'Could not place your order. Please try again.';
+      if (typeof data?.error === 'string') {
+        message = data.error;
+      } else if (data && typeof data === 'object') {
+        const first = Object.values(data)[0];
+        if (Array.isArray(first) && first.length) message = String(first[0]);
+        else if (typeof first === 'string') message = first;
+      }
+      toast.error(message);
     } finally {
       setLoading(false);
     }

@@ -72,6 +72,9 @@ export const authAPI = {
   getProfile: () => api.get('/users/me/'),
   updateProfile: (data) => api.put('/users/update_profile/', data),
   getSellers: () => api.get('/users/sellers/'),
+  // Wishlist API
+  toggleWishlist: (productId) => api.post('/users/toggle_wishlist/', { product_id: productId }),
+  getWishlist: () => api.get('/users/wishlist/'),
 };
 
 // ========== User API (password reset etc.) ==========

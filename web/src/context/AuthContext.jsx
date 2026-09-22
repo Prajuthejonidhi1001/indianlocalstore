@@ -6,6 +6,7 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [wishlist, setWishlist] = useState([]);
 
   const fetchUser = useCallback(async () => {
     const token = localStorage.getItem('access_token');
@@ -21,10 +22,30 @@ export function AuthProvider({ children }) {
     }
   }, []);
 
+  const fetchWishlist = useCallback(async () => {
+    if (!user) {
+      setWishlist([]);
+      return;
+    }
+    try {
+      const res = await authAPI.getWishlist();
+      setWishlist(res.data);
+    } catch (err) {
+      console.error('Failed to fetch wishlist:', err);
+      setWishlist([]);
+    }
+  }, [user]);
+
   useEffect(() => { fetchUser(); }, [fetchUser]);
 
-  const loginWithPhoneOTP = async (idToken, emailOtp, role, firstName, lastName) => {
-    const { data } = await authAPI.verifyPhoneOtp(idToken, emailOtp, role, firstName, lastName);
+  useEffect(() => {
+    if (user) {
+      fetchWishlist();
+    }
+  }, [user, fetchWishlist]);
+
+  const loginWithPhoneOTP = async (idToken, emailOtp, email, role, firstName, lastName) => {
+    const { data } = await authAPI.verifyPhoneOtp(idToken, emailOtp, email, role, firstName, lastName);
     localStorage.setItem('access_token', data.access);
     localStorage.setItem('refresh_token', data.refresh);
     await fetchUser();
@@ -45,16 +66,55 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
     setUser(null);
+    setWishlist([]);
   };
 
   const updateUser = (updatedUser) => setUser(updatedUser);
+
+  const toggleWishlist = async (productId) => {
+    if (!user) return false;
+    try {
+      await authAPI.toggleWishlist(productId);
+      setWishlist(prev => {
+        const itemIndex = prev.findIndex(item => item.product === productId);
+        if (itemIndex >= 0) {
+          const newWishlist = [...prev];
+          newWishlist.splice(itemIndex, 1);
+          return newWishlist;
+        } else {
+          // Find the full product details to add to wishlist
+          // This assumes we have access to product data somewhere
+          // For now we'll return a simplified structure
+          return [...prev, { product: productId }];
+        }
+      });
+      return true;
+    } catch (err) {
+      console.error('Failed to toggle wishlist:', err);
+      return false;
+    }
+  };
 
   const isAuthenticated = !!user;
   const isSeller = user?.role === 'seller';
   const isAdmin = user?.is_staff || user?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAuthenticated, isSeller, isAdmin, loginWithPhoneOTP, register, logout, updateUser, refetchUser: fetchUser }}>
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      isAuthenticated,
+      isSeller,
+      isAdmin,
+      loginWithPhoneOTP,
+      register,
+      logout,
+      updateUser,
+      refetchUser: fetchUser,
+      wishlist,
+      toggleWishlist,
+      getWishlist: fetchWishlist
+    }}>
       {children}
     </AuthContext.Provider>
   );

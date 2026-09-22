@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, Dimensions, Modal, Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 
 const { width, height } = Dimensions.get('window');
@@ -12,10 +13,27 @@ const { width, height } = Dimensions.get('window');
 export default function ProductDetailScreen({ route, navigation }) {
   const { product } = route.params;
   const { addToCart } = useCart();
+  const { user, toggleWishlist, getWishlist } = useAuth();
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState({});
+  const [wishlist, setWishlist] = useState(false);
+
+  // Fetch wishlist state on component mount and when user or product changes
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      if (!user) return;
+      try {
+        const wishlistItems = await getWishlist();
+        const wishlistProductIds = wishlistItems.map(item => item.product);
+        setWishlist(wishlistProductIds.includes(product.id));
+      } catch (error) {
+        console.error('Failed to fetch wishlist:', error);
+      }
+    };
+    fetchWishlist();
+  }, [user, product.id, getWishlist]);
 
   const price = parseFloat(product.price || 0);
   const discountPrice = product.discount_price ? parseFloat(product.discount_price) : null;
@@ -84,6 +102,27 @@ export default function ProductDetailScreen({ route, navigation }) {
                 <Ionicons name="expand" size={16} color="#fff" />
                 <Text style={styles.expandText}>Tap to enlarge</Text>
               </View>
+            </TouchableOpacity>
+            {/* Wishlist Button */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={async () => {
+                if (!user) {
+                  alert('Please login to save items to wishlist');
+                  return;
+                }
+                try {
+                  await toggleWishlist(product.id);
+                  setWishlist(!wishlist);
+                } catch (error) {
+                  alert('Failed to update wishlist');
+                }
+              }}
+              style={[
+                styles.wishlistButton,
+                wishlist && styles.wishlistButtonActive
+              ]}>
+              <Ionicons name={wishlist ? 'heart' : 'heart-outline'} size={24} color={wishlist ? COLORS.primary : COLORS.textMuted} />
             </TouchableOpacity>
             {images.length > 1 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbnailRow} contentContainerStyle={{ paddingHorizontal: 16 }}>
@@ -331,5 +370,22 @@ const styles = StyleSheet.create({
   },
   cartBtnSuccess: { backgroundColor: '#00C853' },
   cartBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+
+  // Wishlist Button
+  wishlistButton: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.md,
+  },
+  wishlistButtonActive: {
+    backgroundColor: 'rgba(255,107,53,0.15)',
+  },
 });
 

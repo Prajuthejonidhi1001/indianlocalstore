@@ -249,6 +249,15 @@
   transition: all 0.2s;
 }
 .wishlist-btn:hover { color: #e74c3c; transform: scale(1.1); }
+.wishlist-btn.active {
+  background: var(--saffron);
+  color: white;
+  transform: scale(1.05);
+}
+.wishlist-btn.active:hover {
+  background: #e68a00;
+  transform: scale(1.1);
+}
 .fd-img {
   width: 100%;
   height: 180px;

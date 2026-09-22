@@ -67,8 +67,8 @@ api.interceptors.response.use(
 // ── Auth ──────────────────────────────────────────────
 export const authAPI = {
   sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
-  verifyPhoneOtp: (firebase_token, email_otp, role, first_name, last_name) => 
-    api.post('/users/verify_otp/', { firebase_token, email_otp, role, first_name, last_name }),
+  verifyPhoneOtp: (firebase_token, email_otp, email, role, first_name, last_name) =>
+    api.post('/users/verify_otp/', { firebase_token, email_otp, email, role, first_name, last_name }),
   // Legacy register for testing if needed
   register: (data) => api.post('/users/register/', data),
   // Standard tokens
@@ -77,6 +77,9 @@ export const authAPI = {
   getProfile: () => api.get('/users/me/'),
   updateProfile: (data) => api.put('/users/update_profile/', data),
   getSellers: () => api.get('/users/sellers/'),
+  // Wishlist
+  toggleWishlist: (productId) => api.post('/users/toggle_wishlist/', { product_id: productId }),
+  getWishlist: () => api.get('/users/wishlist/'),
 };
 
 // ── Products ──────────────────────────────────────────
@@ -85,6 +88,7 @@ export const productAPI = {
   getSubCategories: (categoryId) => api.get(`/products/subcategories/?category=${categoryId}`),
   getProducts: (params) => api.get('/products/products/', { params }),
   getProductDetail: (id) => api.get(`/products/products/${id}/`),
+  getProductReviews: (id) => api.get(`/products/products/${id}/reviews/`),
   searchProducts: (query) => api.get('/products/products/search/', { params: { q: query } }),
   createProduct: (data) => api.post('/products/products/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   updateProduct: (id, data) => api.patch(`/products/products/${id}/`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),

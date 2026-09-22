@@ -48,7 +48,7 @@ class User(AbstractUser):
         return f"{self.username} ({self.get_role_display()})"
 
 class OTPVerification(models.Model):
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     phone_otp = models.CharField(max_length=6, null=True, blank=True)
     email_otp = models.CharField(max_length=6, null=True, blank=True)
@@ -61,3 +61,21 @@ class OTPVerification(models.Model):
 
     def __str__(self):
         return f"{self.phone} - PhoneOTP: {self.phone_otp} | EmailOTP: {self.email_otp}"
+
+
+class Wishlist(models.Model):
+    """Wishlist model for saving products for later"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
+    product = models.ForeignKey('products.Product', on_delete=models.CASCADE, related_name='wished_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ['user', 'product']
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user']),
+            models.Index(fields=['product']),
+        ]
+
+    def __str__(self):
+        return f"{self.user.username} wishes {self.product.name}"

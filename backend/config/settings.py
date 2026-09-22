@@ -3,7 +3,6 @@ from pathlib import Path
 from datetime import timedelta
 from decouple import config
 import dj_database_url
-import secrets
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -90,16 +89,25 @@ if DATABASE_URL:
             ssl_require=True,      # Force SSL to Supabase
         )
     }
+    # Render's free tier cannot always reach Supabase over IPv6, so pin the
+    # connection to an IPv4 address. Do this with psycopg2's `hostaddr` rather
+    # than by overwriting HOST: `hostaddr` chooses the IP to dial while `host`
+    # stays the real hostname, which is what TLS validates against. Overwriting
+    # HOST with a bare IP would make the certificate name mismatch, so SSL
+    # could never be verified.
     try:
         import socket
+
         db_host = DATABASES['default'].get('HOST')
         if db_host:
-            ips = socket.getaddrinfo(db_host, None, socket.AF_INET)
-            if ips:
-                DATABASES['default']['HOST'] = ips[0][4][0]
-    except Exception:
+            ipv4 = socket.getaddrinfo(db_host, None, socket.AF_INET)
+            if ipv4:
+                options = DATABASES['default'].setdefault('OPTIONS', {})
+                options['hostaddr'] = ipv4[0][4][0]
+    except OSError:
+        # DNS lookup failed or no A record -- fall back to normal resolution
+        # (including IPv6) instead of taking the whole app down.
         pass
-        
 else:
     DATABASES = {
         'default': {
@@ -206,17 +214,30 @@ SIMPLE_JWT = {
 
 # ── CORS ─────────────────────────────────────────────────────────────────────
 CORS_ALLOW_ALL_ORIGINS = False   # Explicitly list allowed origins
-CORS_ALLOWED_ORIGINS = config(
-    'CORS_ALLOWED_ORIGINS',
-    default=(
-        'https://indianlocalstore.vercel.app,'
-        'http://localhost:5173,'
-        'http://localhost:3000,'
-        'http://localhost:19000,'
-        'http://localhost:8081,'
-        'exp://localhost:8081'
-    )
-).split(',')
+
+# The default below is the *local development* set. Production must override it
+# via the CORS_ALLOWED_ORIGINS env var (see render.yaml) -- otherwise the live
+# API would accept credentialed browser requests from localhost.
+# Note: native Expo builds are not subject to CORS at all; only the web app is.
+CORS_ALLOWED_ORIGINS = [
+    origin.strip()
+    for origin in config(
+        'CORS_ALLOWED_ORIGINS',
+        default=(
+            'https://indianlocalstore.vercel.app,'
+            'http://localhost:5173,'
+            'http://localhost:3000'
+        )
+    ).split(',')
+    if origin.strip()
+]
+
+# Vercel creates a fresh preview URL for every branch push. Anchored to this
+# project's own subdomains so it cannot match an attacker-controlled host.
+CORS_ALLOWED_ORIGIN_REGEXES = [
+    r'^https://indianlocalstore-[a-z0-9-]+\.vercel\.app$',
+]
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_HEADERS = [
     'accept', 'accept-encoding', 'authorization', 'content-type',
@@ -239,6 +260,17 @@ if not DEBUG:
 # ── Razorpay ─────────────────────────────────────────────────────────────────
 RAZORPAY_KEY_ID     = config('RAZORPAY_KEY_ID',     default='')
 RAZORPAY_KEY_SECRET = config('RAZORPAY_KEY_SECRET', default='')
+
+# ── Firebase (phone-auth token verification) ─────────────────────────────────
+# This is the *public* Firebase Web API key -- the same value ships inside the
+# web and mobile bundles, so it is not a secret. It is read from the environment
+# here rather than inlined in users/views.py so that rotating or restricting the
+# key is a config change instead of a code change. The default keeps local dev
+# working; production should set it explicitly.
+FIREBASE_WEB_API_KEY = config(
+    'FIREBASE_WEB_API_KEY',
+    default='AIzaSyC4Yhpk0zw-Om-mNWSFn4mwQOy97tufzHE'
+)
 
 # ── Session (non-JWT fallback) ────────────────────────────────────────────────
 SESSION_COOKIE_HTTPONLY = True

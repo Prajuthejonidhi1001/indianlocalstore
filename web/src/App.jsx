@@ -19,6 +19,7 @@ import CartPage from './pages/CartPage';
 import CheckoutPage from './pages/CheckoutPage';
 import ProfilePage from './pages/ProfilePage';
 import SellerDashboardPage from './pages/SellerDashboardPage';
+import WishlistPage from './pages/WishlistPage';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -51,6 +52,7 @@ function AppRoutes() {
           <Route path="/shops/:id" element={<ShopDetailPage />} />
           <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
           <Route path="/cart" element={<PrivateRoute><CartPage /></PrivateRoute>} />
+          <Route path="/wishlist" element={<PrivateRoute><WishlistPage /></PrivateRoute>} />
           <Route path="/checkout" element={<PrivateRoute><CheckoutPage /></PrivateRoute>} />
           <Route path="/orders" element={<Navigate to="/profile" replace />} />
           <Route path="/profile" element={<PrivateRoute><ProfilePage /></PrivateRoute>} />

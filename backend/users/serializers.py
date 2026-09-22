@@ -3,7 +3,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 import re
-from .models import User
+from .models import User, Wishlist
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -94,5 +94,17 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'profile_image', 'address', 
+        fields = ['first_name', 'last_name', 'profile_image', 'address',
                   'city', 'state', 'pincode', 'latitude', 'longitude']
+
+
+class WishlistSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_image = serializers.ImageField(source='product.image', read_only=True)
+    product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    product_discount_price = serializers.DecimalField(source='product.discount_price', max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Wishlist
+        fields = ['id', 'product', 'product_name', 'product_image', 'product_price', 'product_discount_price', 'created_at']
+        read_only_fields = ['id', 'created_at']

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Star, MapPin, Store, Package, Shield, RefreshCw, ChevronLeft, ChevronRight, Share2, Heart, Plus } from 'lucide-react';
-import { productAPI } from '../api';
+import { productAPI, authAPI } from '../api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
@@ -38,6 +38,7 @@ export default function ProductDetailPage() {
 
   // Sticky Cart
   const [showStickyCart, setShowStickyCart] = useState(false);
+  const [wishlist, setWishlist] = useState(false);
   const mainActionsRef = useRef(null);
 
   useEffect(() => {
@@ -61,6 +62,20 @@ export default function ProductDetailPage() {
     };
     fetchProduct();
   }, [id]);
+
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      if (!user) return;
+      try {
+        const res = await authAPI.getWishlist();
+        const wishlistProductIds = res.data.map(item => item.product);
+        setWishlist(wishlistProductIds.includes(id));
+      } catch (err) {
+        console.error('Failed to fetch wishlist:', err);
+      }
+    };
+    fetchWishlist();
+  }, [user, id, authAPI]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -95,7 +110,7 @@ export default function ProductDetailPage() {
     e.preventDefault();
     if (!user) return toast.error('Please login to review');
     if (!reviewForm.comment.trim()) return toast.error('Comment is required');
-    
+
     setSubmittingReview(true);
     try {
       await productAPI.addReview(product.id, reviewForm);
@@ -107,6 +122,18 @@ export default function ProductDetailPage() {
       toast.error('Failed to submit review');
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleToggleWishlist = async () => {
+    if (!user) return toast.error('Please login to save items to wishlist');
+
+    try {
+      const res = await authAPI.toggleWishlist(id);
+      setWishlist(res.data.in_wishlist);
+      toast.success(res.data.message);
+    } catch (err) {
+      toast.error('Failed to update wishlist');
     }
   };
 
@@ -150,7 +177,9 @@ export default function ProductDetailPage() {
           {/* Left: Gallery */}
           <div className="pd-gallery">
             <div className="pd-main-image-container">
-              <button className="pd-action-btn pd-wishlist"><Heart size={20}/></button>
+              <button className={`pd-action-btn pd-wishlist ${wishlist ? 'active' : ''}`} onClick={handleToggleWishlist}>
+  <Heart size={20} />
+</button>
               <button className="pd-action-btn pd-share"><Share2 size={20}/></button>
               <ImageMagnifier src={images[currentImageIndex]} alt={product.name} />
             </div>

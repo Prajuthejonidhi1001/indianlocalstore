@@ -1,14 +1,52 @@
 {
   "cli": {
-    "version": ">= 5.9.1"
+    "version": ">= 5.9.1",
+    "appVersionSource": "local"
   },
   "build": {
-    "preview": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "channel": "development",
       "android": {
         "buildType": "apk",
         "image": "ubuntu-22.04-jdk-17-ndk-r26b"
+      },
+      "ios": {
+        "simulator": true
       }
     },
-    "production": {}
+    "preview": {
+      "distribution": "internal",
+      "channel": "preview",
+      "android": {
+        "buildType": "apk",
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://indianlocalstore-api-cjiq.onrender.com/api"
+      }
+    },
+    "production": {
+      "distribution": "internal",
+      "channel": "production",
+      "android": {
+        "buildType": "apk",
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://indianlocalstore-api-cjiq.onrender.com/api"
+      }
+    },
+    "playstore": {
+      "channel": "production",
+      "android": {
+        "buildType": "app-bundle",
+        "image": "ubuntu-22.04-jdk-17-ndk-r26b"
+      },
+      "env": {
+        "EXPO_PUBLIC_API_URL": "https://indianlocalstore-api-cjiq.onrender.com/api"
+      }
+    }
   }
 }

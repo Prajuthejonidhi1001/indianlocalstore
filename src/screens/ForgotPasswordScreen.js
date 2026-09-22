@@ -5,9 +5,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
-import axios from 'axios';
-
-const API_URL = 'https://indianlocalstore-api-cjiq.onrender.com/api'; // Or use your config
+import { userAPI } from '../utils/api';
 
 export default function ForgotPasswordScreen({ navigation }) {
   const [step, setStep] = useState(1); // 1 = enter email, 2 = enter otp + new pass
@@ -33,7 +31,7 @@ export default function ForgotPasswordScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/users/forgot_password/`, { email: identifier.trim() });
+      await userAPI.forgotPassword(identifier.trim());
       setStep(2);
       setResendCooldown(60);
       Alert.alert('OTP Sent', 'Check your email for the 6-digit verification code.');
@@ -47,7 +45,7 @@ export default function ForgotPasswordScreen({ navigation }) {
   const handleResendOTP = async () => {
     if (resendCooldown > 0) return;
     try {
-      await axios.post(`${API_URL}/users/forgot_password/`, { email: identifier.trim() });
+      await userAPI.forgotPassword(identifier.trim());
       setResendCooldown(60);
       Alert.alert('OTP Sent', 'A new verification code has been sent to your email.');
     } catch (err) {
@@ -70,11 +68,7 @@ export default function ForgotPasswordScreen({ navigation }) {
     }
     setLoading(true);
     try {
-      await axios.post(`${API_URL}/users/reset_password/`, {
-        email: identifier.trim(),
-        otp: otp.trim(),
-        new_password: newPassword
-      });
+      await userAPI.resetPassword(identifier.trim(), otp.trim(), newPassword);
       Alert.alert('Success! 🎉', 'Your password has been reset. Please log in with your new password.', [
         { text: 'Go to Login', onPress: () => navigation.navigate('Login') }
       ]);

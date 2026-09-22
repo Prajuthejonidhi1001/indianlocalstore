@@ -1,0 +1,58 @@
+# Normalise line endings so the repo stores LF and diffs stay readable.
+# Without this, editing on Windows rewrites whole files with CRLF and every
+# file shows as "modified" even when nothing actually changed.
+
+# Default: treat as text, store LF in the repo.
+* text=auto eol=lf
+
+# Source
+*.js      text eol=lf
+*.jsx     text eol=lf
+*.ts      text eol=lf
+*.tsx     text eol=lf
+*.py      text eol=lf
+*.json    text eol=lf
+*.css     text eol=lf
+*.scss    text eol=lf
+*.html    text eol=lf
+*.md      text eol=lf
+*.yml     text eol=lf
+*.yaml    text eol=lf
+*.txt     text eol=lf
+*.env     text eol=lf
+Procfile  text eol=lf
+
+# Must stay LF or they break on Linux hosts (Render, Docker)
+*.sh      text eol=lf
+build.sh  text eol=lf
+
+# Windows-only scripts keep CRLF
+*.bat     text eol=crlf
+*.cmd     text eol=crlf
+*.ps1     text eol=crlf
+
+# Lockfiles: keep LF, and hide them from diff/merge noise
+package-lock.json  text eol=lf -diff linguist-generated
+yarn.lock          text eol=lf -diff linguist-generated
+
+# Binary: never touch, never diff
+*.png     binary
+*.jpg     binary
+*.jpeg    binary
+*.gif     binary
+*.webp    binary
+*.ico     binary
+*.svg     text eol=lf
+*.pdf     binary
+*.ttf     binary
+*.otf     binary
+*.woff    binary
+*.woff2   binary
+*.eot     binary
+*.mp4     binary
+*.zip     binary
+*.jks     binary
+*.keystore binary
+*.pyc     binary
+*.so      binary
+*.dll     binary

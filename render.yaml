@@ -14,9 +14,40 @@ services:
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS
-        value: "*"
+        # Never "*" in production -- a wildcard allows Host-header attacks
+        # (poisoned password-reset links, cache poisoning). List real hosts only.
+        value: "indianlocalstore-api-cjiq.onrender.com,.onrender.com"
       - key: DATABASE_URL
         sync: false # Requires manual entry of Supabase URL in Render dashboard
+
+      # Without this, settings.py falls back to its dev default, which allows
+      # five localhost origins in production. List the real front-end only.
+      - key: CORS_ALLOWED_ORIGINS
+        value: "https://indianlocalstore.vercel.app"
+
+      # Public Firebase Web API key, used to verify phone-auth ID tokens.
+      # Not a secret (it ships in the web/mobile bundles) -- kept here so
+      # rotating it does not require a code change.
+      - key: FIREBASE_WEB_API_KEY
+        value: "AIzaSyC4Yhpk0zw-Om-mNWSFn4mwQOy97tufzHE"
+
+      # Transactional email (OTP delivery). Unset means send_mail fails
+      # silently and users never receive their verification codes.
+      - key: EMAIL_HOST_USER
+        value: "stiratechindianlocalstore@gmail.com"
+      - key: BREVO_API_KEY
+        sync: false
+
+      # Payments. The secret must never be committed.
+      - key: RAZORPAY_KEY_ID
+        sync: false
+      - key: RAZORPAY_KEY_SECRET
+        sync: false
+
+      # Optional: leave unset to use the in-process LocMemCache instead.
+      - key: REDIS_URL
+        sync: false
+
       - key: CLOUDINARY_CLOUD_NAME
         sync: false
       - key: CLOUDINARY_API_KEY

@@ -1,6 +1,22 @@
-# Heroku Configuration for Django App
-# Make sure migrations run on release
-django_db_logging_enabled = False
+# Backend-specific ignores.
+# Shared Python/secret rules live in the repo-root .gitignore.
 
+# Virtualenv (whichever name you use)
 venv/
+.venv/
+env/
+
+# Bytecode
 __pycache__/
+*.py[cod]
+
+# Local secrets
+.env
+firebase-admin.json
+
+# Collected static + user uploads are generated, not source
+staticfiles/
+media/
+
+# Local DB
+*.sqlite3

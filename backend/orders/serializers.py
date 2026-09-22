@@ -59,9 +59,50 @@ class OrderDetailSerializer(serializers.ModelSerializer):
 
 
 class OrderCreateSerializer(serializers.ModelSerializer):
+    """Input and response body for POST /api/orders/orders/.
+
+    Only the delivery fields and the payment method are writable. Every money
+    field is read-only on purpose: the view recomputes the amounts from the
+    server-side cart, so a tampered request body cannot change what the
+    customer is charged.
+
+    The read-only fields matter for the response too. The client shows the
+    order number on the confirmation screen, so `id` and `order_id` have to
+    come back in the create response.
+    """
+
+    PAYMENT_METHOD_CHOICES = [
+        ('cod', 'Cash on Delivery'),
+        ('razorpay', 'Razorpay'),
+    ]
+
+    payment_method = serializers.ChoiceField(
+        choices=PAYMENT_METHOD_CHOICES,
+        default='cod',
+    )
+
     class Meta:
         model = Order
-        fields = ['delivery_address', 'delivery_city', 'delivery_state', 'delivery_pincode']
+        fields = [
+            'id', 'order_id',
+            'delivery_address', 'delivery_city', 'delivery_state', 'delivery_pincode',
+            'payment_method',
+            'total_amount', 'discount_amount', 'final_amount',
+            'order_status', 'payment_status', 'created_at',
+        ]
+        read_only_fields = [
+            'id', 'order_id',
+            'total_amount', 'discount_amount', 'final_amount',
+            'order_status', 'payment_status', 'created_at',
+        ]
+
+    def validate_delivery_pincode(self, value):
+        pincode = (value or '').strip()
+        if not (pincode.isdigit() and len(pincode) == 6):
+            raise serializers.ValidationError(
+                'Enter a valid 6-digit Indian pincode.'
+            )
+        return pincode
 
 
 class PaymentSerializer(serializers.ModelSerializer):

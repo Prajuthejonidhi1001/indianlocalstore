@@ -23,36 +23,61 @@ export default function CheckoutScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
 
+  // These keys must match the API's field names exactly. They were previously
+  // `city` / `state` / `pincode`, which the serializer ignored -- so every
+  // order failed with "this field is required" for the delivery_* fields.
   const [form, setForm] = useState({
     delivery_address: user?.address || '',
-    city: user?.city || '',
-    state: user?.state || '',
-    pincode: user?.pincode || '',
+    delivery_city: user?.city || '',
+    delivery_state: user?.state || '',
+    delivery_pincode: user?.pincode || '',
   });
 
   const handlePlaceOrder = async () => {
-    if (!form.delivery_address || !form.city || !form.pincode) {
-      return Alert.alert('Error', 'Please fill in all address fields.');
+    if (!form.delivery_address.trim()) {
+      return Alert.alert('Address needed', 'Please enter your delivery address.');
+    }
+    if (!form.delivery_city.trim() || !form.delivery_state.trim()) {
+      return Alert.alert('Address needed', 'Please enter your city and state.');
+    }
+    if (!/^\d{6}$/.test(form.delivery_pincode.trim())) {
+      return Alert.alert('Check pincode', 'Please enter a valid 6-digit pincode.');
     }
 
     setLoading(true);
     try {
-      const orderData = {
-        ...form,
+      const res = await orderAPI.createOrder({
+        delivery_address: form.delivery_address.trim(),
+        delivery_city: form.delivery_city.trim(),
+        delivery_state: form.delivery_state.trim(),
+        delivery_pincode: form.delivery_pincode.trim(),
         payment_method: paymentMethod,
-      };
+      });
 
-      const res = await orderAPI.createOrder(orderData);
       await clearCart();
-      
+
+      const orderNumber = res.data?.order_id || res.data?.id || '';
+
       Alert.alert(
-        'Order Placed Successfully! 🎉', 
-        `Your order #${res.data.id} has been confirmed.`,
+        'Order placed 🎉',
+        orderNumber
+          ? `Your order ${orderNumber} is confirmed. Pay cash when it arrives.`
+          : 'Your order is confirmed. Pay cash when it arrives.',
         [{ text: 'View Orders', onPress: () => navigation.navigate('Orders') }]
       );
     } catch (err) {
-      console.error(err);
-      Alert.alert('Error', err.response?.data?.error || 'Failed to place order');
+      // DRF returns either {error: "..."} or {field: ["..."]}. Surface whichever
+      // arrived instead of a blanket failure message the customer can't act on.
+      const data = err.response?.data;
+      let message = 'Could not place your order. Please try again.';
+      if (typeof data?.error === 'string') {
+        message = data.error;
+      } else if (data && typeof data === 'object') {
+        const firstField = Object.values(data)[0];
+        if (Array.isArray(firstField) && firstField.length) message = String(firstField[0]);
+        else if (typeof firstField === 'string') message = firstField;
+      }
+      Alert.alert('Order failed', message);
     } finally {
       setLoading(false);
     }
@@ -93,28 +118,28 @@ export default function CheckoutScreen({ navigation }) {
             <View style={styles.row}>
               <View style={[styles.field, { flex: 1, marginRight: 10 }]}>
                  <Text style={styles.fieldLabel}>City</Text>
-                 <TextInput 
+                 <TextInput
                   style={styles.input}
-                  value={form.city}
-                  onChangeText={t => setForm({...form, city: t})}
+                  value={form.delivery_city}
+                  onChangeText={t => setForm({...form, delivery_city: t})}
                 />
               </View>
               <View style={[styles.field, { flex: 1 }]}>
                  <Text style={styles.fieldLabel}>State</Text>
-                 <TextInput 
+                 <TextInput
                   style={styles.input}
-                  value={form.state}
-                  onChangeText={t => setForm({...form, state: t})}
+                  value={form.delivery_state}
+                  onChangeText={t => setForm({...form, delivery_state: t})}
                 />
               </View>
             </View>
 
             <View style={[styles.field, { width: '50%' }]}>
               <Text style={styles.fieldLabel}>Pincode</Text>
-              <TextInput 
+              <TextInput
                 style={styles.input}
-                value={form.pincode}
-                onChangeText={t => setForm({...form, pincode: t})}
+                value={form.delivery_pincode}
+                onChangeText={t => setForm({...form, delivery_pincode: t})}
                 keyboardType="number-pad"
                 maxLength={6}
               />
@@ -142,21 +167,25 @@ export default function CheckoutScreen({ navigation }) {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.paymentCard, paymentMethod === 'online' && styles.paymentActive]}
-            onPress={() => setPaymentMethod('online')}
-          >
+          {/* Online payment is intentionally not selectable yet. Razorpay live
+              keys require completed business KYC; until then an order marked
+              "online" would ship with no way for the customer to actually pay.
+              Leaving it visible but disabled sets the expectation without
+              creating an unpaid-order hole. */}
+          <View style={[styles.paymentCard, { opacity: 0.5 }]}>
             <View style={styles.paymentRow}>
-              <Ionicons name="card-outline" size={24} color={paymentMethod === 'online' ? COLORS.primary : COLORS.textMuted} />
+              <Ionicons name="card-outline" size={24} color={COLORS.textMuted} />
               <View style={styles.paymentInfo}>
-                <Text style={styles.paymentName}>Pay Online</Text>
-                <Text style={styles.paymentDesc}>UPI, Credit Card, Net Banking (Razorpay)</Text>
-              </View>
-              <View style={[styles.radio, paymentMethod === 'online' && styles.radioActive]}>
-                {paymentMethod === 'online' && <View style={styles.radioInner} />}
+                <View style={styles.paymentNameRow}>
+                  <Text style={styles.paymentName}>Pay Online</Text>
+                  <View style={styles.comingSoonBadge}>
+                    <Text style={styles.comingSoonText}>COMING SOON</Text>
+                  </View>
+                </View>
+                <Text style={styles.paymentDesc}>UPI, Credit Card, Net Banking</Text>
               </View>
             </View>
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* CTA */}
@@ -208,6 +237,9 @@ const styles = StyleSheet.create({
   paymentInfo: { flex: 1, marginLeft: 15 },
   paymentName: { color: COLORS.text, fontSize: 16, fontWeight: '700', marginBottom: 2 },
   paymentDesc: { color: COLORS.textMuted, fontSize: 12 },
+  paymentNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  comingSoonBadge: { backgroundColor: 'rgba(255,107,53,0.15)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(255,107,53,0.3)' },
+  comingSoonText: { color: COLORS.primary, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: COLORS.textDim, alignItems: 'center', justifyContent: 'center' },
   radioActive: { borderColor: COLORS.primary },

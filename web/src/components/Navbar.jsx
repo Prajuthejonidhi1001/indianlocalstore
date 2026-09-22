@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation as useRouterLocation } from 'react-router-dom';
-import { ShoppingCart, User, Menu, X, Store, Search, LogOut, Package, LayoutDashboard, Grid, ChevronDown, Clock, TrendingUp } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, Store, Search, LogOut, Package, LayoutDashboard, Grid, ChevronDown, Clock, TrendingUp, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
 import { productAPI } from '../api';
@@ -12,8 +12,9 @@ const RECENT_SEARCHES = ['Fresh Vegetables', 'Wireless Earbuds', 'Men\'s T-Shirt
 const POPULAR_SEARCHES = ['Organic Fruits', 'Running Shoes', 'Smart Watches'];
 
 export default function Navbar() {
-  const { isAuthenticated, user, isSeller, logout } = useAuth();
+  const { isAuthenticated, user, isSeller, logout, wishlist } = useAuth();
   const { cartCount } = useCart();
+  const wishlistCount = wishlist ? wishlist.length : 0;
   const navigate = useNavigate();
   const location = useRouterLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -157,6 +158,12 @@ export default function Navbar() {
 
           {isAuthenticated ? (
             <>
+              {/* Wishlist */}
+              <Link to="/wishlist" className="nav-icon-btn" title="Wishlist">
+                <Heart size={20} />
+                {wishlistCount > 0 && <span className="wishlist-badge">{wishlistCount}</span>}
+              </Link>
+
               {/* Cart */}
               <button onClick={() => setCartDrawerOpen(true)} id="cart-btn" className="nav-icon-btn">
                 <ShoppingCart size={20} />
