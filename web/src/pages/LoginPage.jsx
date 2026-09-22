@@ -14,6 +14,7 @@ export default function LoginPage() {
   const location = useLocation();
   
   const [step, setStep] = useState(1); // 1 = Details, 2 = OTP
+  const [loginMethod, setLoginMethod] = useState('email');
   const [identifier, setIdentifier] = useState('');
   
   const [otp, setOtp] = useState('');
@@ -45,7 +46,7 @@ export default function LoginPage() {
     }
   };
 
-  const isEmail = identifier.includes('@');
+  const isEmail = loginMethod === 'email';
 
   const handleSendOTP = async (e) => {
     if(e) e.preventDefault();
@@ -55,7 +56,8 @@ export default function LoginPage() {
     }
     
     if (isEmail) {
-      if (!/^\S+@\S+\.\S+$/.test(identifier)) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+      if (!emailRegex.test(identifier)) {
         toast.error('Please enter a valid email address');
         return;
       }
@@ -149,36 +151,65 @@ export default function LoginPage() {
         </div>
 
         {step === 1 ? (
-          <form onSubmit={handleSendOTP} className="auth-form" id="login-form">
-            <div className="form-group">
-              <label className="form-label">Email or Phone Number (Preferred: Email)</label>
-              <div className="auth-input-wrapper">
-                <User size={18} className="auth-input-icon" />
-                <input
-                  id="identifier-input"
-                  type="text"
-                  className="form-input"
-                  placeholder="Enter email or 10-digit number"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
-                  style={{ paddingLeft: '40px' }}
-                />
-              </div>
-              <small className="text-muted d-block mt-1">We will send an OTP to verify your identity.</small>
+          <div className="auth-form" id="login-form">
+            <div className="role-card-grid" style={{ marginBottom: '1.5rem', gap: '10px', display: 'flex' }}>
+              <button
+                type="button"
+                className={`role-card ${loginMethod === 'email' ? 'active' : ''}`}
+                onClick={() => { setLoginMethod('email'); setIdentifier(''); }}
+                style={{ flex: 1, padding: '10px', textAlign: 'center' }}
+              >
+                <Mail size={20} style={{ marginBottom: '5px', color: loginMethod === 'email' ? 'var(--saffron)' : 'inherit' }} />
+                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Email</div>
+              </button>
+              <button
+                type="button"
+                className={`role-card ${loginMethod === 'phone' ? 'active' : ''}`}
+                onClick={() => { setLoginMethod('phone'); setIdentifier(''); }}
+                style={{ flex: 1, padding: '10px', textAlign: 'center' }}
+              >
+                <Smartphone size={20} style={{ marginBottom: '5px', color: loginMethod === 'phone' ? 'var(--saffron)' : 'inherit' }} />
+                <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Phone</div>
+              </button>
             </div>
 
-            {/* Invisible Recaptcha Container */}
-            <div id="recaptcha-container"></div>
+            <form onSubmit={handleSendOTP}>
+              <div className="form-group">
+                <label className="form-label">{loginMethod === 'email' ? 'Email Address' : 'Phone Number'}</label>
+                <div className="auth-input-wrapper">
+                  {loginMethod === 'email' ? <Mail size={18} className="auth-input-icon" /> : <Smartphone size={18} className="auth-input-icon" />}
+                  <input
+                    id="identifier-input"
+                    type={loginMethod === 'email' ? 'email' : 'tel'}
+                    className="form-input"
+                    placeholder={loginMethod === 'email' ? "Enter your email address" : "Enter 10-digit number"}
+                    value={identifier}
+                    onChange={(e) => {
+                      if (loginMethod === 'phone') {
+                        setIdentifier(e.target.value.replace(/\D/g, '').slice(0, 10));
+                      } else {
+                        setIdentifier(e.target.value);
+                      }
+                    }}
+                    style={{ paddingLeft: '40px' }}
+                  />
+                </div>
+                <small className="text-muted d-block mt-1">We will send an OTP to verify your identity.</small>
+              </div>
 
-            <button
-              id="send-otp-btn"
-              type="submit"
-              className="btn btn-primary btn-block btn-lg mt-4"
-              disabled={loading || identifier.length < 5}
-            >
-              {loading ? 'Sending OTPs...' : 'Get OTP'} <ArrowRight size={18} />
-            </button>
-          </form>
+              {/* Invisible Recaptcha Container */}
+              <div id="recaptcha-container"></div>
+
+              <button
+                id="send-otp-btn"
+                type="submit"
+                className="btn btn-primary btn-block btn-lg mt-4"
+                disabled={loading || (loginMethod === 'email' ? identifier.length < 5 : identifier.length !== 10)}
+              >
+                {loading ? 'Sending OTPs...' : 'Get OTP'} <ArrowRight size={18} />
+              </button>
+            </form>
+          </div>
         ) : (
           <form onSubmit={handleVerifyOTP} className="auth-form animate-in" id="otp-form">
             <div className="text-center mb-4">
