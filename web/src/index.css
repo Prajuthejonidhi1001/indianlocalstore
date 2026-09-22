@@ -19,18 +19,18 @@
   --purple: #D500F9;
 
   /* ── Background System ── */
-  --bg-base: #F8FAFC;
-  --bg-surface: #FFFFFF;
-  --bg-card: #FFFFFF;
-  --bg-elevated: #F1F5F9;
-  --bg-hover: #F1F5F9;
-  --bg-overlay: rgba(255, 255, 255, 0.85);
+  --bg-base: #0f0c29; /* Dark midnight base for vibrant contrast */
+  --bg-surface: #302b63;
+  --bg-card: rgba(25, 20, 40, 0.6);
+  --bg-elevated: rgba(40, 35, 70, 0.7);
+  --bg-hover: rgba(255, 107, 53, 0.15);
+  --bg-overlay: rgba(15, 12, 41, 0.85);
 
   /* ── Text ── */
-  --text-primary: #0F172A;
-  --text-secondary: #475569;
+  --text-primary: #FFFFFF;
+  --text-secondary: #E2E8F0;
   --text-muted: #94A3B8;
-  --text-inverse: #FFFFFF;
+  --text-inverse: #0F172A;
 
   /* ── Borders ── */
   --border-subtle: rgba(15, 23, 42, 0.06);
@@ -47,9 +47,9 @@
   --shadow-gold: 0 8px 24px rgba(255, 182, 39, 0.25);
 
   /* ── Glass ── */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
-  --glass-shine: rgba(255, 255, 255, 0.8);
+  --glass-bg: rgba(20, 15, 40, 0.45);
+  --glass-border: rgba(255, 107, 53, 0.3);
+  --glass-shine: rgba(255, 255, 255, 0.1);
 
   /* ── Typography ── */
   --font-heading: 'Inter', system-ui, sans-serif;
@@ -89,12 +89,19 @@ body {
 body::before {
   content: '';
   position: fixed;
-  inset: 0;
+  inset: -50%;
   background:
-    radial-gradient(circle 800px at 10% 20%, rgba(255,107,53,0.03) 0%, transparent 100%),
-    radial-gradient(circle 600px at 90% 80%, rgba(255,182,39,0.03) 0%, transparent 100%);
+    radial-gradient(circle 800px at 10% 20%, rgba(255,107,53,0.15) 0%, transparent 100%),
+    radial-gradient(circle 600px at 90% 80%, rgba(15,12,41,1) 0%, transparent 100%),
+    radial-gradient(circle 900px at 50% 50%, rgba(242,192,20,0.1) 0%, transparent 100%);
   pointer-events: none;
   z-index: 0;
+  animation: auroraMesh 15s ease-in-out infinite alternate;
+}
+
+@keyframes auroraMesh {
+  0% { transform: rotate(0deg) scale(1); }
+  100% { transform: rotate(5deg) scale(1.1); }
 }
 
 img { max-width: 100%; height: auto; display: block; }

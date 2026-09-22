@@ -8,22 +8,22 @@ export const COLORS = {
   green: '#2ECC71',
   red: '#E74C3C',
 
-  // Background System (Exact from Web)
-  background: '#F8FAFC',     // bg-base
-  surface: '#FFFFFF',        // bg-surface
-  card: '#FFFFFF',           // bg-card
-  elevated: '#F1F5F9',       // bg-elevated
-  hover: '#E2E8F0',          // bg-hover
+  // Background System (Vibrant Aurora Theme)
+  background: '#0F0C29',     // Midnight Base
+  surface: '#302B63',        // Deep indigo surface
+  card: 'rgba(25, 20, 40, 0.6)',           
+  elevated: 'rgba(40, 35, 70, 0.7)',       
+  hover: 'rgba(255, 107, 53, 0.15)',          
   
   // Text
-  text: '#0F172A',           // text-primary
-  textMuted: '#475569',      // text-secondary
-  textDim: '#64748B',        // text-muted
+  text: '#FFFFFF',           // Bright text on dark
+  textMuted: '#E2E8F0',      
+  textDim: '#94A3B8',        
   
   // Interactions
-  border: 'rgba(0, 0, 0, 0.08)',
-  borderStrong: 'rgba(0, 0, 0, 0.15)',
-  glass: 'rgba(255, 255, 255, 0.7)',
+  border: 'rgba(255, 107, 53, 0.3)',
+  borderStrong: 'rgba(255, 107, 53, 0.6)',
+  glass: 'rgba(20, 15, 40, 0.45)',
   white: '#FFFFFF',
   black: '#000000',
 };

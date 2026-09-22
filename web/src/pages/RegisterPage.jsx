@@ -270,28 +270,24 @@ export default function RegisterPage() {
   return (
     <div className="auth-page">
       <div className="auth-bg" />
-      <div className="auth-card auth-card-wide glass-card animate-in">
+      <div className={`auth-card ${step === 2 && form.role === 'seller' ? 'auth-card-wide' : ''}`}>
         <div className="auth-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '1rem' }}>
           <img src="/logo.png" alt="Indian Local Store" style={{ height: '70px', width: 'auto', borderRadius: '12px' }} />
         </div>
         <h2 className="auth-title">Create Account</h2>
         <p className="auth-subtitle">Join thousands of local shoppers & sellers</p>
 
-        {/* Role Selector — large cards */}
+        {/* Role Selector — tabs */}
         {step === 1 && (
-          <div className="role-card-grid" style={{ marginBottom: '1.5rem' }}>
+          <div className="role-card-grid">
             <button
               type="button"
               className={`role-card ${form.role === 'customer' ? 'active' : ''}`}
               onClick={() => setForm({ ...form, role: 'customer' })}
               id="role-customer"
             >
-              <div className="role-card-icon">🛒</div>
-              <div className="role-card-body">
-                <div className="role-card-title">Customer</div>
-                <div className="role-card-desc">Browse shops & buy products</div>
-              </div>
-              {form.role === 'customer' && <div className="role-card-check">✓</div>}
+              <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>🛒</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Customer</div>
             </button>
             <button
               type="button"
@@ -299,12 +295,8 @@ export default function RegisterPage() {
               onClick={() => setForm({ ...form, role: 'seller' })}
               id="role-seller"
             >
-              <div className="role-card-icon">🏪</div>
-              <div className="role-card-body">
-                <div className="role-card-title">Seller</div>
-                <div className="role-card-desc">List your shop & sell products</div>
-              </div>
-              {form.role === 'seller' && <div className="role-card-check">✓</div>}
+              <div style={{ fontSize: '1.2rem', marginBottom: '4px' }}>🏪</div>
+              <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>Seller</div>
             </button>
           </div>
         )}
