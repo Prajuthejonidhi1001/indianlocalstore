@@ -18,6 +18,7 @@ const { width, height } = Dimensions.get('window');
 export default function LoginScreen({ navigation }) {
   const isFocused = useIsFocused();
   const [step, setStep] = useState(1);
+  const [loginMethod, setLoginMethod] = useState('email');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
   
@@ -77,36 +78,52 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleSendOTP = async () => {
-    if (!phone || phone.length < 10) { 
+    if (loginMethod === 'phone' && (!phone || phone.length < 10)) { 
       triggerErrorShake(); 
       Alert.alert('Error', 'Please enter a valid 10-digit phone number'); 
       return; 
     }
-    if (email && !/^\S+@\S+\.\S+$/.test(email)) {
-      triggerErrorShake();
-      Alert.alert('Error', 'Please enter a valid email address');
-      return;
+    if (loginMethod === 'email') {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+      if (!email || !emailRegex.test(email)) {
+        triggerErrorShake();
+        Alert.alert('Error', 'Please enter a valid email address');
+        return;
+      }
     }
     
     setLoading(true);
     try {
-      const phoneNumber = `+91${phone}`;
-      const phoneProvider = new PhoneAuthProvider(auth);
-      const verificationId = await phoneProvider.verifyPhoneNumber(
-        phoneNumber,
-        recaptchaVerifier.current
+      // 1. CHECK IF USER EXISTS
+      const checkRes = await authAPI.checkUser(
+        loginMethod === 'email' ? email : null,
+        loginMethod === 'phone' ? phone : null
       );
-      setVerificationId(verificationId);
 
-      if (email) {
-        await authAPI.sendPhoneOtp(phoneNumber, email);
+      if (!checkRes.data.exists) {
+        triggerErrorShake();
+        Alert.alert('Not Registered', 'Please sign up first.');
+        setLoading(false);
+        return;
+      }
+
+      if (loginMethod === 'phone') {
+        const phoneNumber = `+91${phone}`;
+        const phoneProvider = new PhoneAuthProvider(auth);
+        const verificationId = await phoneProvider.verifyPhoneNumber(
+          phoneNumber,
+          recaptchaVerifier.current
+        );
+        setVerificationId(verificationId);
+      } else {
+        await authAPI.sendPhoneOtp(null, email);
       }
 
       setStep(2);
       setResendCooldown(30);
-      Alert.alert('OTP Sent', email ? 'OTPs sent to phone and email!' : 'OTP sent to your phone!');
+      Alert.alert('OTP Sent', loginMethod === 'email' ? 'OTP sent to your email!' : 'OTP sent to your phone!');
     } catch (err) {
-      console.error("FIREBASE ERROR:", err);
+      console.error("ERROR:", err);
       Alert.alert('Error', err.message || 'Failed to send OTP. Try again.');
       triggerErrorShake();
       setRecaptchaKey(prev => prev + 1);
@@ -116,12 +133,12 @@ export default function LoginScreen({ navigation }) {
   };
 
   const handleVerifyOTP = async () => {
-    if (phoneOtp.length !== 6) {
+    if (loginMethod === 'phone' && phoneOtp.length !== 6) {
       triggerErrorShake();
       Alert.alert('Error', 'Please enter a valid 6-digit phone OTP');
       return;
     }
-    if (email && emailOtp.length !== 6) {
+    if (loginMethod === 'email' && emailOtp.length !== 6) {
       triggerErrorShake();
       Alert.alert('Error', 'Please enter a valid 6-digit email OTP');
       return;
@@ -129,17 +146,19 @@ export default function LoginScreen({ navigation }) {
 
     setLoading(true);
     try {
-      // Create credential from verificationId and OTP
-      const credential = PhoneAuthProvider.credential(verificationId, phoneOtp);
-      // Wait, we need the firebase idToken
-      // Unfortunately we must sign in to get the token, but we are using Firebase Auth
-      // In expo-firebase-recaptcha flow, usually you call auth.signInWithCredential(credential)
-      // Wait, React Native Firebase v9 uses `signInWithCredential`
-      const { signInWithCredential } = require('firebase/auth');
-      const result = await signInWithCredential(auth, credential);
-      const idToken = await result.user.getIdToken();
+      let idToken = null;
+      let emailOtpToVerify = null;
 
-      const res = await loginWithPhoneOTP(idToken, emailOtp);
+      if (loginMethod === 'phone') {
+        const credential = PhoneAuthProvider.credential(verificationId, phoneOtp);
+        const { signInWithCredential } = require('firebase/auth');
+        const result = await signInWithCredential(auth, credential);
+        idToken = await result.user.getIdToken();
+      } else {
+        emailOtpToVerify = emailOtp;
+      }
+
+      const res = await loginWithPhoneOTP(idToken, emailOtpToVerify, loginMethod === 'email' ? email : null);
       
       if (!res.success) {
         triggerErrorShake();
@@ -201,28 +220,45 @@ export default function LoginScreen({ navigation }) {
             </View>
 
             <Text style={styles.title}>{step === 1 ? 'Welcome Back' : 'Verify Identity'}</Text>
-            <Text style={styles.subtitle}>{step === 1 ? 'Sign in with your phone number' : 'Enter the code sent to your phone'}</Text>
+            <Text style={styles.subtitle}>{step === 1 ? 'Sign in to continue your journey' : `Enter the code sent to your ${loginMethod}`}</Text>
 
             {step === 1 ? (
               <>
-                <View style={[styles.inputContainer, focusedInput === 'phone' && styles.inputFocused]}>
-                  <Ionicons name="call" size={20} color={focusedInput === 'phone' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
-                  <Text style={{color: COLORS.text, fontSize: 17, marginRight: 8, fontWeight: '500'}}>+91</Text>
-                  <TextInput 
-                    placeholder="10-digit number" value={phone} onChangeText={t => setPhone(t.replace(/\D/g, '').slice(0,10))} 
-                    style={styles.input} keyboardType="phone-pad" placeholderTextColor={COLORS.borderStrong}
-                    onFocus={() => setFocusedInput('phone')} onBlur={() => setFocusedInput(null)}
-                  />
+                <View style={{ flexDirection: 'row', marginBottom: 20, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 4 }}>
+                  <TouchableOpacity 
+                    style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: loginMethod === 'email' ? '#FF6B00' : 'transparent', borderRadius: 8 }}
+                    onPress={() => setLoginMethod('email')}
+                  >
+                    <Text style={{ color: '#FFF', fontWeight: '600' }}>Email</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: loginMethod === 'phone' ? '#FF6B00' : 'transparent', borderRadius: 8 }}
+                    onPress={() => setLoginMethod('phone')}
+                  >
+                    <Text style={{ color: '#FFF', fontWeight: '600' }}>Phone</Text>
+                  </TouchableOpacity>
                 </View>
 
-                <View style={[styles.inputContainer, focusedInput === 'email' && styles.inputFocused]}>
-                  <Ionicons name="mail" size={20} color={focusedInput === 'email' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
-                  <TextInput 
-                    placeholder="Email (Optional for extra security)" value={email} onChangeText={setEmail} 
-                    style={styles.input} keyboardType="email-address" autoCapitalize="none" placeholderTextColor={COLORS.borderStrong}
-                    onFocus={() => setFocusedInput('email')} onBlur={() => setFocusedInput(null)}
-                  />
-                </View>
+                {loginMethod === 'phone' ? (
+                  <View style={[styles.inputContainer, focusedInput === 'phone' && styles.inputFocused]}>
+                    <Ionicons name="call" size={20} color={focusedInput === 'phone' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+                    <Text style={{color: COLORS.text, fontSize: 17, marginRight: 8, fontWeight: '500'}}>+91</Text>
+                    <TextInput 
+                      placeholder="10-digit number" value={phone} onChangeText={t => setPhone(t.replace(/\D/g, '').slice(0,10))} 
+                      style={styles.input} keyboardType="phone-pad" placeholderTextColor={COLORS.borderStrong}
+                      onFocus={() => setFocusedInput('phone')} onBlur={() => setFocusedInput(null)}
+                    />
+                  </View>
+                ) : (
+                  <View style={[styles.inputContainer, focusedInput === 'email' && styles.inputFocused]}>
+                    <Ionicons name="mail" size={20} color={focusedInput === 'email' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+                    <TextInput 
+                      placeholder="Email Address" value={email} onChangeText={setEmail} 
+                      style={styles.input} keyboardType="email-address" autoCapitalize="none" placeholderTextColor={COLORS.borderStrong}
+                      onFocus={() => setFocusedInput('email')} onBlur={() => setFocusedInput(null)}
+                    />
+                  </View>
+                )}
 
                 <TouchableOpacity style={styles.loginBtn} onPress={handleSendOTP} disabled={loading} activeOpacity={0.85}>
                   <View style={styles.btnHologram} />
@@ -232,17 +268,17 @@ export default function LoginScreen({ navigation }) {
               </>
             ) : (
               <>
-                <View style={[styles.inputContainer, focusedInput === 'phoneOtp' && styles.inputFocused]}>
-                  <Ionicons name="key" size={20} color={focusedInput === 'phoneOtp' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
-                  <TextInput 
-                    placeholder="Phone OTP (6 digits)" value={phoneOtp} onChangeText={t => setPhoneOtp(t.replace(/\D/g, '').slice(0,6))} 
-                    style={[styles.input, {letterSpacing: 8, fontSize: 20}]} keyboardType="number-pad" placeholderTextColor={COLORS.borderStrong}
-                    onFocus={() => setFocusedInput('phoneOtp')} onBlur={() => setFocusedInput(null)}
-                    maxLength={6}
-                  />
-                </View>
-
-                {email ? (
+                {loginMethod === 'phone' ? (
+                  <View style={[styles.inputContainer, focusedInput === 'phoneOtp' && styles.inputFocused]}>
+                    <Ionicons name="key" size={20} color={focusedInput === 'phoneOtp' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
+                    <TextInput 
+                      placeholder="Phone OTP (6 digits)" value={phoneOtp} onChangeText={t => setPhoneOtp(t.replace(/\D/g, '').slice(0,6))} 
+                      style={[styles.input, {letterSpacing: 8, fontSize: 20}]} keyboardType="number-pad" placeholderTextColor={COLORS.borderStrong}
+                      onFocus={() => setFocusedInput('phoneOtp')} onBlur={() => setFocusedInput(null)}
+                      maxLength={6}
+                    />
+                  </View>
+                ) : (
                   <View style={[styles.inputContainer, focusedInput === 'emailOtp' && styles.inputFocused]}>
                     <Ionicons name="mail" size={20} color={focusedInput === 'emailOtp' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
                     <TextInput 

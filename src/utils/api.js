@@ -65,6 +65,7 @@ api.interceptors.response.use(
 
 // ========== Authentication API ==========
 export const authAPI = {
+  checkUser: (email, phone) => api.post('/users/check_user/', { email, phone }),
   sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
   verifyOtp: (firebase_token, email_otp) => api.post('/users/verify_otp/', { firebase_token, email_otp }),
   refreshToken: (refresh_token) => api.post('/users/token/refresh/', { refresh: refresh_token }),
