@@ -75,6 +75,23 @@ class UserViewSet(viewsets.ModelViewSet):
         return Response({'message': 'OTPs sent successfully.'}, status=status.HTTP_200_OK)
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
+    def check_user(self, request):
+        phone = request.data.get('phone')
+        email = request.data.get('email', '').strip()
+        
+        if not phone and not email:
+            return Response({'error': 'No phone or email provided.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        exists = False
+        if email:
+            exists = User.objects.filter(email=email).exists()
+        elif phone:
+            phone = phone.replace(' ', '').replace('-', '').replace('+91', '')
+            exists = User.objects.filter(phone=phone).exists()
+            
+        return Response({'exists': exists}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
     def verify_otp(self, request):
         firebase_token = request.data.get('firebase_token')
         email_otp = request.data.get('email_otp')

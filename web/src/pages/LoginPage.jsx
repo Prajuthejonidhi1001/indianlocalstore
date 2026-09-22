@@ -71,6 +71,18 @@ export default function LoginPage() {
     
     setLoading(true);
     try {
+      // 1. CHECK IF USER EXISTS
+      const checkRes = await authAPI.checkUser(
+        isEmail ? identifier : null,
+        !isEmail ? identifier : null
+      );
+
+      if (!checkRes.data.exists) {
+        toast.error('Not registered. Please sign up first.');
+        setLoading(false);
+        return;
+      }
+
       if (!isEmail) {
         setupRecaptcha();
         const appVerifier = window.recaptchaVerifier;
