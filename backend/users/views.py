@@ -77,7 +77,10 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
     def check_user(self, request):
         phone = request.data.get('phone')
-        email = request.data.get('email', '').strip()
+        email = request.data.get('email')
+        
+        phone = str(phone).strip() if phone else ''
+        email = str(email).strip() if email else ''
         
         if not phone and not email:
             return Response({'error': 'No phone or email provided.'}, status=status.HTTP_400_BAD_REQUEST)
