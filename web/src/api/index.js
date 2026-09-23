@@ -70,6 +70,8 @@ export const authAPI = {
   sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
   verifyPhoneOtp: (firebase_token, email_otp, email, role, first_name, last_name) =>
     api.post('/users/verify_otp/', { firebase_token, email_otp, email, role, first_name, last_name }),
+  verifyEmailOnly: (email, email_otp) =>
+    api.post('/users/verify_email_only/', { email, email_otp }),
   // Legacy register for testing if needed
   register: (data) => api.post('/users/register/', data),
   // Standard tokens

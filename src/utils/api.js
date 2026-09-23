@@ -68,6 +68,7 @@ export const authAPI = {
   checkUser: (email, phone) => api.post('/users/check_user/', { email, phone }),
   sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
   verifyOtp: (firebase_token, email_otp) => api.post('/users/verify_otp/', { firebase_token, email_otp }),
+  verifyEmailOnly: (email, email_otp) => api.post('/users/verify_email_only/', { email, email_otp }),
   refreshToken: (refresh_token) => api.post('/users/token/refresh/', { refresh: refresh_token }),
   logout: (refresh_token) => api.post('/users/logout/', { refresh: refresh_token }),
   getProfile: () => api.get('/users/me/'),

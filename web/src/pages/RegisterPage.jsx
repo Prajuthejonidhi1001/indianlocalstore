@@ -43,6 +43,11 @@ export default function RegisterPage() {
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [sendingEmailOtp, setSendingEmailOtp] = useState(false);
   
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verifyingPhone, setVerifyingPhone] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+  
   const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
@@ -174,6 +179,37 @@ export default function RegisterPage() {
     }
   };
 
+  const handleVerifyEmail = async () => {
+    const eCode = emailOtp.join('');
+    if (eCode.length !== 6) return toast.error("Please enter the full 6-digit email OTP");
+    setVerifyingEmail(true);
+    try {
+      await authAPI.verifyEmailOnly(form.email, eCode);
+      setEmailVerified(true);
+      toast.success("Email verified!");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Invalid Email OTP");
+    } finally {
+      setVerifyingEmail(false);
+    }
+  };
+
+  const handleVerifyPhone = async () => {
+    const pCode = phoneOtp.join('');
+    if (pCode.length !== 6) return toast.error("Please enter the full 6-digit phone OTP");
+    setVerifyingPhone(true);
+    try {
+      const result = await window.confirmationResult.confirm(pCode);
+      window.phoneIdToken = await result.user.getIdToken();
+      setPhoneVerified(true);
+      toast.success("Phone verified!");
+    } catch (err) {
+      toast.error("Invalid Phone OTP");
+    } finally {
+      setVerifyingPhone(false);
+    }
+  };
+
   const verifyAndRegister = async (e) => {
     e.preventDefault();
     const required = ['username', 'email', 'password', 'first_name', 'phone'];
@@ -190,16 +226,15 @@ export default function RegisterPage() {
     if (form.password.length < 8) return toast.error('Password must be at least 8 characters');
     if (form.password !== confirmPw) return toast.error('Passwords do not match');
 
-    const pCode = phoneOtp.join('');
-    const eCode = emailOtp.join('');
-
-    if (pCode.length < 6) return toast.error('Please verify your phone number');
-    if (eCode.length < 6) return toast.error('Please verify your email address');
+    if (!phoneVerified) return toast.error('Please click Verify next to your Phone OTP');
+    if (!emailVerified) return toast.error('Please click Verify next to your Email OTP');
 
     setLoading(true);
     try {
-      const result = await window.confirmationResult.confirm(pCode);
-      const idToken = await result.user.getIdToken();
+      // Use the idToken we saved during phone verification
+      const idToken = window.phoneIdToken;
+      // Pass the eCode just in case, though it's already verified in the DB
+      const eCode = emailOtp.join('');
 
       await loginWithPhoneOTP(idToken, eCode, form.email, form.role, form.first_name, form.last_name);
       
@@ -369,30 +404,41 @@ export default function RegisterPage() {
               )}
             </div>
             {emailOtpSent && (
-              <div className="otp-container" style={{ marginTop: '10px' }}>
-                {emailOtp.map((digit, index) => (
-                  <input
-                    key={`e-${index}`}
-                    type="text"
-                    maxLength={1}
-                    className={`otp-input ${otpStatus}`}
-                    value={digit}
-                    onChange={(e) => {
-                      if (isNaN(e.target.value)) return;
-                      setOtpStatus('');
-                      const newOtp = [...emailOtp];
-                      newOtp[index] = e.target.value;
-                      setEmailOtp(newOtp);
-                      if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Backspace' && !emailOtp[index] && e.target.previousSibling) {
-                        e.target.previousSibling.focus();
-                      }
-                    }}
-                    disabled={loading}
-                  />
-                ))}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px' }}>
+                <div className="otp-container" style={{ flex: 1 }}>
+                  {emailOtp.map((digit, index) => (
+                    <input
+                      key={`e-${index}`}
+                      type="text"
+                      maxLength={1}
+                      className={`otp-input ${otpStatus}`}
+                      value={digit}
+                      onChange={(e) => {
+                        if (isNaN(e.target.value)) return;
+                        setOtpStatus('');
+                        const newOtp = [...emailOtp];
+                        newOtp[index] = e.target.value;
+                        setEmailOtp(newOtp);
+                        if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Backspace' && !emailOtp[index] && e.target.previousSibling) {
+                          e.target.previousSibling.focus();
+                        }
+                      }}
+                      disabled={loading || emailVerified}
+                    />
+                  ))}
+                </div>
+                {!emailVerified ? (
+                  <button type="button" className="btn btn-primary" onClick={handleVerifyEmail} disabled={verifyingEmail || emailOtp.join('').length < 6} style={{ height: '48px', padding: '0 16px' }}>
+                    {verifyingEmail ? '...' : 'Verify'}
+                  </button>
+                ) : (
+                  <div style={{ height: '48px', display: 'flex', alignItems: 'center', color: '#2ECC71', fontWeight: 'bold' }}>
+                    ✅ Verified
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -417,30 +463,41 @@ export default function RegisterPage() {
               )}
             </div>
             {phoneOtpSent && (
-              <div className="otp-container" style={{ marginTop: '10px' }}>
-                {phoneOtp.map((digit, index) => (
-                  <input
-                    key={`p-${index}`}
-                    type="text"
-                    maxLength={1}
-                    className={`otp-input ${otpStatus}`}
-                    value={digit}
-                    onChange={(e) => {
-                      if (isNaN(e.target.value)) return;
-                      setOtpStatus('');
-                      const newOtp = [...phoneOtp];
-                      newOtp[index] = e.target.value;
-                      setPhoneOtp(newOtp);
-                      if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Backspace' && !phoneOtp[index] && e.target.previousSibling) {
-                        e.target.previousSibling.focus();
-                      }
-                    }}
-                    disabled={loading}
-                  />
-                ))}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px' }}>
+                <div className="otp-container" style={{ flex: 1 }}>
+                  {phoneOtp.map((digit, index) => (
+                    <input
+                      key={`p-${index}`}
+                      type="text"
+                      maxLength={1}
+                      className={`otp-input ${otpStatus}`}
+                      value={digit}
+                      onChange={(e) => {
+                        if (isNaN(e.target.value)) return;
+                        setOtpStatus('');
+                        const newOtp = [...phoneOtp];
+                        newOtp[index] = e.target.value;
+                        setPhoneOtp(newOtp);
+                        if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Backspace' && !phoneOtp[index] && e.target.previousSibling) {
+                          e.target.previousSibling.focus();
+                        }
+                      }}
+                      disabled={loading || phoneVerified}
+                    />
+                  ))}
+                </div>
+                {!phoneVerified ? (
+                  <button type="button" className="btn btn-primary" onClick={handleVerifyPhone} disabled={verifyingPhone || phoneOtp.join('').length < 6} style={{ height: '48px', padding: '0 16px' }}>
+                    {verifyingPhone ? '...' : 'Verify'}
+                  </button>
+                ) : (
+                  <div style={{ height: '48px', display: 'flex', alignItems: 'center', color: '#2ECC71', fontWeight: 'bold' }}>
+                    ✅ Verified
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -594,7 +651,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <button id="register-btn" type="submit" className="btn btn-primary btn-full" disabled={loading || phoneOtp.join('').length < 6 || emailOtp.join('').length < 6} style={{ marginTop: '1.25rem' }}>
+          <button id="register-btn" type="submit" className="btn btn-primary btn-full" disabled={loading || !phoneVerified || !emailVerified} style={{ marginTop: '1.25rem' }}>
             {loading ? <span className="spinner-sm" /> : <>Verify & Create Account <ArrowRight size={16} /></>}
           </button>
         </form>

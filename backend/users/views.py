@@ -181,6 +181,29 @@ class UserViewSet(viewsets.ModelViewSet):
         })
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
+    def verify_email_only(self, request):
+        email = request.data.get('email', '')
+        if email: email = str(email).strip()
+        email_otp = request.data.get('email_otp', '')
+        if email_otp: email_otp = str(email_otp).strip()
+
+        if not email or not email_otp:
+            return Response({'error': 'Email and OTP required'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            otp_record = OTPVerification.objects.filter(email=email).latest('created_at')
+            if otp_record.expires_at < timezone.now():
+                return Response({'error': 'Email OTP has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+            if otp_record.email_otp != email_otp:
+                return Response({'error': 'Invalid Email OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            otp_record.is_verified = True
+            otp_record.save()
+            return Response({'success': True, 'message': 'Email verified successfully.'})
+        except OTPVerification.DoesNotExist:
+            return Response({'error': 'Please request an Email OTP first.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
     def register(self, request):
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():

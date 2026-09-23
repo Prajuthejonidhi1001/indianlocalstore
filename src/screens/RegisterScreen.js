@@ -43,6 +43,11 @@ export default function RegisterScreen({ navigation }) {
   const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
   const [sendingEmailOtp, setSendingEmailOtp] = useState(false);
   
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verifyingPhone, setVerifyingPhone] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+  
   const otpInputs = useRef([]);
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -210,6 +215,38 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
+  const handleVerifyEmail = async () => {
+    if (emailOtp.length !== 6) return Alert.alert("Error", "Please enter the 6-digit email OTP");
+    setVerifyingEmail(true);
+    try {
+      await authAPI.verifyEmailOnly(form.email, emailOtp);
+      setEmailVerified(true);
+      Alert.alert("Success", "Email verified!");
+    } catch (err) {
+      Alert.alert("Error", err.response?.data?.error || "Invalid Email OTP");
+    } finally {
+      setVerifyingEmail(false);
+    }
+  };
+
+  const handleVerifyPhone = async () => {
+    if (phoneOtp.length !== 6) return Alert.alert("Error", "Please enter the 6-digit phone OTP");
+    setVerifyingPhone(true);
+    try {
+      const { auth } = require('../config');
+      const { PhoneAuthProvider, signInWithCredential } = require('firebase/auth');
+      const credential = PhoneAuthProvider.credential(window.verificationId, phoneOtp);
+      const result = await signInWithCredential(auth, credential);
+      window.phoneIdToken = await result.user.getIdToken();
+      setPhoneVerified(true);
+      Alert.alert("Success", "Phone verified!");
+    } catch (err) {
+      Alert.alert("Error", "Invalid Phone OTP");
+    } finally {
+      setVerifyingPhone(false);
+    }
+  };
+
   const verifyAndRegister = async () => {
     if (!form.first_name || !form.last_name || !form.phone || !form.email || !form.username || !form.password) {
       triggerShake(); return Alert.alert('Missing Fields', 'Please fill all required personal info.');
@@ -227,21 +264,16 @@ export default function RegisterScreen({ navigation }) {
       triggerShake(); return Alert.alert('Mismatch', 'Passwords do not match.');
     }
     
-    if (phoneOtp.length !== 6) {
-      triggerShake(); return Alert.alert('Error', 'Please enter a valid 6-digit phone OTP');
+    if (!phoneVerified) {
+      triggerShake(); return Alert.alert('Error', 'Please click Verify next to your Phone OTP');
     }
-    if (emailOtp.length !== 6) {
-      triggerShake(); return Alert.alert('Error', 'Please enter a valid 6-digit email OTP');
+    if (!emailVerified) {
+      triggerShake(); return Alert.alert('Error', 'Please click Verify next to your Email OTP');
     }
     setLoading(true);
     try {
-      const { auth } = require('../config');
-      const { PhoneAuthProvider, signInWithCredential } = require('firebase/auth');
-      
-      // 1. Verify Phone OTP via Firebase
-      const credential = PhoneAuthProvider.credential(window.verificationId, phoneOtp);
-      const result = await signInWithCredential(auth, credential);
-      const idToken = await result.user.getIdToken();
+      // 1. We already verified Phone OTP via Firebase and stored idToken
+      const idToken = window.phoneIdToken;
 
       // 2. Login to Django Backend
       const { data } = await authAPI.verifyOtp(idToken, emailOtp, form.email);
@@ -394,9 +426,20 @@ export default function RegisterScreen({ navigation }) {
                   )}
                 </View>
                 {emailOtpSent && (
-                  <View style={[styles.inputRow, { marginTop: -4, borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' }]}>
-                    <Ionicons name="key-outline" size={18} color="#FF6B00" style={{ marginRight: 10 }} />
-                    <TextInput placeholder="Enter Email OTP (6 digits)" value={emailOtp} onChangeText={setEmailOtp} style={styles.inputText} keyboardType="number-pad" maxLength={6} placeholderTextColor={COLORS.textMuted} />
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: -4, marginBottom: 12 }}>
+                    <View style={[styles.inputRow, { flex: 1, marginBottom: 0, borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' }]}>
+                      <Ionicons name="key-outline" size={18} color="#FF6B00" style={{ marginRight: 10 }} />
+                      <TextInput placeholder="Email OTP (6 digits)" value={emailOtp} onChangeText={setEmailOtp} style={styles.inputText} keyboardType="number-pad" maxLength={6} placeholderTextColor={COLORS.textMuted} editable={!emailVerified} />
+                    </View>
+                    {!emailVerified ? (
+                      <TouchableOpacity style={[styles.inlineBtn, { backgroundColor: '#FF6B00', borderColor: '#FF6B00' }]} onPress={handleVerifyEmail} disabled={verifyingEmail || emailOtp.length < 6}>
+                        <Text style={[styles.inlineBtnText, { color: '#fff' }]}>{verifyingEmail ? '...' : 'Verify'}</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={[styles.inlineBtn, { backgroundColor: 'rgba(46,204,113,0.1)', borderColor: '#2ECC71' }]}>
+                        <Text style={[styles.inlineBtnText, { color: '#2ECC71' }]}>Verified</Text>
+                      </View>
+                    )}
                   </View>
                 )}
 
@@ -421,9 +464,20 @@ export default function RegisterScreen({ navigation }) {
                   )}
                 </View>
                 {phoneOtpSent && (
-                  <View style={[styles.inputRow, { marginTop: -4, borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' }]}>
-                    <Ionicons name="key-outline" size={18} color="#FF6B00" style={{ marginRight: 10 }} />
-                    <TextInput placeholder="Enter Phone OTP (6 digits)" value={phoneOtp} onChangeText={setPhoneOtp} style={styles.inputText} keyboardType="number-pad" maxLength={6} placeholderTextColor={COLORS.textMuted} />
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: -4, marginBottom: 12 }}>
+                    <View style={[styles.inputRow, { flex: 1, marginBottom: 0, borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' }]}>
+                      <Ionicons name="key-outline" size={18} color="#FF6B00" style={{ marginRight: 10 }} />
+                      <TextInput placeholder="Phone OTP (6 digits)" value={phoneOtp} onChangeText={setPhoneOtp} style={styles.inputText} keyboardType="number-pad" maxLength={6} placeholderTextColor={COLORS.textMuted} editable={!phoneVerified} />
+                    </View>
+                    {!phoneVerified ? (
+                      <TouchableOpacity style={[styles.inlineBtn, { backgroundColor: '#FF6B00', borderColor: '#FF6B00' }]} onPress={handleVerifyPhone} disabled={verifyingPhone || phoneOtp.length < 6}>
+                        <Text style={[styles.inlineBtnText, { color: '#fff' }]}>{verifyingPhone ? '...' : 'Verify'}</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <View style={[styles.inlineBtn, { backgroundColor: 'rgba(46,204,113,0.1)', borderColor: '#2ECC71' }]}>
+                        <Text style={[styles.inlineBtnText, { color: '#2ECC71' }]}>Verified</Text>
+                      </View>
+                    )}
                   </View>
                 )}
                 {renderInput('lock-closed-outline', 'Password (min 8 chars)', form.password, 'password', true)}
@@ -564,7 +618,7 @@ export default function RegisterScreen({ navigation }) {
                 )}
 
                 {/* Submit */}
-                <TouchableOpacity style={[styles.submitBtn, (loading || phoneOtp.length < 6 || emailOtp.length < 6) && { opacity: 0.7 }]} onPress={verifyAndRegister} disabled={loading || phoneOtp.length < 6 || emailOtp.length < 6} activeOpacity={0.85}>
+                <TouchableOpacity style={[styles.submitBtn, (loading || !phoneVerified || !emailVerified) && { opacity: 0.7 }]} onPress={verifyAndRegister} disabled={loading || !phoneVerified || !emailVerified} activeOpacity={0.85}>
                   {loading
                     ? <ActivityIndicator color="#fff" />
                     : <><Text style={styles.submitText}>Verify & Create Account</Text><Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 8 }} /></>
