@@ -35,8 +35,14 @@ export default function RegisterScreen({ navigation }) {
   }
 
   // OTP State
-  const [step, setStep] = useState(1);
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
+  const [sendingEmailOtp, setSendingEmailOtp] = useState(false);
+  
   const otpInputs = useRef([]);
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -152,9 +158,61 @@ export default function RegisterScreen({ navigation }) {
     finally { setLocating(false); }
   };
 
-  const handleRegister = async () => {
-    if (!form.first_name || !form.last_name || !form.phone) {
-      triggerShake(); return Alert.alert('Missing Fields', 'Please fill name and phone number.');
+  const handleSendPhoneOTP = async () => {
+    if (!form.phone || form.phone.length < 10) {
+      triggerShake(); return Alert.alert('Missing Info', 'Please enter a valid 10-digit phone number.');
+    }
+    setSendingPhoneOtp(true);
+    try {
+      const { PhoneAuthProvider } = require('firebase/auth');
+      const { auth } = require('../config');
+      
+      const phoneNumber = `+91${form.phone}`;
+      const phoneProvider = new PhoneAuthProvider(auth);
+      
+      if (!window.recaptchaVerifierRef) {
+        throw new Error('Recaptcha not ready');
+      }
+
+      const verificationId = await phoneProvider.verifyPhoneNumber(
+        phoneNumber,
+        window.recaptchaVerifierRef.current
+      );
+      window.verificationId = verificationId;
+      setPhoneOtpSent(true);
+      Alert.alert('OTP Sent', 'OTP sent to your phone!');
+    } catch (err) {
+      console.error("FIREBASE ERROR:", err);
+      triggerShake();
+      Alert.alert('Error', err.message || 'Failed to send SMS.');
+      setRecaptchaKey(prev => prev + 1);
+    } finally {
+      setSendingPhoneOtp(false);
+    }
+  };
+
+  const handleSendEmailOTP = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!form.email || !emailRegex.test(form.email)) {
+      triggerShake(); return Alert.alert('Invalid Email', 'Please enter a valid email address.');
+    }
+    setSendingEmailOtp(true);
+    try {
+      await authAPI.sendPhoneOtp(null, form.email);
+      setEmailOtpSent(true);
+      Alert.alert('OTP Sent', 'OTP sent to your email!');
+    } catch (err) {
+      console.error(err);
+      triggerShake();
+      Alert.alert('Error', 'Failed to send Email OTP.');
+    } finally {
+      setSendingEmailOtp(false);
+    }
+  };
+
+  const verifyAndRegister = async () => {
+    if (!form.first_name || !form.last_name || !form.phone || !form.email || !form.username || !form.password) {
+      triggerShake(); return Alert.alert('Missing Fields', 'Please fill all required personal info.');
     }
     if (form.role === 'seller' && (!form.shopName || !form.shopAddress || !form.pincode || !form.state)) {
       triggerShake(); return Alert.alert('Missing Info', 'Fill all shop details.');
@@ -162,104 +220,31 @@ export default function RegisterScreen({ navigation }) {
     if (form.role === 'seller' && !form.category) {
       triggerShake(); return Alert.alert('Category Required', 'Please select your shop category.');
     }
-
-    setLoading(true);
-    try {
-      if (step === 1) {
-        const { PhoneAuthProvider } = require('firebase/auth');
-        const { auth } = require('../config');
-        
-        const phoneNumber = `+91${form.phone}`;
-        const phoneProvider = new PhoneAuthProvider(auth);
-        
-        // Ensure recaptcha is mounted
-        if (!window.recaptchaVerifierRef) {
-          throw new Error('Recaptcha not ready');
-        }
-
-        const verificationId = await phoneProvider.verifyPhoneNumber(
-          phoneNumber,
-          window.recaptchaVerifierRef.current
-        );
-        window.verificationId = verificationId;
-
-        if (form.email) {
-          await authAPI.sendPhoneOtp(phoneNumber, form.email);
-        }
-
-        setStep(2);
-        setResendCooldown(30);
-        Alert.alert('OTP Sent', form.email ? 'OTPs sent to phone and email!' : 'OTP sent to your phone!');
-      }
-    } catch (err) {
-      console.error("FIREBASE ERROR:", err);
-      triggerShake();
-      Alert.alert('Error', err.message || 'Failed to send OTP. Try again.');
-      setRecaptchaKey(prev => prev + 1);
-    } finally {
-      setLoading(false);
+    if (form.password.length < 8) {
+      triggerShake(); return Alert.alert('Weak Password', 'Password must be at least 8 characters.');
     }
-  };
-
-  const handleResendOTP = async () => {
-    if (resendCooldown > 0) return;
-    try {
-      const { auth } = require('../config');
-      const { PhoneAuthProvider } = require('firebase/auth');
-      const phoneProvider = new PhoneAuthProvider(auth);
-      const phoneNumber = `+91${form.phone}`;
-      const verificationId = await phoneProvider.verifyPhoneNumber(
-        phoneNumber,
-        window.recaptchaVerifierRef.current
-      );
-      window.verificationId = verificationId;
-
-      if (form.email) await authAPI.sendPhoneOtp(phoneNumber, form.email);
-      setResendCooldown(30);
-      Alert.alert('OTP Sent', 'A new verification code has been sent.');
-    } catch (err) {
-      Alert.alert('Error', 'Failed to resend OTP. Please try again.');
-      setRecaptchaKey(prev => prev + 1);
-    }
-  };
-
-  const handleOtpChange = (text, index) => {
-    if (/[^0-9]/.test(text)) return;
-    const newOtp = [...otp];
-    newOtp[index] = text;
-    setOtp(newOtp);
-
-    // Auto focus next
-    if (text && index < 5) {
-      otpInputs.current[index + 1]?.focus();
+    if (form.password !== confirmPassword) {
+      triggerShake(); return Alert.alert('Mismatch', 'Passwords do not match.');
     }
     
-    // Auto verify
-    if (index === 5 && text) {
-      const fullCode = newOtp.join('');
-      if (fullCode.length === 6) verifyAndRegister(fullCode);
+    if (phoneOtp.length !== 6) {
+      triggerShake(); return Alert.alert('Error', 'Please enter a valid 6-digit phone OTP');
     }
-  };
-
-  const handleOtpKeyPress = (e, index) => {
-    if (e.nativeEvent.key === 'Backspace' && !otp[index] && index > 0) {
-      otpInputs.current[index - 1]?.focus();
+    if (emailOtp.length !== 6) {
+      triggerShake(); return Alert.alert('Error', 'Please enter a valid 6-digit email OTP');
     }
-  };
-
-  const verifyAndRegister = async (code) => {
     setLoading(true);
     try {
       const { auth } = require('../config');
       const { PhoneAuthProvider, signInWithCredential } = require('firebase/auth');
       
       // 1. Verify Phone OTP via Firebase
-      const credential = PhoneAuthProvider.credential(window.verificationId, code);
+      const credential = PhoneAuthProvider.credential(window.verificationId, phoneOtp);
       const result = await signInWithCredential(auth, credential);
       const idToken = await result.user.getIdToken();
 
       // 2. Login to Django Backend
-      const { data } = await authAPI.verifyOtp(idToken, '');
+      const { data } = await authAPI.verifyOtp(idToken, emailOtp, form.email);
       const AsyncStorage = require('@react-native-async-storage/async-storage').default;
       await AsyncStorage.setItem('access_token', data.access);
       await AsyncStorage.setItem('refresh_token', data.refresh);
@@ -398,20 +383,49 @@ export default function RegisterScreen({ navigation }) {
                   </View>
                 </View>
                 {renderInput('at-outline', 'Username', form.username, 'username')}
-                {renderInput('mail-outline', 'Email', form.email, 'email', false, 'email-address')}
-                <View style={[styles.inputRow, focusedInput === 'phone' && styles.inputRowFocused]}>
-                  <Ionicons name="call-outline" size={18} color={focusedInput === 'phone' ? '#FF6B00' : COLORS.textMuted} style={{ marginRight: 10 }} />
-                  <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '600', marginRight: 5 }}>+91</Text>
-                  <TextInput
-                    placeholder="9876543210" value={form.phone}
-                    onChangeText={t => {
-                      const val = t.replace(/\D/g, '');
-                      if (val.length <= 10) setForm({ ...form, phone: val });
-                    }}
-                    style={styles.inputText} keyboardType="phone-pad" placeholderTextColor={COLORS.textMuted}
-                    onFocus={() => setFocusedInput('phone')} onBlur={() => setFocusedInput(null)}
-                  />
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <View style={{ flex: 1 }}>
+                    {renderInput('mail-outline', 'Email', form.email, 'email', false, 'email-address', { editable: !emailOtpSent })}
+                  </View>
+                  {!emailOtpSent && (
+                    <TouchableOpacity style={styles.inlineBtn} onPress={handleSendEmailOTP} disabled={sendingEmailOtp}>
+                      <Text style={styles.inlineBtnText}>{sendingEmailOtp ? 'Wait...' : 'Send OTP'}</Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
+                {emailOtpSent && (
+                  <View style={[styles.inputRow, { marginTop: -4, borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' }]}>
+                    <Ionicons name="key-outline" size={18} color="#FF6B00" style={{ marginRight: 10 }} />
+                    <TextInput placeholder="Enter Email OTP (6 digits)" value={emailOtp} onChangeText={setEmailOtp} style={styles.inputText} keyboardType="number-pad" maxLength={6} placeholderTextColor={COLORS.textMuted} />
+                  </View>
+                )}
+
+                <View style={{ flexDirection: 'row', gap: 8 }}>
+                  <View style={[styles.inputRow, { flex: 1 }, focusedInput === 'phone' && styles.inputRowFocused]}>
+                    <Ionicons name="call-outline" size={18} color={focusedInput === 'phone' ? '#FF6B00' : COLORS.textMuted} style={{ marginRight: 10 }} />
+                    <Text style={{ color: COLORS.text, fontSize: 15, fontWeight: '600', marginRight: 5 }}>+91</Text>
+                    <TextInput
+                      placeholder="9876543210" value={form.phone}
+                      onChangeText={t => {
+                        const val = t.replace(/\D/g, '');
+                        if (val.length <= 10) setForm({ ...form, phone: val });
+                      }}
+                      style={styles.inputText} keyboardType="phone-pad" placeholderTextColor={COLORS.textMuted}
+                      onFocus={() => setFocusedInput('phone')} onBlur={() => setFocusedInput(null)} editable={!phoneOtpSent}
+                    />
+                  </View>
+                  {!phoneOtpSent && (
+                    <TouchableOpacity style={styles.inlineBtn} onPress={handleSendPhoneOTP} disabled={sendingPhoneOtp}>
+                      <Text style={styles.inlineBtnText}>{sendingPhoneOtp ? 'Wait...' : 'Send OTP'}</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+                {phoneOtpSent && (
+                  <View style={[styles.inputRow, { marginTop: -4, borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' }]}>
+                    <Ionicons name="key-outline" size={18} color="#FF6B00" style={{ marginRight: 10 }} />
+                    <TextInput placeholder="Enter Phone OTP (6 digits)" value={phoneOtp} onChangeText={setPhoneOtp} style={styles.inputText} keyboardType="number-pad" maxLength={6} placeholderTextColor={COLORS.textMuted} />
+                  </View>
+                )}
                 {renderInput('lock-closed-outline', 'Password (min 8 chars)', form.password, 'password', true)}
 
                 {form.password.length > 0 && (
@@ -550,57 +564,17 @@ export default function RegisterScreen({ navigation }) {
                 )}
 
                 {/* Submit */}
-                <TouchableOpacity style={[styles.submitBtn, loading && { opacity: 0.7 }]} onPress={handleRegister} disabled={loading} activeOpacity={0.85}>
+                <TouchableOpacity style={[styles.submitBtn, (loading || phoneOtp.length < 6 || emailOtp.length < 6) && { opacity: 0.7 }]} onPress={verifyAndRegister} disabled={loading || phoneOtp.length < 6 || emailOtp.length < 6} activeOpacity={0.85}>
                   {loading
                     ? <ActivityIndicator color="#fff" />
-                    : <><Text style={styles.submitText}>Continue</Text><Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 8 }} /></>
+                    : <><Text style={styles.submitText}>Verify & Create Account</Text><Ionicons name="arrow-forward" size={18} color="#fff" style={{ marginLeft: 8 }} /></>
                   }
                 </TouchableOpacity>
 
                 <TouchableOpacity style={styles.footerLink} onPress={() => navigation.navigate('Login')}>
                   <Text style={styles.footerText}>Already have an account? <Text style={styles.footerAction}>Sign In</Text></Text>
                 </TouchableOpacity>
-              </>
-            ) : (
-              <View style={styles.otpSection}>
-                <Text style={styles.otpTitle}>Verification Code</Text>
-                <Text style={styles.otpSubtitle}>We sent a 6-digit code to</Text>
-                <Text style={styles.otpEmail}>{form.email}</Text>
 
-                <View style={styles.otpContainer}>
-                  {otp.map((digit, index) => (
-                    <TextInput
-                      key={index}
-                      ref={el => otpInputs.current[index] = el}
-                      style={styles.otpInput}
-                      keyboardType="number-pad"
-                      maxLength={1}
-                      value={digit}
-                      onChangeText={(text) => handleOtpChange(text, index)}
-                      onKeyPress={(e) => handleOtpKeyPress(e, index)}
-                      autoFocus={index === 0}
-                    />
-                  ))}
-                </View>
-
-                <TouchableOpacity 
-                  style={{ alignSelf: 'center', marginVertical: 10 }} 
-                  onPress={handleResendOTP} 
-                  disabled={resendCooldown > 0}
-                >
-                  <Text style={{ color: resendCooldown > 0 ? COLORS.textMuted : COLORS.primary, fontWeight: '600' }}>
-                    {resendCooldown > 0 ? `Resend OTP in ${resendCooldown}s` : 'Resend OTP'}
-                  </Text>
-                </TouchableOpacity>
-
-                {loading && <ActivityIndicator color="#FF6B00" style={{ marginTop: 20 }} />}
-
-                <TouchableOpacity style={styles.backToRegBtn} onPress={() => { setStep(1); setOtp(['','','','','','']); setRecaptchaKey(prev => prev + 1); }}>
-                  <Ionicons name="arrow-back" size={16} color={COLORS.textMuted} style={{ marginRight: 6 }} />
-                  <Text style={styles.backToRegText}>Back to Registration</Text>
-                </TouchableOpacity>
-              </View>
-            )}
 
           </Animated.View>
         </ScrollView>
@@ -640,6 +614,8 @@ const styles = StyleSheet.create({
   inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.elevated, borderRadius: 14, paddingHorizontal: 14, height: 52, marginBottom: 12, borderWidth: 1.5, borderColor: COLORS.border },
   inputRowFocused: { borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' },
   inputText: { flex: 1, color: COLORS.text, fontSize: 15, fontWeight: '500' },
+  inlineBtn: { height: 52, paddingHorizontal: 12, backgroundColor: 'rgba(255,107,53,0.1)', borderRadius: 14, borderWidth: 1, borderColor: '#FF6B00', alignItems: 'center', justifyContent: 'center' },
+  inlineBtnText: { color: '#FF6B00', fontWeight: '800', fontSize: 13 },
 
   // Password strength
   strengthBar: { marginBottom: 14, marginTop: -4 },
