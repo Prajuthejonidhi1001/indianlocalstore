@@ -281,7 +281,23 @@ export default function RegisterPage() {
     } catch (err) {
       console.error(err);
       setOtpStatus('error');
-      toast.error(err.message || 'Verification failed. Invalid code.');
+      let errMsg = 'Verification failed. Invalid code.';
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errMsg = err.response.data;
+        } else if (err.response.data.error) {
+          errMsg = err.response.data.error;
+        } else {
+          // Extract first field error
+          const firstKey = Object.keys(err.response.data)[0];
+          if (firstKey && Array.isArray(err.response.data[firstKey])) {
+            errMsg = `${firstKey}: ${err.response.data[firstKey][0]}`;
+          } else if (firstKey) {
+            errMsg = `${firstKey}: ${err.response.data[firstKey]}`;
+          }
+        }
+      }
+      toast.error(errMsg || err.message);
     } finally {
       setLoading(false);
     }
