@@ -90,7 +90,9 @@ class UserViewSet(viewsets.ModelViewSet):
         if email:
             exists = User.objects.filter(email=email).exists()
         elif phone:
-            phone = phone.replace(' ', '').replace('-', '').replace('+91', '')
+            phone = str(phone).replace(' ', '').replace('-', '')
+            if not phone.startswith('+') and len(phone) == 10:
+                phone = '+91' + phone
             exists = User.objects.filter(phone=phone).exists()
             
         return Response({'exists': exists}, status=status.HTTP_200_OK)
