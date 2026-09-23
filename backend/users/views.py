@@ -32,7 +32,9 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
     def send_otp(self, request):
         phone = request.data.get('phone')
-        email = request.data.get('email', '').strip()
+        email = request.data.get('email')
+        if email:
+            email = str(email).strip()
         
         if not email and not phone:
             return Response({'message': 'No email or phone provided.'}, status=status.HTTP_400_BAD_REQUEST)
@@ -77,7 +79,9 @@ class UserViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
     def check_user(self, request):
         phone = request.data.get('phone')
-        email = request.data.get('email', '').strip()
+        email = request.data.get('email')
+        if email:
+            email = str(email).strip()
         
         if not phone and not email:
             return Response({'error': 'No phone or email provided.'}, status=status.HTTP_400_BAD_REQUEST)
