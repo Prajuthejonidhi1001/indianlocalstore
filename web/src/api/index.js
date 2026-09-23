@@ -105,8 +105,8 @@ export const shopAPI = {
   getShops: (params) => api.get('/shops/', { params }),
   getShopDetail: (id) => api.get(`/shops/${id}/`),
   getNearbyShops: (lat, lng) => api.get('/shops/nearby/', { params: { latitude: lat, longitude: lng } }),
-  createShop: (data) => api.post('/shops/', data),
-  updateShop: (id, data) => api.patch(`/shops/${id}/`, data),
+  createShop: (data) => api.post('/shops/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateShop: (id, data) => api.patch(`/shops/${id}/`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getMyShop: () => api.get('/shops/my_shop/'),
   addReview: (shopId, data) => api.post(`/shops/${shopId}/add_review/`, data),
 };
