@@ -354,7 +354,7 @@ export default function RegisterScreen({ navigation }) {
                 <Ionicons name="arrow-back" size={22} color="#fff" />
               </TouchableOpacity>
               <View style={styles.logoBox}>
-                <Ionicons name="storefront" size={20} color="#fff" />
+                <Image source={require('../../assets/icon.png')} style={{ width: 24, height: 24 }} resizeMode="contain" />
               </View>
             </View>
 

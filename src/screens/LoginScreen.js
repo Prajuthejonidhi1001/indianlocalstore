@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, 
-  ScrollView, Alert, Animated, Easing, KeyboardAvoidingView, Platform, Dimensions, Vibration
+  ScrollView, Alert, Animated, Easing, KeyboardAvoidingView, Platform, Dimensions, Vibration, Image
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useIsFocused } from '@react-navigation/native';
@@ -196,7 +196,7 @@ export default function LoginScreen({ navigation }) {
             <View style={styles.logoWrap}>
               <Animated.View style={[styles.hologramRing, { transform: [{ rotate: logoRotation }] }]} />
               <View style={styles.logoBox}>
-                <Ionicons name="flash" size={36} color="#FFF" />
+                <Image source={require('../../assets/icon.png')} style={{ width: 40, height: 40 }} resizeMode="contain" />
               </View>
             </View>
 

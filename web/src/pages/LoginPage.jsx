@@ -14,9 +14,11 @@ export default function LoginPage() {
   const location = useLocation();
   
   const [step, setStep] = useState(1); // 1 = Details, 2 = OTP
-  const [identifier, setIdentifier] = useState('');
+  const [phone, setPhone] = useState('');
+  const [email, setEmail] = useState('');
   
-  const [otp, setOtp] = useState('');
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
@@ -45,48 +47,37 @@ export default function LoginPage() {
     }
   };
 
-  const isEmail = identifier.includes('@');
-
   const handleSendOTP = async (e) => {
     if(e) e.preventDefault();
-    if (!identifier) {
-      toast.error('Please enter your phone number or email');
+    if (!phone || phone.length < 10) {
+      toast.error('Please enter a valid 10-digit phone number');
       return;
     }
-    
-    if (isEmail) {
-      if (!/^\S+@\S+\.\S+$/.test(identifier)) {
-        toast.error('Please enter a valid email address');
-        return;
-      }
-    } else {
-      const numericPhone = identifier.replace(/\D/g, '');
-      if (numericPhone.length < 10) {
-        toast.error('Please enter a valid 10-digit phone number');
-        return;
-      }
+    if (email && !/^\S+@\S+\.\S+$/.test(email)) {
+      toast.error('Please enter a valid email address');
+      return;
     }
     
     setLoading(true);
     try {
-      if (!isEmail) {
-        setupRecaptcha();
-        const appVerifier = window.recaptchaVerifier;
-        const numericPhone = identifier.replace(/\D/g, '');
-        const phoneNumber = `+91${numericPhone}`;
-        // 1. Send Firebase SMS
-        const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
-        window.confirmationResult = confirmationResult;
-      } else {
-        // 2. Send Email OTP from our backend
-        await authAPI.sendPhoneOtp(null, identifier);
+      setupRecaptcha();
+      const appVerifier = window.recaptchaVerifier;
+      const phoneNumber = `+91${phone}`;
+
+      // 1. Send Firebase SMS
+      const confirmationResult = await signInWithPhoneNumber(auth, phoneNumber, appVerifier);
+      window.confirmationResult = confirmationResult;
+
+      // 2. Send Email OTP from our backend (if provided)
+      if (email) {
+        await authAPI.sendPhoneOtp(phoneNumber, email);
       }
 
-      toast.success('OTP sent successfully!');
+      toast.success(email ? 'OTPs sent to phone and email!' : 'OTP sent successfully!');
       setStep(2);
       setResendCooldown(30);
     } catch (err) {
-      console.error("ERROR:", err);
+      console.error("FIREBASE ERROR:", err);
       toast.error(err.message || 'Failed to send OTP. Try again.');
       if (window.recaptchaVerifier) {
         window.recaptchaVerifier.clear();
@@ -99,27 +90,23 @@ export default function LoginPage() {
 
   const handleVerifyOTP = async (e) => {
     e.preventDefault();
-    if (otp.length !== 6) {
-      toast.error('Please enter a valid 6-digit OTP');
+    if (phoneOtp.length !== 6) {
+      toast.error('Please enter a valid 6-digit phone OTP');
+      return;
+    }
+    if (email && emailOtp.length !== 6) {
+      toast.error('Please enter a valid 6-digit email OTP');
       return;
     }
     
     setLoading(true);
     try {
-      let idToken = null;
-      let emailOtpToVerify = null;
+      // 1. Verify Phone OTP with Firebase
+      const result = await window.confirmationResult.confirm(phoneOtp);
+      const idToken = await result.user.getIdToken();
 
-      if (!isEmail) {
-        // 1. Verify Phone OTP with Firebase
-        const result = await window.confirmationResult.confirm(otp);
-        idToken = await result.user.getIdToken();
-      } else {
-        // 2. Email OTP to verify
-        emailOtpToVerify = otp;
-      }
-
-      // Send to backend
-      const res = await loginWithPhoneOTP(idToken, emailOtpToVerify, isEmail ? identifier : null);
+      // 2. Send Firebase ID Token (and optional Email OTP) to our backend
+      const res = await loginWithPhoneOTP(idToken, emailOtp);
       
       if (res.is_new_user) {
         toast.success('Account created successfully!');
@@ -139,32 +126,46 @@ export default function LoginPage() {
 
   return (
     <div className="auth-page animate-in">
-      <div className="auth-bg"></div>
-      <div className="auth-card glass-card" style={{ boxShadow: '0 20px 40px rgba(255, 107, 53, 0.15), 0 1px 3px rgba(0,0,0,0.05)', border: '1px solid rgba(255, 107, 53, 0.2)', backdropFilter: 'blur(10px)' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <Link to="/" className="auth-logo" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '12px', textDecoration: 'none', margin: '0 auto 1rem auto' }}>
-            <img src="/logo.png" alt="Indian Local Store" style={{ height: '70px', width: 'auto', borderRadius: '12px' }} />
-          </Link>
-          <p className="auth-subtitle" style={{ fontSize: '0.95rem', margin: 0 }}>Welcome back! Sign in to continue your journey.</p>
-        </div>
+      <div className="auth-card glass-card">
+        <Link to="/" className="auth-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '12px', textDecoration: 'none', marginBottom: '1.5rem' }}>
+          <img src="/logo.png" alt="Indian Local Store" style={{ height: '70px', width: 'auto', borderRadius: '12px' }} />
+        </Link>
+        <p className="auth-subtitle">Welcome back! Sign in to continue.</p>
 
         {step === 1 ? (
           <form onSubmit={handleSendOTP} className="auth-form" id="login-form">
             <div className="form-group">
-              <label className="form-label">Phone Number or Email</label>
+              <label className="form-label">Phone Number (Required)</label>
               <div className="auth-input-wrapper">
-                <User size={18} className="auth-input-icon" />
+                <Smartphone size={18} className="auth-input-icon" />
+                <span className="phone-prefix">+91</span>
                 <input
-                  id="identifier-input"
-                  type="text"
+                  id="phone-input"
+                  type="tel"
                   className="form-input"
-                  placeholder="Enter 10-digit number or email"
-                  value={identifier}
-                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Enter 10-digit number"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  style={{ paddingLeft: '75px' }}
+                />
+              </div>
+            </div>
+
+            <div className="form-group mt-3">
+              <label className="form-label">Email Address (Optional)</label>
+              <div className="auth-input-wrapper">
+                <Mail size={18} className="auth-input-icon" />
+                <input
+                  id="email-input"
+                  type="email"
+                  className="form-input"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   style={{ paddingLeft: '40px' }}
                 />
               </div>
-              <small className="text-muted d-block mt-1">We will send an OTP to verify your identity.</small>
+              <small className="text-muted d-block mt-1">If provided, we'll verify this too for extra security.</small>
             </div>
 
             {/* Invisible Recaptcha Container */}
@@ -203,7 +204,7 @@ export default function LoginPage() {
                 id="phone-otp-input"
                 type="text"
                 className="form-input text-center text-xl tracking-widest"
-                placeholder="• • • • • •"
+                placeholder="ΓÇó ΓÇó ΓÇó ΓÇó ΓÇó ΓÇó"
                 value={phoneOtp}
                 onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 maxLength={6}
@@ -218,7 +219,7 @@ export default function LoginPage() {
                   id="email-otp-input"
                   type="text"
                   className="form-input text-center text-xl tracking-widest"
-                  placeholder="• • • • • •"
+                  placeholder="ΓÇó ΓÇó ΓÇó ΓÇó ΓÇó ΓÇó"
                   value={emailOtp}
                   onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                   maxLength={6}
