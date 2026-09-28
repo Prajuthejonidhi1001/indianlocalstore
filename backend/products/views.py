@@ -7,18 +7,20 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.exceptions import PermissionDenied
 from django.db import transaction
 from django_filters.rest_framework import DjangoFilterBackend
-from .models import Category, SubCategory, Product, ProductReview, ProductImage
+from .models import Category, SubCategory, Product, ProductReview, ProductImage, Wishlist
 from .serializers import (
     CategorySerializer, SubCategorySerializer, ProductListSerializer,
-    ProductDetailSerializer, ProductCreateUpdateSerializer, ProductReviewSerializer
+    ProductDetailSerializer, ProductCreateUpdateSerializer, ProductReviewSerializer,
+    WishlistSerializer
 )
+from .filters import ProductFilter
 
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Get all categories and subcategories"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     @method_decorator(cache_page(60 * 15))
     def list(self, request, *args, **kwargs):
@@ -29,7 +31,7 @@ class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Get subcategories by category"""
     queryset = SubCategory.objects.all()
     serializer_class = SubCategorySerializer
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend]
     filterset_fields = ['category']
 
@@ -42,7 +44,7 @@ class ProductViewSet(viewsets.ModelViewSet):
     """Product listing and management"""
     queryset = Product.objects.filter(is_active=True)
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
-    filterset_fields = ['category', 'subcategory', 'seller']
+    filterset_class = ProductFilter
     search_fields = ['name', 'description']
     ordering_fields = ['price', 'rating', 'created_at']
     ordering = ['-created_at']
@@ -53,9 +55,7 @@ class ProductViewSet(viewsets.ModelViewSet):
         return super().list(request, *args, **kwargs)
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            return [IsAuthenticated()]
-        return [AllowAny()]
+        return [IsAuthenticated()]
 
     def get_serializer_class(self):
         if self.action == 'retrieve':
@@ -113,10 +113,23 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def add_review(self, request, pk=None):
         product = self.get_object()
+        
+        # Check if user already reviewed
+        if ProductReview.objects.filter(product=product, user=request.user).exists():
+            return Response({'detail': 'You have already reviewed this product.'}, status=status.HTTP_400_BAD_REQUEST)
+            
         serializer = ProductReviewSerializer(data=request.data)
         
         if serializer.is_valid():
             serializer.save(product=product, user=request.user)
+            
+            # Recalculate average rating
+            reviews = ProductReview.objects.filter(product=product)
+            product.reviews_count = reviews.count()
+            avg_rating = sum([r.rating for r in reviews]) / product.reviews_count if product.reviews_count > 0 else 0
+            product.rating = round(avg_rating, 1)
+            product.save()
+            
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -130,10 +143,27 @@ class ProductViewSet(viewsets.ModelViewSet):
         serializer = ProductListSerializer(products, many=True, context={'request': request})
         return Response(serializer.data)
 
-    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def search(self, request):
         """Search products by name or category"""
         query = request.query_params.get('q', '')
         products = Product.objects.filter(name__icontains=query, is_active=True)
         serializer = self.get_serializer(products, many=True)
         return Response(serializer.data)
+
+
+class WishlistViewSet(viewsets.ModelViewSet):
+    """Manage user wishlist"""
+    serializer_class = WishlistSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Wishlist.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        product = serializer.validated_data['product']
+        # Prevent duplicates
+        if Wishlist.objects.filter(user=self.request.user, product=product).exists():
+            raise serializers.ValidationError({"detail": "Product already in wishlist"})
+        serializer.save(user=self.request.user)
+

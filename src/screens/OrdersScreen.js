@@ -7,7 +7,8 @@ import {
   TouchableOpacity, 
   ActivityIndicator,
   Alert,
-  FlatList
+  FlatList,
+  Linking
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
@@ -65,6 +66,20 @@ export default function OrdersScreen({ navigation }) {
     }
   };
 
+  const getTrackerProgress = (status) => {
+    if (status === 'delivered') return '100%';
+    if (status === 'shipped') return '66%';
+    if (status === 'processing') return '33%';
+    return '0%';
+  };
+
+  const TrackerStep = ({ label, isActive }) => (
+    <View style={{ alignItems: 'center', width: '25%' }}>
+      <View style={[styles.trackerDot, isActive && styles.trackerDotActive]} />
+      <Text style={[styles.trackerLabel, isActive && styles.trackerLabelActive]}>{label}</Text>
+    </View>
+  );
+
   const renderOrder = ({ item }) => (
     <View style={styles.orderCard}>
       <View style={styles.orderHeader}>
@@ -72,10 +87,30 @@ export default function OrdersScreen({ navigation }) {
           <Text style={styles.orderId}>Order #{item.id}</Text>
           <Text style={styles.orderDate}>{new Date(item.created_at).toLocaleDateString()}</Text>
         </View>
-        <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(item.status)}15` }]}>
-          <Text style={[styles.statusText, { color: getStatusColor(item.status) }]}>{item.status?.toUpperCase() || 'PROCESSING'}</Text>
+        <View style={[styles.statusBadge, { backgroundColor: `${getStatusColor(item.order_status)}15` }]}>
+          <Text style={[styles.statusText, { color: getStatusColor(item.order_status) }]}>{item.order_status?.toUpperCase() || 'PROCESSING'}</Text>
         </View>
       </View>
+
+      {/* Visual Tracker */}
+      {item.order_status !== 'cancelled' && (
+        <View style={styles.trackerContainer}>
+          <View style={styles.trackerLineBg}>
+            <View style={[styles.trackerLineFill, { width: getTrackerProgress(item.order_status) }]} />
+          </View>
+          <View style={styles.trackerSteps}>
+            <TrackerStep label="Placed" isActive={['pending', 'confirmed', 'processing', 'shipped', 'delivered'].includes(item.order_status)} />
+            <TrackerStep label="Processing" isActive={['processing', 'shipped', 'delivered'].includes(item.order_status)} />
+            <TrackerStep label="Shipped" isActive={['shipped', 'delivered'].includes(item.order_status)} />
+            <TrackerStep label="Delivered" isActive={['delivered'].includes(item.order_status)} />
+          </View>
+          {item.tracking_url && (
+            <TouchableOpacity style={styles.trackBtn} onPress={() => Linking.openURL(item.tracking_url)}>
+              <Text style={styles.trackBtnText}>Track Order Live</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       <View style={styles.divider} />
 
@@ -167,7 +202,19 @@ const styles = StyleSheet.create({
   statusBadge: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.sm },
   statusText: { fontSize: 11, fontWeight: '800', letterSpacing: 1 },
   
-  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 15 },
+  // Tracker styles
+  trackerContainer: { marginVertical: 15, position: 'relative' },
+  trackerSteps: { flexDirection: 'row', justifyContent: 'space-between', position: 'relative', zIndex: 2 },
+  trackerLineBg: { position: 'absolute', top: 9, left: '12.5%', width: '75%', height: 2, backgroundColor: COLORS.border, zIndex: 1 },
+  trackerLineFill: { height: '100%', backgroundColor: COLORS.primary },
+  trackerDot: { width: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.card, borderWidth: 2, borderColor: COLORS.border, marginBottom: 6 },
+  trackerDotActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  trackerLabel: { fontSize: 10, color: COLORS.textMuted, fontWeight: '600' },
+  trackerLabelActive: { color: COLORS.text, fontWeight: '700' },
+  trackBtn: { alignSelf: 'flex-start', marginTop: 12, paddingVertical: 6, paddingHorizontal: 12, backgroundColor: 'rgba(255,107,53,0.1)', borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(255,107,53,0.3)' },
+  trackBtnText: { color: COLORS.primary, fontSize: 12, fontWeight: '700' },
+
+  divider: { height: 1, backgroundColor: COLORS.border, marginVertical: 10 },
   
   itemRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
   itemQty: { color: COLORS.textMuted, fontSize: 14, fontWeight: '700', width: 30 },

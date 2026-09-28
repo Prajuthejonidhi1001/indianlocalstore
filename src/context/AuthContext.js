@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '../utils/api';
+import { registerForPushNotificationsAsync } from '../utils/pushNotifications';
 
 const AuthContext = createContext(null);
 
@@ -17,6 +18,16 @@ export const AuthProvider = ({ children }) => {
       }
       const { data } = await authAPI.getProfile();
       setUser(data);
+      
+      // Update push token quietly
+      try {
+        const token = await registerForPushNotificationsAsync();
+        if (token) {
+          await authAPI.updateProfile({ expo_push_token: token });
+        }
+      } catch (err) {
+        console.log('Quiet push token update failed:', err);
+      }
     } catch (error) {
       console.error('Fetch user error:', error);
       await AsyncStorage.removeItem('access_token');

@@ -6,11 +6,16 @@ from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-from .models import User
+from .models import User, OTPVerification, Address
 from .serializers import (
     UserSerializer, UserRegisterSerializer,
-    CustomTokenObtainPairSerializer, ProfileUpdateSerializer
+    CustomTokenObtainPairSerializer, ProfileUpdateSerializer, AddressSerializer
 )
+from .permissions import IsAdminUser
+from shops.models import Shop
+from products.models import Product
+from orders.models import Order
+from django.db.models import Sum
 import random
 from django.utils import timezone
 from datetime import timedelta
@@ -18,7 +23,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.utils.html import strip_tags
-from .models import OTPVerification
+
 import uuid
 import os
 import requests
@@ -37,29 +42,16 @@ class UserViewSet(viewsets.ModelViewSet):
         phone = request.data.get('phone')
         email = request.data.get('email', '').strip()
         
-        if not phone:
-            return Response({'error': 'Phone number is required'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Clean phone number
-        phone = phone.replace(' ', '').replace('-', '')
-        if not phone.startswith('+91'):
-            if len(phone) == 10:
-                phone = '+91' + phone
-            else:
-                return Response({'error': 'Please enter a valid 10-digit Indian phone number.'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        # With Firebase, the frontend handles the phone SMS directly.
-        # This endpoint is now ONLY for generating the Email OTP.
-        if not email:
-            return Response({'message': 'No email provided.'}, status=status.HTTP_200_OK)
+        if not email and not phone:
+            return Response({'message': 'No email or phone provided.'}, status=status.HTTP_400_BAD_REQUEST)
             
-        email_otp = f"{random.randint(100000, 999999)}"
+        email_otp = f"{random.randint(100000, 999999)}" if email else None
         expires_at = timezone.now() + timedelta(minutes=10)
         
         OTPVerification.objects.create(
             phone=phone, 
             email=email,
-            phone_otp=None, # Not used anymore, Firebase handles it
+            phone_otp=None,
             email_otp=email_otp, 
             expires_at=expires_at
         )
@@ -94,12 +86,11 @@ class UserViewSet(viewsets.ModelViewSet):
     def verify_otp(self, request):
         firebase_token = request.data.get('firebase_token')
         email_otp = request.data.get('email_otp')
-        
-        if not firebase_token:
-            return Response({'error': 'Firebase token is required'}, status=status.HTTP_400_BAD_REQUEST)
-            
-        try:
-            # 1. Verify the Firebase token using REST API
+        email = request.data.get('email')
+        phone = None
+        verified_email = ''
+
+        if firebase_token:
             firebase_api_key = config('VITE_FIREBASE_API_KEY', default='AIzaSyC4Yhpk0zw-Om-mNWSFn4mwQOy97tufzHE')
             url = f'https://identitytoolkit.googleapis.com/v1/accounts:lookup?key={firebase_api_key}'
             resp = requests.post(url, json={'idToken': firebase_token})
@@ -110,34 +101,37 @@ class UserViewSet(viewsets.ModelViewSet):
                 
             user_data = resp.json().get('users', [{}])[0]
             phone = user_data.get('phoneNumber')
-            
             if not phone:
                 return Response({'error': 'Token does not contain a valid phone number.'}, status=status.HTTP_400_BAD_REQUEST)
-            
-            # Format phone just in case, Firebase usually returns it with +91 already
             phone = phone.replace(' ', '').replace('-', '')
             
-            # 2. If email_otp was provided, verify it against our database
-            verified_email = ''
-            if email_otp:
-                try:
+        if email_otp:
+            try:
+                if email:
+                    otp_record = OTPVerification.objects.filter(email=email).latest('created_at')
+                elif phone:
                     otp_record = OTPVerification.objects.filter(phone=phone).latest('created_at')
+                else:
+                    return Response({'error': 'No identifier for email OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+                
+                if otp_record.expires_at < timezone.now():
+                    return Response({'error': 'Email OTP has expired.'}, status=status.HTTP_400_BAD_REQUEST)
+                if otp_record.email_otp != email_otp:
+                    return Response({'error': 'Invalid Email OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
                     
-                    if otp_record.expires_at < timezone.now():
-                        return Response({'error': 'Email OTP has expired. Please request a new one.'}, status=status.HTTP_400_BAD_REQUEST)
-                        
-                    if not otp_record.email:
-                        return Response({'error': 'No email was registered for this session.'}, status=status.HTTP_400_BAD_REQUEST)
-                        
-                    if otp_record.email_otp != email_otp:
-                        return Response({'error': 'Invalid Email OTP code.'}, status=status.HTTP_400_BAD_REQUEST)
-                        
-                    verified_email = otp_record.email
-                    otp_record.delete()
-                except OTPVerification.DoesNotExist:
-                    return Response({'error': 'Please request an Email OTP first.'}, status=status.HTTP_400_BAD_REQUEST)
-                    
-            # Both valid (or only phone required). Get or create user.
+                verified_email = otp_record.email
+                otp_record.delete()
+            except OTPVerification.DoesNotExist:
+                return Response({'error': 'Please request an Email OTP first.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not phone and not verified_email:
+            return Response({'error': 'Must provide either a valid Firebase token or Email OTP'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if verified_email and not phone:
+            user = User.objects.filter(email=verified_email).first()
+            if not user:
+                return Response({'error': 'No account found with this email. Please register.'}, status=status.HTTP_404_NOT_FOUND)
+        else:
             user, created = User.objects.get_or_create(
                 phone=phone,
                 defaults={
@@ -148,24 +142,17 @@ class UserViewSet(viewsets.ModelViewSet):
                     'last_name': request.data.get('last_name', '')
                 }
             )
-            
-            # Update email if they provided one now but didn't have one before
-            if verified_email and not user.email:
+            if verified_email and user.email != verified_email:
                 user.email = verified_email
                 user.save()
-            
-            refresh = RefreshToken.for_user(user)
-            
-            return Response({
-                'access': str(refresh.access_token),
-                'refresh': str(refresh),
-                'user': UserSerializer(user).data,
-                'is_new_user': created
-            }, status=status.HTTP_200_OK)
-            
-        except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+        refresh = RefreshToken.for_user(user)
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data,
+            'is_new_user': created if 'created' in locals() else False
+        })
 
     @action(detail=False, methods=['post'], permission_classes=[AllowAny], throttle_classes=[AuthRateThrottle])
     def register(self, request):
@@ -211,3 +198,100 @@ class CustomTokenObtainPairView(TokenObtainPairView):
     serializer_class = CustomTokenObtainPairSerializer
     permission_classes = [AllowAny]
     throttle_classes = [AuthRateThrottle]
+
+
+class AddressViewSet(viewsets.ModelViewSet):
+    serializer_class = AddressSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Address.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        is_default = serializer.validated_data.get('is_default', False)
+        if is_default or not Address.objects.filter(user=self.request.user).exists():
+            Address.objects.filter(user=self.request.user).update(is_default=False)
+            serializer.validated_data['is_default'] = True
+        serializer.save(user=self.request.user)
+
+    def perform_update(self, serializer):
+        if serializer.validated_data.get('is_default', False):
+            Address.objects.filter(user=self.request.user).update(is_default=False)
+        serializer.save()
+
+class AdminViewSet(viewsets.ViewSet):
+    """
+    Super Admin endpoints for Dashboard stats and user/shop management.
+    """
+    permission_classes = [IsAdminUser]
+
+    @action(detail=False, methods=['get'])
+    def dashboard_stats(self, request):
+        total_users = User.objects.count()
+        total_shops = Shop.objects.count()
+        total_products = Product.objects.count()
+        
+        # Calculate revenue for non-cancelled orders
+        revenue_data = Order.objects.exclude(order_status='cancelled').aggregate(total_revenue=Sum('final_amount'))
+        total_revenue = revenue_data['total_revenue'] or 0
+
+        # Fetch recent orders (last 5)
+        recent_orders = Order.objects.all().order_by('-created_at')[:5]
+        from orders.serializers import OrderListSerializer
+        orders_data = OrderListSerializer(recent_orders, many=True).data
+
+        return Response({
+            'total_users': total_users,
+            'total_shops': total_shops,
+            'total_products': total_products,
+            'total_revenue': total_revenue,
+            'recent_orders': orders_data
+        })
+
+    @action(detail=False, methods=['get'])
+    def users(self, request):
+        users = User.objects.all().order_by('-created_at')
+        serializer = UserSerializer(users, many=True)
+        return Response(serializer.data)
+        
+    @action(detail=False, methods=['get'])
+    def shops(self, request):
+        shops = Shop.objects.all().order_by('-created_at')
+        from shops.serializers import ShopListSerializer
+        serializer = ShopListSerializer(shops, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def orders(self, request):
+        orders = Order.objects.all().order_by('-created_at')
+        from orders.serializers import OrderListSerializer
+        serializer = OrderListSerializer(orders, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['patch'])
+    def update_role(self, request, pk=None):
+        try:
+            user_to_update = User.objects.get(pk=pk)
+            new_role = request.data.get('role')
+            if new_role not in [choice[0] for choice in User.ROLE_CHOICES]:
+                return Response({'error': 'Invalid role.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            user_to_update.role = new_role
+            user_to_update.save()
+            return Response({'message': 'Role updated successfully.'})
+        except User.DoesNotExist:
+            return Response({'error': 'User not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=True, methods=['patch'])
+    def verify_shop(self, request, pk=None):
+        try:
+            shop = Shop.objects.get(pk=pk)
+            # Assuming verification_status exists on Shop model
+            shop.verification_status = 'verified'
+            shop.save()
+            return Response({'message': 'Shop verified successfully.'})
+        except Shop.DoesNotExist:
+            return Response({'error': 'Shop not found.'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+

@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Category, SubCategory, Product, ProductReview, ProductImage
+from .models import Category, SubCategory, Product, ProductReview, ProductImage, Wishlist
 
 
 class SubCategorySerializer(serializers.ModelSerializer):
@@ -72,3 +72,15 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
         read_only_fields = ['category', 'subcategory']
         # is_active is intentionally excluded — new products are always active
         # Sellers can deactivate via a separate admin/edit flow
+
+
+class WishlistSerializer(serializers.ModelSerializer):
+    product = ProductListSerializer(read_only=True)
+    product_id = serializers.PrimaryKeyRelatedField(
+        queryset=Product.objects.all(), source='product', write_only=True
+    )
+
+    class Meta:
+        model = Wishlist
+        fields = ['id', 'product', 'product_id', 'created_at']
+        read_only_fields = ['id', 'created_at']

@@ -109,6 +109,40 @@ export default function OrdersPage() {
                     </span>
                   </div>
                   
+                  {/* Visual Tracker */}
+                  {selectedOrder.order_status !== 'cancelled' && (
+                    <div className="order-tracker mt-4 mb-4">
+                      <div className="tracker-steps">
+                        {['Order Placed', 'Processing', 'Shipped', 'Delivered'].map((step, idx) => {
+                          const statusMap = {
+                            'Order Placed': ['pending', 'confirmed', 'processing', 'shipped', 'delivered'],
+                            'Processing': ['processing', 'shipped', 'delivered'],
+                            'Shipped': ['shipped', 'delivered'],
+                            'Delivered': ['delivered']
+                          };
+                          const isActive = statusMap[step].includes(selectedOrder.order_status);
+                          return (
+                            <div key={step} className={`tracker-step ${isActive ? 'active' : ''}`}>
+                              <div className="tracker-dot"></div>
+                              <div className="tracker-label">{step}</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="tracker-progress-bg">
+                        <div 
+                          className="tracker-progress-fill" 
+                          style={{
+                            width: selectedOrder.order_status === 'delivered' ? '100%' 
+                                 : selectedOrder.order_status === 'shipped' ? '66%' 
+                                 : selectedOrder.order_status === 'processing' ? '33%' 
+                                 : '0%'
+                          }}
+                        ></div>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="od-section">
                     <h4>Delivery Details</h4>
                     <p className="od-text">{selectedOrder.delivery_address}</p>

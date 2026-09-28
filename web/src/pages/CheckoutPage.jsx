@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom';
 import { Truck, CreditCard, ShieldCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderAPI } from '../api';
+import { orderAPI, addressAPI } from '../api';
 import toast from 'react-hot-toast';
 import './CheckoutPage.css';
 
 export default function CheckoutPage() {
-  const { cart, cartTotal, clearCart } = useCart();
+  const { cart, cartTotal, cartSubtotal, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -21,11 +21,61 @@ export default function CheckoutPage() {
   });
   const [loading, setLoading] = useState(false);
 
+  // Address selection state
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('new');
+  const [addressesLoading, setAddressesLoading] = useState(true);
+
   useEffect(() => {
     if (!cart || cart.items.length === 0) {
       navigate('/cart');
     }
   }, [cart, navigate]);
+
+  useEffect(() => {
+    addressAPI.getAddresses()
+      .then(res => {
+        const data = res.data.results || res.data;
+        setAddresses(data);
+        const defaultAddr = data.find(a => a.is_default);
+        if (defaultAddr) {
+          setSelectedAddressId(defaultAddr.id);
+          populateFormWithAddress(defaultAddr);
+        } else if (data.length > 0) {
+          setSelectedAddressId(data[0].id);
+          populateFormWithAddress(data[0]);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setAddressesLoading(false));
+  }, []);
+
+  const populateFormWithAddress = (addr) => {
+    setForm(prev => ({
+      ...prev,
+      delivery_address: addr.address_line,
+      delivery_city: addr.city,
+      delivery_state: addr.state,
+      delivery_pincode: addr.pincode,
+    }));
+  };
+
+  const handleAddressSelect = (e) => {
+    const val = e.target.value;
+    setSelectedAddressId(val);
+    if (val === 'new') {
+      setForm(prev => ({
+        ...prev,
+        delivery_address: '',
+        delivery_city: '',
+        delivery_state: '',
+        delivery_pincode: '',
+      }));
+    } else {
+      const addr = addresses.find(a => a.id.toString() === val);
+      if (addr) populateFormWithAddress(addr);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -72,26 +122,45 @@ export default function CheckoutPage() {
                   <h3>Delivery Address</h3>
                 </div>
                 <div className="checkout-card-body">
+                  {!addressesLoading && addresses.length > 0 && (
+                    <div className="form-group mb-4">
+                      <label className="form-label">Saved Addresses</label>
+                      <select 
+                        className="form-input" 
+                        value={selectedAddressId} 
+                        onChange={handleAddressSelect}
+                      >
+                        {addresses.map(addr => (
+                          <option key={addr.id} value={addr.id}>
+                            {addr.title} - {addr.address_line}, {addr.city}
+                          </option>
+                        ))}
+                        <option value="new">+ Enter new address</option>
+                      </select>
+                    </div>
+                  )}
+
                   <div className="form-group mb-3">
                     <label className="form-label">Full Address</label>
                     <textarea 
                       className="form-input" rows={3} placeholder="House No, Building, Street..."
                       value={form.delivery_address} onChange={e => setForm({...form, delivery_address: e.target.value})}
+                      disabled={selectedAddressId !== 'new'}
                     />
                   </div>
                   <div className="form-row">
                     <div className="form-group">
                       <label className="form-label">City</label>
-                      <input type="text" className="form-input" value={form.delivery_city} onChange={e => setForm({...form, delivery_city: e.target.value})} />
+                      <input type="text" className="form-input" value={form.delivery_city} onChange={e => setForm({...form, delivery_city: e.target.value})} disabled={selectedAddressId !== 'new'} />
                     </div>
                     <div className="form-group">
                       <label className="form-label">State</label>
-                      <input type="text" className="form-input" value={form.delivery_state} onChange={e => setForm({...form, delivery_state: e.target.value})} />
+                      <input type="text" className="form-input" value={form.delivery_state} onChange={e => setForm({...form, delivery_state: e.target.value})} disabled={selectedAddressId !== 'new'} />
                     </div>
                   </div>
                   <div className="form-group mt-3">
                     <label className="form-label">Pincode</label>
-                    <input type="text" className="form-input" value={form.delivery_pincode} onChange={e => setForm({...form, delivery_pincode: e.target.value})} />
+                    <input type="text" className="form-input" value={form.delivery_pincode} onChange={e => setForm({...form, delivery_pincode: e.target.value})} disabled={selectedAddressId !== 'new'} />
                   </div>
                 </div>
               </div>
@@ -155,8 +224,16 @@ export default function CheckoutPage() {
               <div className="divider" />
               <div className="summary-row">
                 <span>Subtotal</span>
-                <span>₹{cartTotal.toFixed(2)}</span>
+                <span>₹{cartSubtotal.toFixed(2)}</span>
               </div>
+              
+              {cart?.applied_coupon_code && (
+                <div className="summary-row" style={{ color: 'var(--green, #22c55e)' }}>
+                  <span>Discount ({cart.applied_coupon_code})</span>
+                  <span>-₹{(cartSubtotal - cartTotal).toFixed(2)}</span>
+                </div>
+              )}
+
               <div className="summary-row">
                 <span>Delivery</span>
                 <span className="text-green">Free</span>

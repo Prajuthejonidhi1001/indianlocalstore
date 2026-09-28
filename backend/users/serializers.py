@@ -3,7 +3,7 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 import re
-from .models import User
+from .models import User, Address
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -95,4 +95,12 @@ class ProfileUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'profile_image', 'address', 
-                  'city', 'state', 'pincode', 'latitude', 'longitude']
+                  'city', 'state', 'pincode', 'latitude', 'longitude', 'expo_push_token']
+
+
+class AddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Address
+        fields = ['id', 'title', 'name', 'phone', 'address_line', 
+                  'city', 'state', 'pincode', 'is_default', 'created_at']
+        read_only_fields = ['id', 'created_at']

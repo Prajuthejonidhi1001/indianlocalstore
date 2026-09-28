@@ -15,10 +15,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderAPI } from '../utils/api';
+import { orderAPI, addressAPI } from '../utils/api';
+import { Picker } from '@react-native-picker/picker';
 
 export default function CheckoutScreen({ navigation }) {
-  const { cartTotal, clearCart } = useCart();
+  const { cart, cartTotal, cartSubtotal, clearCart } = useCart();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
@@ -29,6 +30,54 @@ export default function CheckoutScreen({ navigation }) {
     state: user?.state || '',
     pincode: user?.pincode || '',
   });
+
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('new');
+  const [addressesLoading, setAddressesLoading] = useState(true);
+
+  React.useEffect(() => {
+    addressAPI.getAddresses()
+      .then(res => {
+        const data = res.data.results || res.data;
+        setAddresses(data);
+        const defaultAddr = data.find(a => a.is_default);
+        if (defaultAddr) {
+          setSelectedAddressId(defaultAddr.id);
+          populateFormWithAddress(defaultAddr);
+        } else if (data.length > 0) {
+          setSelectedAddressId(data[0].id);
+          populateFormWithAddress(data[0]);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setAddressesLoading(false));
+  }, []);
+
+  const populateFormWithAddress = (addr) => {
+    setForm(prev => ({
+      ...prev,
+      delivery_address: addr.address_line,
+      city: addr.city,
+      state: addr.state,
+      pincode: addr.pincode,
+    }));
+  };
+
+  const handleAddressSelect = (addrId) => {
+    setSelectedAddressId(addrId);
+    if (addrId === 'new') {
+      setForm(prev => ({
+        ...prev,
+        delivery_address: '',
+        city: '',
+        state: '',
+        pincode: '',
+      }));
+    } else {
+      const addr = addresses.find(a => a.id === addrId);
+      if (addr) populateFormWithAddress(addr);
+    }
+  };
 
   const handlePlaceOrder = async () => {
     if (!form.delivery_address || !form.city || !form.pincode) {
@@ -73,6 +122,11 @@ export default function CheckoutScreen({ navigation }) {
         <View style={styles.summaryBox}>
           <Text style={styles.summaryLabel}>Total Amount Payable</Text>
           <Text style={styles.summaryValue}>₹{cartTotal.toFixed(2)}</Text>
+          {cart?.applied_coupon_code && (
+            <Text style={{ color: COLORS.green, fontSize: 13, fontWeight: 'bold', marginTop: 8 }}>
+              {cart.applied_coupon_code} applied! (-₹{(cartSubtotal - cartTotal).toFixed(2)})
+            </Text>
+          )}
         </View>
 
         {/* Address Form */}
@@ -80,31 +134,52 @@ export default function CheckoutScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Delivery Address</Text>
           
           <View style={styles.card}>
+            {!addressesLoading && addresses.length > 0 && (
+              <View style={{ marginBottom: 15 }}>
+                <Text style={styles.fieldLabel}>Saved Addresses</Text>
+                <View style={styles.pickerContainer}>
+                  <Picker
+                    selectedValue={selectedAddressId}
+                    onValueChange={(itemValue) => handleAddressSelect(itemValue)}
+                    style={styles.picker}
+                  >
+                    {addresses.map((addr) => (
+                      <Picker.Item key={addr.id} label={`${addr.title} - ${addr.address_line}, ${addr.city}`} value={addr.id} />
+                    ))}
+                    <Picker.Item label="+ Enter new address" value="new" />
+                  </Picker>
+                </View>
+              </View>
+            )}
+
             <Text style={styles.fieldLabel}>Complete Address</Text>
             <TextInput 
-              style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+              style={[styles.input, { height: 80, textAlignVertical: 'top' }, selectedAddressId !== 'new' && styles.inputDisabled]}
               value={form.delivery_address}
               onChangeText={t => setForm({...form, delivery_address: t})}
               multiline
               placeholder="House, Street, Area..."
               placeholderTextColor={COLORS.textDim}
+              editable={selectedAddressId === 'new'}
             />
             
             <View style={styles.row}>
               <View style={[styles.field, { flex: 1, marginRight: 10 }]}>
                  <Text style={styles.fieldLabel}>City</Text>
                  <TextInput 
-                  style={styles.input}
+                  style={[styles.input, selectedAddressId !== 'new' && styles.inputDisabled]}
                   value={form.city}
                   onChangeText={t => setForm({...form, city: t})}
+                  editable={selectedAddressId === 'new'}
                 />
               </View>
               <View style={[styles.field, { flex: 1 }]}>
                  <Text style={styles.fieldLabel}>State</Text>
                  <TextInput 
-                  style={styles.input}
+                  style={[styles.input, selectedAddressId !== 'new' && styles.inputDisabled]}
                   value={form.state}
                   onChangeText={t => setForm({...form, state: t})}
+                  editable={selectedAddressId === 'new'}
                 />
               </View>
             </View>
@@ -112,11 +187,12 @@ export default function CheckoutScreen({ navigation }) {
             <View style={[styles.field, { width: '50%' }]}>
               <Text style={styles.fieldLabel}>Pincode</Text>
               <TextInput 
-                style={styles.input}
+                style={[styles.input, selectedAddressId !== 'new' && styles.inputDisabled]}
                 value={form.pincode}
                 onChangeText={t => setForm({...form, pincode: t})}
                 keyboardType="number-pad"
                 maxLength={6}
+                editable={selectedAddressId === 'new'}
               />
             </View>
           </View>
@@ -142,21 +218,17 @@ export default function CheckoutScreen({ navigation }) {
             </View>
           </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.paymentCard, paymentMethod === 'online' && styles.paymentActive]}
-            onPress={() => setPaymentMethod('online')}
-          >
+          <View style={[styles.paymentCard, { opacity: 0.5 }]}>
             <View style={styles.paymentRow}>
-              <Ionicons name="card-outline" size={24} color={paymentMethod === 'online' ? COLORS.primary : COLORS.textMuted} />
+              <Ionicons name="card-outline" size={24} color={COLORS.textMuted} />
               <View style={styles.paymentInfo}>
-                <Text style={styles.paymentName}>Pay Online</Text>
-                <Text style={styles.paymentDesc}>UPI, Credit Card, Net Banking (Razorpay)</Text>
+                <Text style={styles.paymentName}>Pay Online (Coming Soon)</Text>
+                <Text style={styles.paymentDesc}>UPI, Credit Card, Net Banking</Text>
               </View>
-              <View style={[styles.radio, paymentMethod === 'online' && styles.radioActive]}>
-                {paymentMethod === 'online' && <View style={styles.radioInner} />}
+              <View style={styles.radio}>
               </View>
             </View>
-          </TouchableOpacity>
+          </View>
         </View>
 
         {/* CTA */}
@@ -201,6 +273,18 @@ const styles = StyleSheet.create({
   field: { marginBottom: 15 },
   fieldLabel: { fontSize: 11, fontWeight: '800', color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: 8 },
   input: { backgroundColor: COLORS.elevated, borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: 12, color: COLORS.text, fontSize: 15 },
+  inputDisabled: { opacity: 0.6, backgroundColor: COLORS.background },
+  pickerContainer: {
+    backgroundColor: COLORS.elevated,
+    borderWidth: 1.5,
+    borderColor: COLORS.border,
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+  },
+  picker: {
+    height: 50,
+    width: '100%',
+  },
 
   paymentCard: { backgroundColor: COLORS.card, padding: 15, borderRadius: RADIUS.lg, borderWidth: 1.5, borderColor: COLORS.border, marginBottom: 12 },
   paymentActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(255,107,53,0.05)' },

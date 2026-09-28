@@ -3,11 +3,27 @@ from django.db.models import Sum, F
 from django.core.validators import MinValueValidator
 from users.models import User
 from products.models import Product
+from django.utils import timezone
 
+
+class Coupon(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    discount_percent = models.PositiveIntegerField(validators=[MinValueValidator(1)])
+    max_usage = models.PositiveIntegerField(default=100)
+    times_used = models.PositiveIntegerField(default=0)
+    valid_until = models.DateTimeField()
+    is_active = models.BooleanField(default=True)
+    
+    def is_valid(self):
+        return self.is_active and self.times_used < self.max_usage and self.valid_until > timezone.now()
+
+    def __str__(self):
+        return self.code
 
 class Cart(models.Model):
     """Shopping cart for users"""
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='cart')
+    applied_coupon = models.ForeignKey(Coupon, null=True, blank=True, on_delete=models.SET_NULL)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -27,6 +43,11 @@ class Cart(models.Model):
                 total += item.product.discount_price * item.quantity
             else:
                 total += item.product.price * item.quantity
+                
+        if self.applied_coupon and self.applied_coupon.is_valid():
+            discount_amount = (total * self.applied_coupon.discount_percent) / 100
+            total -= discount_amount
+            
         return total
 
 
@@ -81,6 +102,7 @@ class Order(models.Model):
     # Payment
     total_amount = models.DecimalField(max_digits=10, decimal_places=2)
     discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    applied_coupon = models.ForeignKey(Coupon, null=True, blank=True, on_delete=models.SET_NULL)
     shipping_charge = models.DecimalField(max_digits=10, decimal_places=2, default=0)
     final_amount = models.DecimalField(max_digits=10, decimal_places=2)
     

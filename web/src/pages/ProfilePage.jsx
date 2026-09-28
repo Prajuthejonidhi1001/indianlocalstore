@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { User, Mail, Phone, Edit2, Check, X, LayoutDashboard, Package, ShoppingCart, MapPin, Heart, Shield, ChevronRight, Clock, Search, XCircle, LogOut, Plus } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { orderAPI } from '../api';
+import { orderAPI, addressAPI } from '../api';
 import toast from 'react-hot-toast';
 import './ProfilePage.css';
 
@@ -24,6 +24,15 @@ export default function ProfilePage() {
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
+
+  // Address State
+  const [addresses, setAddresses] = useState([]);
+  const [addressLoading, setAddressLoading] = useState(false);
+  const [addressModalOpen, setAddressModalOpen] = useState(false);
+  const [editingAddress, setEditingAddress] = useState(null);
+  const [addressForm, setAddressForm] = useState({
+    title: 'Home', name: '', phone: '', address_line: '', city: '', state: '', pincode: '', is_default: false
+  });
 
   // Orders State
   const [orders, setOrders] = useState([]);
@@ -53,7 +62,18 @@ export default function ProfilePage() {
         .catch(console.error)
         .finally(() => setOrdersLoading(false));
     }
+    if (activeTab === 'addresses' || activeTab === 'dashboard') {
+      fetchAddresses();
+    }
   }, [activeTab]);
+
+  const fetchAddresses = () => {
+    setAddressLoading(true);
+    addressAPI.getAddresses()
+      .then(res => setAddresses(res.data.results || res.data))
+      .catch(console.error)
+      .finally(() => setAddressLoading(false));
+  };
 
   const handleSaveProfile = async () => {
     setSavingProfile(true);
@@ -93,6 +113,61 @@ export default function ProfilePage() {
       toast.error(err.response?.data?.error || 'Failed to cancel order');
     } finally {
       setCancelling(false);
+    }
+  };
+
+  const handleOpenAddressModal = (addr = null) => {
+    if (addr) {
+      setEditingAddress(addr.id);
+      setAddressForm({
+        title: addr.title, name: addr.name, phone: addr.phone, address_line: addr.address_line,
+        city: addr.city, state: addr.state, pincode: addr.pincode, is_default: addr.is_default
+      });
+    } else {
+      setEditingAddress(null);
+      setAddressForm({
+        title: 'Home', name: '', phone: '', address_line: '', city: '', state: '', pincode: '', is_default: false
+      });
+    }
+    setAddressModalOpen(true);
+  };
+
+  const handleSaveAddress = async (e) => {
+    e.preventDefault();
+    try {
+      if (editingAddress) {
+        await addressAPI.updateAddress(editingAddress, addressForm);
+        toast.success("Address updated");
+      } else {
+        await addressAPI.addAddress(addressForm);
+        toast.success("Address added");
+      }
+      setAddressModalOpen(false);
+      fetchAddresses();
+    } catch (err) {
+      toast.error("Failed to save address");
+    }
+  };
+
+  const handleDeleteAddress = async (id) => {
+    if (window.confirm("Delete this address?")) {
+      try {
+        await addressAPI.deleteAddress(id);
+        toast.success("Address deleted");
+        fetchAddresses();
+      } catch (err) {
+        toast.error("Failed to delete address");
+      }
+    }
+  };
+
+  const handleSetDefaultAddress = async (id) => {
+    try {
+      await addressAPI.updateAddress(id, { is_default: true });
+      toast.success("Default address updated");
+      fetchAddresses();
+    } catch (err) {
+      toast.error("Failed to update default address");
     }
   };
 
@@ -413,27 +488,38 @@ export default function ProfilePage() {
                   <h2 className="tab-heading mb-0">Your Addresses</h2>
                 </div>
 
-                <div className="addresses-grid">
-                  <div className="address-card add-new-address" onClick={() => { setActiveTab('security'); setEditing(true); }}>
-                    <Plus size={32} className="text-muted" />
-                    <h3>Add Address</h3>
-                  </div>
-
-                  {(form.address || form.city) && (
-                    <div className="address-card">
-                      <div className="address-badge">Default</div>
-                      <h4 className="font-medium text-primary mb-2">{form.first_name} {form.last_name}</h4>
-                      <p className="text-secondary mb-1">{form.address}</p>
-                      <p className="text-secondary mb-1">{form.city}, {form.state} {form.pincode}</p>
-                      <p className="text-secondary mb-3">Phone number: {form.phone}</p>
-                      <div className="address-actions">
-                        <button className="btn-link" onClick={() => { setActiveTab('security'); setEditing(true); }}>Edit</button>
-                        <span className="text-muted mx-2">|</span>
-                        <button className="btn-link text-red">Remove</button>
-                      </div>
+                {addressLoading ? (
+                  <div className="loading-center"><div className="spinner" /></div>
+                ) : (
+                  <div className="addresses-grid">
+                    <div className="address-card add-new-address" onClick={() => handleOpenAddressModal()}>
+                      <Plus size={32} className="text-muted" />
+                      <h3>Add Address</h3>
                     </div>
-                  )}
-                </div>
+
+                    {addresses.map((addr) => (
+                      <div key={addr.id} className="address-card" style={addr.is_default ? { borderColor: 'var(--primary)', backgroundColor: 'rgba(255,107,53,0.03)' } : {}}>
+                        {addr.is_default && <div className="address-badge">Default</div>}
+                        <h4 className="font-medium text-primary mb-1">{addr.title}</h4>
+                        <p className="font-medium mb-2">{addr.name}</p>
+                        <p className="text-secondary mb-1">{addr.address_line}</p>
+                        <p className="text-secondary mb-1">{addr.city}, {addr.state} {addr.pincode}</p>
+                        <p className="text-secondary mb-3">Phone: {addr.phone}</p>
+                        <div className="address-actions">
+                          <button className="btn-link" onClick={() => handleOpenAddressModal(addr)}>Edit</button>
+                          <span className="text-muted mx-2">|</span>
+                          <button className="btn-link text-red" onClick={() => handleDeleteAddress(addr.id)}>Remove</button>
+                          {!addr.is_default && (
+                            <>
+                              <span className="text-muted mx-2">|</span>
+                              <button className="btn-link" onClick={() => handleSetDefaultAddress(addr.id)}>Set as Default</button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -453,6 +539,64 @@ export default function ProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Address Modal */}
+      {addressModalOpen && (
+        <div className="modal-backdrop" onClick={() => setAddressModalOpen(false)}>
+          <div className="modal-content" onClick={e => e.stopPropagation()} style={{ maxWidth: '500px' }}>
+            <div className="modal-header">
+              <h3>{editingAddress ? 'Edit Address' : 'Add New Address'}</h3>
+              <button className="btn-icon" onClick={() => setAddressModalOpen(false)}><X size={20} /></button>
+            </div>
+            <div className="modal-body">
+              <form onSubmit={handleSaveAddress}>
+                <div className="form-group">
+                  <label className="form-label">Address Title</label>
+                  <input type="text" className="form-input" placeholder="e.g. Home, Office" value={addressForm.title} onChange={e => setAddressForm({...addressForm, title: e.target.value})} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Full Name</label>
+                  <input type="text" className="form-input" value={addressForm.name} onChange={e => setAddressForm({...addressForm, name: e.target.value})} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Phone Number</label>
+                  <input type="tel" className="form-input" value={addressForm.phone} onChange={e => setAddressForm({...addressForm, phone: e.target.value})} required />
+                </div>
+                <div className="form-group">
+                  <label className="form-label">Address Line</label>
+                  <textarea className="form-input" rows="3" value={addressForm.address_line} onChange={e => setAddressForm({...addressForm, address_line: e.target.value})} required />
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">City</label>
+                    <input type="text" className="form-input" value={addressForm.city} onChange={e => setAddressForm({...addressForm, city: e.target.value})} required />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">State</label>
+                    <input type="text" className="form-input" value={addressForm.state} onChange={e => setAddressForm({...addressForm, state: e.target.value})} required />
+                  </div>
+                </div>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Pincode</label>
+                    <input type="text" className="form-input" value={addressForm.pincode} onChange={e => setAddressForm({...addressForm, pincode: e.target.value})} required />
+                  </div>
+                  <div className="form-group" style={{ display: 'flex', alignItems: 'center', paddingTop: '30px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
+                      <input type="checkbox" checked={addressForm.is_default} onChange={e => setAddressForm({...addressForm, is_default: e.target.checked})} style={{ marginRight: '8px' }} />
+                      Make this default
+                    </label>
+                  </div>
+                </div>
+                <div className="modal-footer" style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+                  <button type="button" className="btn btn-ghost" onClick={() => setAddressModalOpen(false)}>Cancel</button>
+                  <button type="submit" className="btn btn-primary">Save Address</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

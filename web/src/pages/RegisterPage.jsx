@@ -34,7 +34,8 @@ export default function RegisterPage() {
   const [subcategories, setSubcategories] = useState([]);
 
   const [step, setStep] = useState(1);
-  const [otp, setOtp] = useState(new Array(6).fill(''));
+  const [phoneOtp, setPhoneOtp] = useState(new Array(6).fill(''));
+  const [emailOtp, setEmailOtp] = useState(new Array(6).fill(''));
   const [otpStatus, setOtpStatus] = useState(''); // 'success' or 'error'
   const [resendCooldown, setResendCooldown] = useState(0);
 
@@ -153,8 +154,9 @@ export default function RegisterPage() {
         const fullPhone = `+91${form.phone}`;
         const confirmationResult = await signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier);
         window.confirmationResult = confirmationResult;
+        await authAPI.sendPhoneOtp(fullPhone, form.email);
         setStep(2);
-        toast.success("SMS verification code sent!");
+        toast.success("OTPs sent to phone and email!");
       }
     } catch (err) {
       console.error("FIREBASE ERROR:", err);
@@ -208,20 +210,13 @@ export default function RegisterPage() {
     }
   };
 
-  useEffect(() => {
-    const code = otp.join('');
-    if (code.length === 6 && step === 2) {
-      verifyAndRegister(code);
-    }
-  }, [otp, step]);
-
-  const verifyAndRegister = async (code) => {
+  const verifyAndRegister = async (pCode, eCode) => {
     setLoading(true);
     try {
-      const result = await window.confirmationResult.confirm(code);
+      const result = await window.confirmationResult.confirm(pCode);
       const idToken = await result.user.getIdToken();
 
-      await loginWithPhoneOTP(idToken, null, form.role, form.first_name, form.last_name);
+      await loginWithPhoneOTP(idToken, eCode, form.email, form.role, form.first_name, form.last_name);
       
       setOtpStatus('success');
 
@@ -512,34 +507,79 @@ export default function RegisterPage() {
         ) : (
           <div className="auth-form animate-in">
             <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ marginBottom: 8 }}>Verification Code</h3>
+              <h3 style={{ marginBottom: 8 }}>Verify Identity</h3>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                We sent a 6-digit SMS code to <strong>+91 {form.phone}</strong>
+                Enter the codes sent to your phone and email.
               </p>
             </div>
 
-            <div className="otp-container" onPaste={handleOtpPaste}>
-              {otp.map((digit, index) => (
+            <label className="form-label" style={{textAlign: 'left', display: 'block', marginTop: '1rem'}}>Phone OTP (+91 {form.phone})</label>
+            <div className="otp-container" style={{marginBottom: '1rem'}}>
+              {phoneOtp.map((digit, index) => (
                 <input
-                  key={index}
+                  key={`p-${index}`}
                   type="text"
                   maxLength={1}
                   className={`otp-input ${otpStatus}`}
                   value={digit}
-                  onChange={(e) => handleOtpChange(e.target, index)}
-                  onKeyDown={(e) => handleOtpKeyDown(e, index)}
+                  onChange={(e) => {
+                    if (isNaN(e.target.value)) return;
+                    setOtpStatus('');
+                    const newOtp = [...phoneOtp];
+                    newOtp[index] = e.target.value;
+                    setPhoneOtp(newOtp);
+                    if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Backspace' && !phoneOtp[index] && e.target.previousSibling) {
+                      e.target.previousSibling.focus();
+                    }
+                  }}
                   autoFocus={index === 0}
                   disabled={loading}
                 />
               ))}
             </div>
 
-            {loading && <div style={{ textAlign: 'center', marginTop: 16 }}><span className="spinner-sm" /></div>}
+            <label className="form-label" style={{textAlign: 'left', display: 'block'}}>Email OTP ({form.email})</label>
+            <div className="otp-container" style={{marginBottom: '1.5rem'}}>
+              {emailOtp.map((digit, index) => (
+                <input
+                  key={`e-${index}`}
+                  type="text"
+                  maxLength={1}
+                  className={`otp-input ${otpStatus}`}
+                  value={digit}
+                  onChange={(e) => {
+                    if (isNaN(e.target.value)) return;
+                    setOtpStatus('');
+                    const newOtp = [...emailOtp];
+                    newOtp[index] = e.target.value;
+                    setEmailOtp(newOtp);
+                    if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Backspace' && !emailOtp[index] && e.target.previousSibling) {
+                      e.target.previousSibling.focus();
+                    }
+                  }}
+                  disabled={loading}
+                />
+              ))}
+            </div>
+
+            <button 
+              className="btn btn-primary btn-block mb-3" 
+              onClick={() => verifyAndRegister(phoneOtp.join(''), emailOtp.join(''))} 
+              disabled={loading || phoneOtp.join('').length < 6 || emailOtp.join('').length < 6}
+            >
+              {loading ? <span className="spinner-sm" /> : "Verify & Create Account"}
+            </button>
             
             <button 
               className="auth-back-btn" 
-              onClick={() => { setStep(1); setOtp(new Array(6).fill('')); setOtpStatus(''); }}
-              style={{ marginTop: '2rem', margin: '2rem auto 0' }}
+              onClick={() => { setStep(1); setPhoneOtp(new Array(6).fill('')); setEmailOtp(new Array(6).fill('')); setOtpStatus(''); }}
+              style={{ marginTop: '1rem', margin: '1rem auto 0' }}
               disabled={loading}
             >
               ← Back to Registration

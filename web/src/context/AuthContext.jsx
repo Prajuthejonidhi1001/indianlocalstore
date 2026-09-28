@@ -23,8 +23,8 @@ export function AuthProvider({ children }) {
 
   useEffect(() => { fetchUser(); }, [fetchUser]);
 
-  const loginWithPhoneOTP = async (idToken, emailOtp, role, firstName, lastName) => {
-    const { data } = await authAPI.verifyPhoneOtp(idToken, emailOtp, role, firstName, lastName);
+  const loginWithPhoneOTP = async (idToken, emailOtp, email, role, firstName, lastName) => {
+    const { data } = await authAPI.verifyPhoneOtp(idToken, emailOtp, email, role, firstName, lastName);
     localStorage.setItem('access_token', data.access);
     localStorage.setItem('refresh_token', data.refresh);
     await fetchUser();

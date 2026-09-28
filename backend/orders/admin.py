@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Cart, CartItem, Order, OrderItem, Payment
+from .models import Cart, CartItem, Order, OrderItem, Payment, Coupon
 
 class OrderItemInline(admin.TabularInline):
     """
@@ -10,6 +10,13 @@ class OrderItemInline(admin.TabularInline):
     extra = 0
     readonly_fields = ['product', 'quantity', 'price', 'variants']
     can_delete = False
+
+
+@admin.register(Coupon)
+class CouponAdmin(admin.ModelAdmin):
+    list_display = ['code', 'discount_percent', 'times_used', 'max_usage', 'valid_until', 'is_active']
+    list_filter = ['is_active']
+    search_fields = ['code']
 
 
 @admin.register(Cart)

@@ -1,11 +1,13 @@
 import { Link, useNavigate } from 'react-router-dom';
-import { Trash2, ShoppingBag, ArrowRight } from 'lucide-react';
+import { Trash2, ShoppingBag, ArrowRight, Tag, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useState } from 'react';
 import './CartPage.css';
 
 export default function CartPage() {
-  const { cart, cartLoading, cartTotal, addToCart, removeFromCart, clearCart } = useCart();
+  const { cart, cartLoading, cartTotal, cartSubtotal, addToCart, removeFromCart, clearCart, applyCoupon, removeCoupon } = useCart();
   const navigate = useNavigate();
+  const [couponCode, setCouponCode] = useState('');
 
   if (cartLoading) return <div className="loading-center"><div className="spinner" /></div>;
 
@@ -118,8 +120,33 @@ export default function CartPage() {
               <div className="summary-divider" />
               <div className="summary-row">
                 <span>Subtotal ({items.length} item{items.length !== 1 ? 's' : ''})</span>
-                <span>₹{cartTotal.toFixed(2)}</span>
+                <span>₹{cartSubtotal.toFixed(2)}</span>
               </div>
+              
+              {cart?.applied_coupon_code ? (
+                <div className="summary-row" style={{ color: 'var(--green, #22c55e)' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <Tag size={14} /> {cart.applied_coupon_code} ({cart.coupon_discount_percent}% OFF)
+                    <button className="btn btn-ghost" style={{ padding: 0, color: 'var(--text-muted)' }} onClick={removeCoupon}>
+                      <X size={14} />
+                    </button>
+                  </span>
+                  <span>-₹{(cartSubtotal - cartTotal).toFixed(2)}</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', gap: '0.5rem', margin: '1rem 0' }}>
+                  <input 
+                    type="text" 
+                    className="input" 
+                    placeholder="Promo Code" 
+                    value={couponCode} 
+                    onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                    style={{ flex: 1, padding: '0.5rem' }} 
+                  />
+                  <button className="btn btn-outline" onClick={() => applyCoupon(couponCode)}>Apply</button>
+                </div>
+              )}
+
               <div className="summary-row">
                 <span>Delivery Fee</span>
                 <span style={{ color: 'var(--green, #22c55e)', fontWeight: 700 }}>Free</span>

@@ -14,7 +14,7 @@ from .serializers import (
 class ShopViewSet(viewsets.ModelViewSet):
     """Shop listing and management"""
     queryset = Shop.objects.filter(is_active=True)
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_fields = ['city', 'verification_status']
     search_fields = ['name', 'address', 'city']
@@ -41,9 +41,7 @@ class ShopViewSet(viewsets.ModelViewSet):
         return ShopListSerializer
 
     def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy', 'my_shop']:
-            return [IsAuthenticated()]
-        return [AllowAny()]
+        return [IsAuthenticated()]
 
     def perform_create(self, serializer):
         if self.request.user.role != 'seller':
@@ -60,7 +58,7 @@ class ShopViewSet(viewsets.ModelViewSet):
         except Shop.DoesNotExist:
             return Response({'error': 'Shop not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
     def nearby(self, request):
         """Get nearby shops based on user location using Haversine distance"""
         import math

@@ -43,16 +43,13 @@ export default function ProductDetailPage() {
   useEffect(() => {
     const fetchProduct = async () => {
       try {
-        const [prodRes, revRes] = await Promise.all([
-          productAPI.getProductDetail(id),
-          productAPI.getProductReviews(id)
-        ]);
+        const prodRes = await productAPI.getProductDetail(id);
         const p = prodRes.data;
         if (typeof p.variants === 'string') {
           try { p.variants = JSON.parse(p.variants); } catch (e) { p.variants = null; }
         }
         setProduct(p);
-        setReviews(revRes.data);
+        setReviews(p.product_reviews || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -100,13 +97,31 @@ export default function ProductDetailPage() {
     try {
       await productAPI.addReview(product.id, reviewForm);
       toast.success('Review submitted!');
-      const revRes = await productAPI.getProductReviews(id);
-      setReviews(revRes.data);
+      const prodRes = await productAPI.getProductDetail(id);
+      setProduct(prodRes.data);
+      setReviews(prodRes.data.product_reviews || []);
       setReviewForm({ rating: 5, comment: '' });
     } catch (err) {
       toast.error('Failed to submit review');
     } finally {
       setSubmittingReview(false);
+    }
+  };
+
+  const handleShare = async () => {
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: product.name,
+          text: `Check out ${product.name} on Indian Local Store!`,
+          url: window.location.href,
+        });
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard!');
+      }
+    } catch (err) {
+      console.log('Error sharing', err);
     }
   };
 
@@ -151,7 +166,7 @@ export default function ProductDetailPage() {
           <div className="pd-gallery">
             <div className="pd-main-image-container">
               <button className="pd-action-btn pd-wishlist"><Heart size={20}/></button>
-              <button className="pd-action-btn pd-share"><Share2 size={20}/></button>
+              <button className="pd-action-btn pd-share" onClick={handleShare}><Share2 size={20}/></button>
               <ImageMagnifier src={images[currentImageIndex]} alt={product.name} />
             </div>
             {images.length > 1 && (

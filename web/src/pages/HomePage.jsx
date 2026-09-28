@@ -223,20 +223,30 @@ export default function HomePage() {
           <div className="flash-deals-scroll">
             {loading ? (
               Array(4).fill(0).map((_,i) => <ProductSkeleton key={i} />)
-            ) : trendingProducts.slice(0, 5).map(prod => (
+            ) : trendingProducts.slice(0, 5).map(prod => {
+              const price = parseFloat(prod.price);
+              const discountPrice = prod.discount_price ? parseFloat(prod.discount_price) : null;
+              const discount = discountPrice ? Math.round((1 - discountPrice / price) * 100) : 0;
+              return (
               <div key={prod.id} className="flash-deal-card card" onClick={() => navigate(`/products/${prod.id}`)}>
                 <button className="wishlist-btn"><Heart size={16} /></button>
-                <div className="fd-discount-badge">-{(Math.random() * 20 + 10).toFixed(0)}%</div>
+                {discount > 0 && <div className="fd-discount-badge">-{discount}%</div>}
                 <img src={prod.image?.startsWith('http') ? prod.image : `/media/${prod.image}`} alt={prod.name} className="fd-img" onError={(e) => { e.target.src = 'https://placehold.co/300x300/131920/FFF?text=No+Image' }} />
                 <div className="fd-info">
                   <h4 className="fd-name truncate">{prod.name}</h4>
                   <div className="fd-pricing">
-                    <span className="fd-price">₹{prod.price}</span>
-                    <span className="fd-old-price">₹{(parseFloat(prod.price) * 1.2).toFixed(2)}</span>
+                    {discountPrice ? (
+                      <>
+                        <span className="fd-price">₹{discountPrice.toFixed(2)}</span>
+                        <span className="fd-old-price">₹{price.toFixed(2)}</span>
+                      </>
+                    ) : (
+                      <span className="fd-price">₹{price.toFixed(2)}</span>
+                    )}
                   </div>
                 </div>
               </div>
-            ))}
+            )})}
           </div>
         </section>
 

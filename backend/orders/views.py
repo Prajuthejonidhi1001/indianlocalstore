@@ -11,6 +11,7 @@ from .serializers import (
     CartSerializer, CartItemSerializer, OrderListSerializer,
     OrderDetailSerializer, OrderCreateSerializer, PaymentSerializer
 )
+from users.utils import send_push_notification
 
 
 class CartViewSet(viewsets.ModelViewSet):
@@ -59,7 +60,33 @@ class CartViewSet(viewsets.ModelViewSet):
     def clear_cart(self, request):
         cart = get_object_or_404(Cart, user=request.user)
         cart.items.all().delete()
+        cart.applied_coupon = None
+        cart.save()
         return Response({'message': 'Cart cleared'}, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'])
+    def apply_coupon(self, request):
+        cart = get_object_or_404(Cart, user=request.user)
+        code = request.data.get('code')
+        
+        from .models import Coupon
+        try:
+            coupon = Coupon.objects.get(code__iexact=code)
+            if not coupon.is_valid():
+                return Response({'error': 'Coupon is expired or usage limit reached'}, status=status.HTTP_400_BAD_REQUEST)
+                
+            cart.applied_coupon = coupon
+            cart.save()
+            return Response(CartSerializer(cart).data)
+        except Coupon.DoesNotExist:
+            return Response({'error': 'Invalid coupon code'}, status=status.HTTP_404_NOT_FOUND)
+
+    @action(detail=False, methods=['delete'])
+    def remove_coupon(self, request):
+        cart = get_object_or_404(Cart, user=request.user)
+        cart.applied_coupon = None
+        cart.save()
+        return Response(CartSerializer(cart).data)
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -68,6 +95,11 @@ class OrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderListSerializer
 
     def get_queryset(self):
+        if self.action in ['update_status', 'dispatch_order']:
+            if self.request.user.role == 'admin':
+                return Order.objects.all()
+            elif self.request.user.role == 'seller':
+                return Order.objects.filter(items__seller=self.request.user).distinct()
         return Order.objects.filter(user=self.request.user)
 
     def get_serializer_class(self):
@@ -93,8 +125,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             total_amount=cart.get_total(),
             discount_amount=cart.get_total() - cart.get_discount_total(),
             final_amount=cart.get_discount_total(),
+            applied_coupon=cart.applied_coupon,
             **serializer.validated_data
         )
+        
+        # Increment coupon usage
+        if cart.applied_coupon:
+            cart.applied_coupon.times_used += 1
+            cart.applied_coupon.save()
         
         # Create order items
         for cart_item in cart.items.all():
@@ -110,6 +148,21 @@ class OrderViewSet(viewsets.ModelViewSet):
         
         # Clear cart
         cart.items.all().delete()
+        cart.applied_coupon = None
+        cart.save()
+        
+        # Notify sellers
+        notified_sellers = set()
+        for item in order.items.all():
+            seller = item.seller
+            if seller and seller.id not in notified_sellers and seller.expo_push_token:
+                send_push_notification(
+                    expo_push_token=seller.expo_push_token,
+                    title="New Order Received! 🛍️",
+                    body=f"You have a new order (#{order.order_id}). Please prepare the items for dispatch.",
+                    data={"order_id": order.id}
+                )
+                notified_sellers.add(seller.id)
 
     @action(detail=True, methods=['post'])
     def create_payment(self, request, pk=None):
@@ -234,6 +287,15 @@ class OrderViewSet(viewsets.ModelViewSet):
             order.order_status = 'shipped'
             order.save()
             
+            # Notify customer
+            if order.user.expo_push_token:
+                send_push_notification(
+                    expo_push_token=order.user.expo_push_token,
+                    title="Order Dispatched! 🚚",
+                    body=f"Your order #{order.order_id} has been dispatched. Track it now!",
+                    data={"order_id": order.id}
+                )
+            
             return Response({
                 'message': 'Order dispatched successfully via ' + dispatch_info.get('courier_name', 'Delivery Partner'),
                 'tracking_url': dispatch_info.get('tracking_url'),
@@ -241,3 +303,52 @@ class OrderViewSet(viewsets.ModelViewSet):
             })
         except Exception as e:
             return Response({'error': f'Failed to dispatch: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['patch'])
+    def update_status(self, request, pk=None):
+        """Seller or Admin manually updates the order status (e.g. delivered, cancelled)"""
+        if request.user.role not in ['seller', 'admin']:
+            return Response({'error': 'Permission denied'}, status=status.HTTP_403_FORBIDDEN)
+            
+        order = self.get_object()
+        
+        # If seller, verify they own items in this order
+        if request.user.role == 'seller' and not order.items.filter(seller=request.user).exists():
+            return Response({'error': 'You cannot update this order'}, status=status.HTTP_403_FORBIDDEN)
+            
+        new_status = request.data.get('order_status')
+        valid_statuses = [choice[0] for choice in Order.STATUS_CHOICES]
+        
+        if new_status and new_status not in valid_statuses:
+            return Response({'error': 'Invalid status'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        if new_status:
+            order.order_status = new_status
+            
+        tracking_url = request.data.get('tracking_url')
+        if tracking_url:
+            order.tracking_url = tracking_url
+            
+        tracking_id = request.data.get('tracking_id')
+        if tracking_id:
+            order.tracking_id = tracking_id
+            
+        order.save()
+        
+        if new_status and order.user.expo_push_token:
+            status_msgs = {
+                'confirmed': "has been confirmed by the seller",
+                'shipped': "has been shipped",
+                'delivered': "has been delivered! Enjoy your items 🎁",
+                'cancelled': "has been cancelled."
+            }
+            if new_status in status_msgs:
+                send_push_notification(
+                    expo_push_token=order.user.expo_push_token,
+                    title=f"Order Update: {new_status.capitalize()} 📦",
+                    body=f"Your order #{order.order_id} {status_msgs[new_status]}",
+                    data={"order_id": order.id}
+                )
+        
+        serializer = self.get_serializer(order)
+        return Response(serializer.data)

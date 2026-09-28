@@ -23,6 +23,10 @@ import CartScreen from '../screens/CartScreen';
 import CheckoutScreen from '../screens/CheckoutScreen';
 import OrdersScreen from '../screens/OrdersScreen';
 import SellerDashboardScreen from '../screens/SellerDashboardScreen';
+import WishlistScreen from '../screens/WishlistScreen';
+import AddressBookScreen from '../screens/AddressBookScreen';
+import SearchScreen from '../screens/SearchScreen';
+import SupportScreen from '../screens/SupportScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -38,6 +42,7 @@ function HomeStack() {
       <Stack.Screen name="Subcategory" component={SubcategoryScreen} />
       <Stack.Screen name="ShopProducts" component={ShopProductsScreen} />
       <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
+      <Stack.Screen name="Search" component={SearchScreen} />
     </Stack.Navigator>
   );
 }
@@ -123,6 +128,9 @@ export default function AppNavigator() {
           <RootStack.Screen name="Orders" component={OrdersScreen} />
           <RootStack.Screen name="SellerDashboard" component={SellerDashboardScreen} />
           <RootStack.Screen name="ProductDetail" component={ProductDetailScreen} />
+          <RootStack.Screen name="Wishlist" component={WishlistScreen} />
+          <RootStack.Screen name="AddressBook" component={AddressBookScreen} />
+          <RootStack.Screen name="Support" component={SupportScreen} />
         </>
       )}
     </RootStack.Navigator>

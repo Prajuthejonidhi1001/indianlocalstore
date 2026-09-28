@@ -7,14 +7,16 @@ import {
   TouchableOpacity, 
   Image, 
   ActivityIndicator,
-  Alert
+  Alert,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useCart } from '../context/CartContext';
 
 export default function CartScreen({ navigation }) {
-  const { cart, cartLoading, cartTotal, addToCart, removeFromCart, clearCart } = useCart();
+  const { cart, cartLoading, cartTotal, cartSubtotal, addToCart, removeFromCart, clearCart, applyCoupon, removeCoupon } = useCart();
+  const [couponCode, setCouponCode] = React.useState('');
 
   if (cartLoading) {
     return (
@@ -124,9 +126,44 @@ export default function CartScreen({ navigation }) {
             
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal ({items.length} items)</Text>
-              <Text style={styles.summaryValue}>₹{cartTotal.toFixed(2)}</Text>
+              <Text style={styles.summaryValue}>₹{cartSubtotal.toFixed(2)}</Text>
             </View>
-            <View style={styles.summaryRow}>
+            
+            {cart?.applied_coupon_code ? (
+              <View style={[styles.summaryRow, { marginTop: 10 }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Ionicons name="pricetag" size={14} color={COLORS.green} style={{ marginRight: 5 }} />
+                  <Text style={[styles.summaryLabel, { color: COLORS.green }]}>
+                    {cart.applied_coupon_code} ({cart.coupon_discount_percent}%)
+                  </Text>
+                  <TouchableOpacity onPress={removeCoupon} style={{ marginLeft: 10 }}>
+                    <Ionicons name="close-circle" size={16} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={[styles.summaryValue, { color: COLORS.green }]}>
+                  -₹{(cartSubtotal - cartTotal).toFixed(2)}
+                </Text>
+              </View>
+            ) : (
+              <View style={styles.couponRow}>
+                <TextInput 
+                  style={styles.couponInput}
+                  placeholder="Promo Code"
+                  placeholderTextColor={COLORS.textMuted}
+                  value={couponCode}
+                  onChangeText={(t) => setCouponCode(t.toUpperCase())}
+                  autoCapitalize="characters"
+                />
+                <TouchableOpacity 
+                  style={styles.couponBtn}
+                  onPress={() => applyCoupon(couponCode)}
+                >
+                  <Text style={styles.couponBtnText}>Apply</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <View style={[styles.summaryRow, { marginTop: 10 }]}>
               <Text style={styles.summaryLabel}>Delivery Fee</Text>
               <Text style={styles.summaryFree}>Free</Text>
             </View>
@@ -218,6 +255,11 @@ const styles = StyleSheet.create({
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, alignItems: 'center' },
   totalLabel: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
   totalValue: { color: COLORS.primary, fontSize: 22, fontWeight: '900' },
+
+  couponRow: { flexDirection: 'row', marginTop: 15, marginBottom: 5 },
+  couponInput: { flex: 1, height: 44, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, paddingHorizontal: 15, color: COLORS.text, backgroundColor: COLORS.elevated },
+  couponBtn: { backgroundColor: COLORS.primary, paddingHorizontal: 20, justifyContent: 'center', borderRadius: RADIUS.md, marginLeft: 10 },
+  couponBtnText: { color: '#fff', fontWeight: '700' },
 
   checkoutBtn: { 
     flexDirection: 'row', 

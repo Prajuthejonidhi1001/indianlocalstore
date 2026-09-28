@@ -22,6 +22,7 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     password_reset_token = models.CharField(max_length=128, blank=True, default='')
+    expo_push_token = models.CharField(max_length=255, blank=True, null=True)
 
     # Override related_name for groups and permissions to avoid clash
     groups = models.ManyToManyField(
@@ -48,7 +49,7 @@ class User(AbstractUser):
         return f"{self.username} ({self.get_role_display()})"
 
 class OTPVerification(models.Model):
-    phone = models.CharField(max_length=15)
+    phone = models.CharField(max_length=255, null=True, blank=True)
     email = models.EmailField(null=True, blank=True)
     phone_otp = models.CharField(max_length=6, null=True, blank=True)
     email_otp = models.CharField(max_length=6, null=True, blank=True)
@@ -61,3 +62,23 @@ class OTPVerification(models.Model):
 
     def __str__(self):
         return f"{self.phone} - PhoneOTP: {self.phone_otp} | EmailOTP: {self.email_otp}"
+
+
+class Address(models.Model):
+    """User's saved delivery addresses"""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='addresses')
+    title = models.CharField(max_length=50, default='Home')
+    name = models.CharField(max_length=100)
+    phone = models.CharField(max_length=15)
+    address_line = models.TextField()
+    city = models.CharField(max_length=100)
+    state = models.CharField(max_length=100)
+    pincode = models.CharField(max_length=10)
+    is_default = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-is_default', '-created_at']
+
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"

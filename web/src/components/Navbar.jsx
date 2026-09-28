@@ -56,7 +56,7 @@ export default function Navbar() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (search.trim()) {
-      navigate(`/shops?q=${encodeURIComponent(search.trim())}`);
+      navigate(`/search?q=${encodeURIComponent(search.trim())}`);
       setSearch('');
       setSearchFocused(false);
       setMenuOpen(false);
@@ -64,7 +64,7 @@ export default function Navbar() {
   };
 
   const handleSuggestionClick = (term) => {
-    navigate(`/shops?q=${encodeURIComponent(term)}`);
+    navigate(`/search?q=${encodeURIComponent(term)}`);
     setSearchFocused(false);
     setSearch('');
   };
@@ -197,6 +197,11 @@ export default function Navbar() {
                         <Store size={15} /> Seller Dashboard
                       </Link>
                     )}
+                    {user?.role === 'admin' && (
+                      <Link to="/admin" className="dropdown-item" style={{ color: '#D500F9' }} onClick={() => setUserMenuOpen(false)}>
+                        <LayoutDashboard size={15} /> Admin Panel
+                      </Link>
+                    )}
                     <div className="dropdown-divider" />
                     <button className="dropdown-item text-red" onClick={handleLogout} id="logout-btn">
                       <LogOut size={15} /> Sign Out
@@ -256,6 +261,11 @@ export default function Navbar() {
                 {isSeller && (
                   <Link to="/seller" className="text-saffron" onClick={() => setMenuOpen(false)}>
                     <Store size={18}/> Seller Dashboard
+                  </Link>
+                )}
+                {user?.role === 'admin' && (
+                  <Link to="/admin" style={{ color: '#D500F9' }} onClick={() => setMenuOpen(false)}>
+                    <LayoutDashboard size={18}/> Admin Panel
                   </Link>
                 )}
                 <button className="mobile-link-btn text-red" onClick={handleLogout}>

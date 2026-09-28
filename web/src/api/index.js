@@ -67,8 +67,8 @@ api.interceptors.response.use(
 // ── Auth ──────────────────────────────────────────────
 export const authAPI = {
   sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
-  verifyPhoneOtp: (firebase_token, email_otp, role, first_name, last_name) => 
-    api.post('/users/verify_otp/', { firebase_token, email_otp, role, first_name, last_name }),
+  verifyPhoneOtp: (firebase_token, email_otp, email, role, first_name, last_name) => 
+    api.post('/users/verify_otp/', { firebase_token, email_otp, email, role, first_name, last_name }),
   // Legacy register for testing if needed
   register: (data) => api.post('/users/register/', data),
   // Standard tokens
@@ -77,6 +77,14 @@ export const authAPI = {
   getProfile: () => api.get('/users/me/'),
   updateProfile: (data) => api.put('/users/update_profile/', data),
   getSellers: () => api.get('/users/sellers/'),
+};
+
+// ── Address Book ──────────────────────────────────────
+export const addressAPI = {
+  getAddresses: () => api.get('/users/addresses/'),
+  addAddress: (data) => api.post('/users/addresses/', data),
+  updateAddress: (id, data) => api.patch(`/users/addresses/${id}/`, data),
+  deleteAddress: (id) => api.delete(`/users/addresses/${id}/`),
 };
 
 // ── Products ──────────────────────────────────────────
@@ -91,6 +99,13 @@ export const productAPI = {
   deleteProduct: (id) => api.delete(`/products/products/${id}/`),
   addReview: (productId, data) => api.post(`/products/products/${productId}/add_review/`, data),
   getMyProducts: () => api.get('/products/products/my_products/'),
+};
+
+// ── Wishlist ──────────────────────────────────────────
+export const wishlistAPI = {
+  getWishlist: () => api.get('/products/wishlist/'),
+  addToWishlist: (productId) => api.post('/products/wishlist/', { product_id: productId }),
+  removeFromWishlist: (wishlistId) => api.delete(`/products/wishlist/${wishlistId}/`),
 };
 
 // ── Shops ────────────────────────────────────────────
@@ -110,6 +125,8 @@ export const cartAPI = {
   addItem: (productId, quantity, variants = {}) => api.post('/orders/cart/add_item/', { product_id: productId, quantity, variants }),
   removeItem: (itemId) => api.delete('/orders/cart/remove_item/', { data: { item_id: itemId } }),
   clearCart: () => api.delete('/orders/cart/clear_cart/'),
+  applyCoupon: (code) => api.post('/orders/cart/apply_coupon/', { code }),
+  removeCoupon: () => api.delete('/orders/cart/remove_coupon/'),
 };
 
 // ── Orders ────────────────────────────────────────────
@@ -124,6 +141,17 @@ export const orderAPI = {
   // Seller Actions
   getSellerOrders: () => api.get('/orders/orders/seller_orders/'),
   dispatchOrder: (id) => api.post(`/orders/orders/${id}/dispatch_order/`),
+  updateOrderStatus: (id, data) => api.patch(`/orders/orders/${id}/update_status/`, data),
+};
+
+// ========== Admin API ==========
+export const adminAPI = {
+  getDashboardStats: () => api.get('/users/admin/dashboard_stats/'),
+  getUsers: () => api.get('/users/admin/users/'),
+  getShops: () => api.get('/users/admin/shops/'),
+  getOrders: () => api.get('/users/admin/orders/'),
+  updateUserRole: (id, role) => api.patch(`/users/admin/${id}/update_role/`, { role }),
+  verifyShop: (id) => api.patch(`/users/admin/${id}/verify_shop/`),
 };
 
 export default api;

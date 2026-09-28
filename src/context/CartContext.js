@@ -57,14 +57,34 @@ export function CartProvider({ children }) {
     }
   };
 
+  const applyCoupon = async (code) => {
+    try {
+      const { data } = await cartAPI.applyCoupon(code);
+      setCart(data);
+      Alert.alert('Success', 'Coupon applied!');
+      return true;
+    } catch (err) {
+      Alert.alert('Error', err.response?.data?.error || 'Invalid coupon');
+      return false;
+    }
+  };
+
+  const removeCoupon = async () => {
+    try {
+      const { data } = await cartAPI.removeCoupon();
+      setCart(data);
+      Alert.alert('Success', 'Coupon removed');
+    } catch {
+      Alert.alert('Error', 'Failed to remove coupon');
+    }
+  };
+
   const cartCount = cart?.items?.length || 0;
-  const cartTotal = cart?.items?.reduce((sum, item) => {
-    const price = item.product.discount_price || item.product.price;
-    return sum + parseFloat(price) * item.quantity;
-  }, 0) || 0;
+  const cartTotal = cart?.discount_total ? parseFloat(cart.discount_total) : (cart?.total ? parseFloat(cart.total) : 0);
+  const cartSubtotal = cart?.total ? parseFloat(cart.total) : 0;
 
   return (
-    <CartContext.Provider value={{ cart, cartLoading, cartCount, cartTotal, addToCart, removeFromCart, clearCart, refetchCart: fetchCart }}>
+    <CartContext.Provider value={{ cart, cartLoading, cartCount, cartTotal, cartSubtotal, addToCart, removeFromCart, clearCart, applyCoupon, removeCoupon, refetchCart: fetchCart }}>
       {children}
     </CartContext.Provider>
   );

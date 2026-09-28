@@ -20,10 +20,12 @@ class CartSerializer(serializers.ModelSerializer):
     items = CartItemSerializer(many=True, read_only=True)
     total = serializers.SerializerMethodField()
     discount_total = serializers.SerializerMethodField()
+    applied_coupon_code = serializers.CharField(source='applied_coupon.code', read_only=True)
+    coupon_discount_percent = serializers.IntegerField(source='applied_coupon.discount_percent', read_only=True)
 
     class Meta:
         model = Cart
-        fields = ['id', 'items', 'total', 'discount_total']
+        fields = ['id', 'items', 'total', 'discount_total', 'applied_coupon_code', 'coupon_discount_percent']
 
     def get_total(self, obj):
         return str(obj.get_total())

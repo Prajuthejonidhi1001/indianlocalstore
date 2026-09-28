@@ -722,15 +722,29 @@ export default function SellerDashboardPage() {
                                     success: 'Order Dispatched to Delivery Partner!',
                                     error: 'Failed to dispatch'
                                   }).then(() => {
-                                    // Refresh orders
                                     orderAPI.getSellerOrders().then(res => setSellerOrders(res.data.results || res.data));
                                   });
                                 }}>
                                   Confirm Shipment
                                 </button>
+                              ) : o.order_status === 'shipped' ? (
+                                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                  <a href={o.tracking_url} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">Track</a>
+                                  <button className="btn btn-primary btn-sm" style={{ backgroundColor: '#2ECC71', borderColor: '#2ECC71' }} onClick={() => {
+                                    toast.promise(orderAPI.updateOrderStatus(o.id, { order_status: 'delivered' }), {
+                                      loading: 'Updating...',
+                                      success: 'Order Marked as Delivered!',
+                                      error: 'Failed to update status'
+                                    }).then(() => {
+                                      orderAPI.getSellerOrders().then(res => setSellerOrders(res.data.results || res.data));
+                                    });
+                                  }}>
+                                    Mark Delivered
+                                  </button>
+                                </div>
                               ) : (
                                 <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
-                                  <a href={o.tracking_url} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">Track</a>
+                                  {o.tracking_url && <a href={o.tracking_url} target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">Track</a>}
                                   <button className="btn-link">Print Slip</button>
                                 </div>
                               )}
