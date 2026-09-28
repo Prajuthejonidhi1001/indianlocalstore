@@ -30,11 +30,13 @@ export default function Navbar() {
   const searchRef = useRef(null);
 
   useEffect(() => {
-    // Fetch categories for mega menu
-    productAPI.getCategories()
-      .then(res => setCategories(res.data.results || res.data))
-      .catch(console.error);
-  }, []);
+    // Fetch categories for mega menu only if authenticated
+    if (isAuthenticated) {
+      productAPI.getCategories()
+        .then(res => setCategories(res.data.results || res.data))
+        .catch(console.error);
+    }
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

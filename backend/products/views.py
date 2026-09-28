@@ -20,7 +20,7 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     """Get all categories and subcategories"""
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @method_decorator(cache_page(60 * 15))
     def list(self, request, *args, **kwargs):
