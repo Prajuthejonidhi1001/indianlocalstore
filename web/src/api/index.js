@@ -57,9 +57,7 @@ api.interceptors.response.use(
       } catch {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        if (window.location.pathname !== '/login') {
-          window.location.href = '/login';
-        }
+        if (window.location.pathname !== '/login') { window.location.href = '/login'; }
       }
     }
     return Promise.reject(error);
@@ -68,9 +66,12 @@ api.interceptors.response.use(
 
 // ── Auth ──────────────────────────────────────────────
 export const authAPI = {
+  checkUser: (email, phone) => api.post('/users/check_user/', { email, phone }),
   sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
-  verifyPhoneOtp: (firebase_token, email_otp, email, role, first_name, last_name) => 
+  verifyPhoneOtp: (firebase_token, email_otp, email, role, first_name, last_name) =>
     api.post('/users/verify_otp/', { firebase_token, email_otp, email, role, first_name, last_name }),
+  verifyEmailOnly: (email, email_otp) =>
+    api.post('/users/verify_email_only/', { email, email_otp }),
   // Legacy register for testing if needed
   register: (data) => api.post('/users/register/', data),
   // Standard tokens
@@ -79,14 +80,9 @@ export const authAPI = {
   getProfile: () => api.get('/users/me/'),
   updateProfile: (data) => api.put('/users/update_profile/', data),
   getSellers: () => api.get('/users/sellers/'),
-};
-
-// ── Address Book ──────────────────────────────────────
-export const addressAPI = {
-  getAddresses: () => api.get('/users/addresses/'),
-  addAddress: (data) => api.post('/users/addresses/', data),
-  updateAddress: (id, data) => api.patch(`/users/addresses/${id}/`, data),
-  deleteAddress: (id) => api.delete(`/users/addresses/${id}/`),
+  // Wishlist
+  toggleWishlist: (productId) => api.post('/users/toggle_wishlist/', { product_id: productId }),
+  getWishlist: () => api.get('/users/wishlist/'),
 };
 
 // ── Products ──────────────────────────────────────────
@@ -95,6 +91,7 @@ export const productAPI = {
   getSubCategories: (categoryId) => api.get(`/products/subcategories/?category=${categoryId}`),
   getProducts: (params) => api.get('/products/products/', { params }),
   getProductDetail: (id) => api.get(`/products/products/${id}/`),
+  getProductReviews: (id) => api.get(`/products/products/${id}/reviews/`),
   searchProducts: (query) => api.get('/products/products/search/', { params: { q: query } }),
   createProduct: (data) => api.post('/products/products/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   updateProduct: (id, data) => api.patch(`/products/products/${id}/`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
@@ -103,20 +100,13 @@ export const productAPI = {
   getMyProducts: () => api.get('/products/products/my_products/'),
 };
 
-// ── Wishlist ──────────────────────────────────────────
-export const wishlistAPI = {
-  getWishlist: () => api.get('/products/wishlist/'),
-  addToWishlist: (productId) => api.post('/products/wishlist/', { product_id: productId }),
-  removeFromWishlist: (wishlistId) => api.delete(`/products/wishlist/${wishlistId}/`),
-};
-
 // ── Shops ────────────────────────────────────────────
 export const shopAPI = {
   getShops: (params) => api.get('/shops/', { params }),
   getShopDetail: (id) => api.get(`/shops/${id}/`),
   getNearbyShops: (lat, lng) => api.get('/shops/nearby/', { params: { latitude: lat, longitude: lng } }),
-  createShop: (data) => api.post('/shops/', data),
-  updateShop: (id, data) => api.patch(`/shops/${id}/`, data),
+  createShop: (data) => api.post('/shops/', data, { headers: { 'Content-Type': 'multipart/form-data' } }),
+  updateShop: (id, data) => api.patch(`/shops/${id}/`, data, { headers: { 'Content-Type': 'multipart/form-data' } }),
   getMyShop: () => api.get('/shops/my_shop/'),
   addReview: (shopId, data) => api.post(`/shops/${shopId}/add_review/`, data),
 };
@@ -127,8 +117,6 @@ export const cartAPI = {
   addItem: (productId, quantity, variants = {}) => api.post('/orders/cart/add_item/', { product_id: productId, quantity, variants }),
   removeItem: (itemId) => api.delete('/orders/cart/remove_item/', { data: { item_id: itemId } }),
   clearCart: () => api.delete('/orders/cart/clear_cart/'),
-  applyCoupon: (code) => api.post('/orders/cart/apply_coupon/', { code }),
-  removeCoupon: () => api.delete('/orders/cart/remove_coupon/'),
 };
 
 // ── Orders ────────────────────────────────────────────
@@ -143,17 +131,6 @@ export const orderAPI = {
   // Seller Actions
   getSellerOrders: () => api.get('/orders/orders/seller_orders/'),
   dispatchOrder: (id) => api.post(`/orders/orders/${id}/dispatch_order/`),
-  updateOrderStatus: (id, data) => api.patch(`/orders/orders/${id}/update_status/`, data),
-};
-
-// ========== Admin API ==========
-export const adminAPI = {
-  getDashboardStats: () => api.get('/users/admin/dashboard_stats/'),
-  getUsers: () => api.get('/users/admin/users/'),
-  getShops: () => api.get('/users/admin/shops/'),
-  getOrders: () => api.get('/users/admin/orders/'),
-  updateUserRole: (id, role) => api.patch(`/users/admin/${id}/update_role/`, { role }),
-  verifyShop: (id) => api.patch(`/users/admin/${id}/verify_shop/`),
 };
 
 export default api;

@@ -37,6 +37,17 @@ export default function RegisterPage() {
   const [phoneOtp, setPhoneOtp] = useState(new Array(6).fill(''));
   const [emailOtp, setEmailOtp] = useState(new Array(6).fill(''));
   const [otpStatus, setOtpStatus] = useState(''); // 'success' or 'error'
+  
+  const [phoneOtpSent, setPhoneOtpSent] = useState(false);
+  const [emailOtpSent, setEmailOtpSent] = useState(false);
+  const [sendingPhoneOtp, setSendingPhoneOtp] = useState(false);
+  const [sendingEmailOtp, setSendingEmailOtp] = useState(false);
+  
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [verifyingPhone, setVerifyingPhone] = useState(false);
+  const [verifyingEmail, setVerifyingEmail] = useState(false);
+  
   const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
@@ -131,13 +142,80 @@ export default function RegisterPage() {
     }
   }, []);
 
-  const handleSubmit = async (e) => {
+  const handleSendPhoneOTP = async () => {
+    if (form.phone.length !== 10) return toast.error("Phone number must be 10 digits");
+    setSendingPhoneOtp(true);
+    try {
+      const fullPhone = `+91${form.phone}`;
+      const confirmationResult = await signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier);
+      window.confirmationResult = confirmationResult;
+      setPhoneOtpSent(true);
+      toast.success("OTP sent to phone!");
+    } catch (err) {
+      console.error("FIREBASE ERROR:", err);
+      toast.error(err.message || 'Failed to send SMS.');
+      if (window.recaptchaVerifier) {
+        window.recaptchaVerifier.clear();
+        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
+      }
+    } finally {
+      setSendingPhoneOtp(false);
+    }
+  };
+
+  const handleSendEmailOTP = async () => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[a-zA-Z]{2,}$/;
+    if (!form.email || !emailRegex.test(form.email)) return toast.error("Please enter a valid email");
+    setSendingEmailOtp(true);
+    try {
+      await authAPI.sendPhoneOtp(null, form.email);
+      setEmailOtpSent(true);
+      toast.success("OTP sent to email!");
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to send Email OTP.');
+    } finally {
+      setSendingEmailOtp(false);
+    }
+  };
+
+  const handleVerifyEmail = async () => {
+    const eCode = emailOtp.join('');
+    if (eCode.length !== 6) return toast.error("Please enter the full 6-digit email OTP");
+    setVerifyingEmail(true);
+    try {
+      await authAPI.verifyEmailOnly(form.email, eCode);
+      setEmailVerified(true);
+      toast.success("Email verified!");
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Invalid Email OTP");
+    } finally {
+      setVerifyingEmail(false);
+    }
+  };
+
+  const handleVerifyPhone = async () => {
+    const pCode = phoneOtp.join('');
+    if (pCode.length !== 6) return toast.error("Please enter the full 6-digit phone OTP");
+    setVerifyingPhone(true);
+    try {
+      const result = await window.confirmationResult.confirm(pCode);
+      window.phoneIdToken = await result.user.getIdToken();
+      setPhoneVerified(true);
+      toast.success("Phone verified!");
+    } catch (err) {
+      toast.error("Invalid Phone OTP");
+    } finally {
+      setVerifyingPhone(false);
+    }
+  };
+
+  const verifyAndRegister = async (e) => {
     e.preventDefault();
     const required = ['username', 'email', 'password', 'first_name', 'phone'];
     for (const f of required) {
       if (!form[f]) return toast.error(`${f.replace('_', ' ')} is required`);
     }
-    if (form.phone.length !== 10) return toast.error("Phone number must be 10 digits");
     
     if (form.role === 'seller' && (!form.shopName || !form.pincode || !form.shopAddress)) {
       return toast.error("Please fill all required Shop Details");
@@ -148,73 +226,15 @@ export default function RegisterPage() {
     if (form.password.length < 8) return toast.error('Password must be at least 8 characters');
     if (form.password !== confirmPw) return toast.error('Passwords do not match');
 
+    if (!phoneVerified) return toast.error('Please click Verify next to your Phone OTP');
+    if (!emailVerified) return toast.error('Please click Verify next to your Email OTP');
+
     setLoading(true);
     try {
-      if (step === 1) {
-        const fullPhone = `+91${form.phone}`;
-        const confirmationResult = await signInWithPhoneNumber(auth, fullPhone, window.recaptchaVerifier);
-        window.confirmationResult = confirmationResult;
-        await authAPI.sendPhoneOtp(fullPhone, form.email);
-        setStep(2);
-        toast.success("OTPs sent to phone and email!");
-      }
-    } catch (err) {
-      console.error("FIREBASE ERROR:", err);
-      toast.error(err.message || 'Failed to send SMS.');
-      if (window.recaptchaVerifier) {
-        window.recaptchaVerifier.clear();
-        window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', { size: 'invisible' });
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleOtpChange = (element, index) => {
-    if (isNaN(element.value)) return false;
-    
-    setOtpStatus('');
-    const newOtp = [...otp];
-    newOtp[index] = element.value;
-    setOtp(newOtp);
-
-    // Focus next input
-    if (element.nextSibling && element.value) {
-      element.nextSibling.focus();
-    }
-  };
-
-  const handleOtpPaste = (e) => {
-    e.preventDefault();
-    const pasteData = e.clipboardData.getData('text/plain').slice(0, 6).split('');
-    if (pasteData.some(isNaN)) return;
-    
-    const newOtp = new Array(6).fill('');
-    pasteData.forEach((char, index) => newOtp[index] = char);
-    setOtp(newOtp);
-    setOtpStatus('');
-    
-    // Focus last filled input
-    const inputs = document.querySelectorAll('.otp-input');
-    if (inputs[pasteData.length - 1]) {
-      inputs[pasteData.length - 1].focus();
-    }
-  };
-
-  const handleOtpKeyDown = (e, index) => {
-    if (e.key === 'Backspace') {
-      setOtpStatus('');
-      if (!otp[index] && e.target.previousSibling) {
-        e.target.previousSibling.focus();
-      }
-    }
-  };
-
-  const verifyAndRegister = async (pCode, eCode) => {
-    setLoading(true);
-    try {
-      const result = await window.confirmationResult.confirm(pCode);
-      const idToken = await result.user.getIdToken();
+      // Use the idToken we saved during phone verification
+      const idToken = window.phoneIdToken;
+      // Pass the eCode just in case, though it's already verified in the DB
+      const eCode = emailOtp.join('');
 
       await loginWithPhoneOTP(idToken, eCode, form.email, form.role, form.first_name, form.last_name);
       
@@ -261,11 +281,69 @@ export default function RegisterPage() {
     } catch (err) {
       console.error(err);
       setOtpStatus('error');
-      toast.error(err.message || 'Verification failed. Invalid code.');
+      let errMsg = 'Verification failed. Invalid code.';
+      if (err.response?.data) {
+        if (typeof err.response.data === 'string') {
+          errMsg = err.response.data;
+        } else if (err.response.data.error) {
+          errMsg = err.response.data.error;
+        } else {
+          // Extract first field error
+          const firstKey = Object.keys(err.response.data)[0];
+          if (firstKey && Array.isArray(err.response.data[firstKey])) {
+            errMsg = `${firstKey}: ${err.response.data[firstKey][0]}`;
+          } else if (firstKey) {
+            errMsg = `${firstKey}: ${err.response.data[firstKey]}`;
+          }
+        }
+      }
+      toast.error(errMsg || err.message);
     } finally {
       setLoading(false);
     }
   };
+
+  const handleOtpChange = (element, index) => {
+    if (isNaN(element.value)) return false;
+    
+    setOtpStatus('');
+    const newOtp = [...otp];
+    newOtp[index] = element.value;
+    setOtp(newOtp);
+
+    // Focus next input
+    if (element.nextSibling && element.value) {
+      element.nextSibling.focus();
+    }
+  };
+
+  const handleOtpPaste = (e) => {
+    e.preventDefault();
+    const pasteData = e.clipboardData.getData('text/plain').slice(0, 6).split('');
+    if (pasteData.some(isNaN)) return;
+    
+    const newOtp = new Array(6).fill('');
+    pasteData.forEach((char, index) => newOtp[index] = char);
+    setOtp(newOtp);
+    setOtpStatus('');
+    
+    // Focus last filled input
+    const inputs = document.querySelectorAll('.otp-input');
+    if (inputs[pasteData.length - 1]) {
+      inputs[pasteData.length - 1].focus();
+    }
+  };
+
+  const handleOtpKeyDown = (e, index) => {
+    if (e.key === 'Backspace') {
+      setOtpStatus('');
+      if (!otp[index] && e.target.previousSibling) {
+        e.target.previousSibling.focus();
+      }
+    }
+  };
+
+
 
   return (
     <div className="auth-page">
@@ -309,8 +387,7 @@ export default function RegisterPage() {
           </div>
         )}
 
-        {step === 1 ? (
-          <form onSubmit={handleSubmit} className="auth-form" id="register-form">
+        <form onSubmit={verifyAndRegister} className="auth-form" id="register-form">
             <div id="recaptcha-container"></div>
             <div className="form-row">
               <div className="form-group">
@@ -333,22 +410,112 @@ export default function RegisterPage() {
 
           <div className="form-group">
             <label className="form-label" htmlFor="reg-email">Email *</label>
-            <input id="reg-email" type="email" className="form-input" placeholder="rahul@example.com"
-              value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <input id="reg-email" type="email" className="form-input" style={{ flex: 1 }} placeholder="rahul@example.com"
+                value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} disabled={emailOtpSent} />
+              {!emailOtpSent && (
+                <button type="button" className="btn btn-secondary" onClick={handleSendEmailOTP} disabled={sendingEmailOtp}>
+                  {sendingEmailOtp ? 'Sending...' : 'Send OTP'}
+                </button>
+              )}
+            </div>
+            {emailOtpSent && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px' }}>
+                <div className="otp-container" style={{ flex: 1 }}>
+                  {emailOtp.map((digit, index) => (
+                    <input
+                      key={`e-${index}`}
+                      type="text"
+                      maxLength={1}
+                      className={`otp-input ${otpStatus}`}
+                      value={digit}
+                      onChange={(e) => {
+                        if (isNaN(e.target.value)) return;
+                        setOtpStatus('');
+                        const newOtp = [...emailOtp];
+                        newOtp[index] = e.target.value;
+                        setEmailOtp(newOtp);
+                        if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Backspace' && !emailOtp[index] && e.target.previousSibling) {
+                          e.target.previousSibling.focus();
+                        }
+                      }}
+                      disabled={loading || emailVerified}
+                    />
+                  ))}
+                </div>
+                {!emailVerified ? (
+                  <button type="button" className="btn btn-primary" onClick={handleVerifyEmail} disabled={verifyingEmail || emailOtp.join('').length < 6} style={{ height: '48px', padding: '0 16px' }}>
+                    {verifyingEmail ? '...' : 'Verify'}
+                  </button>
+                ) : (
+                  <div style={{ height: '48px', display: 'flex', alignItems: 'center', color: '#2ECC71', fontWeight: 'bold' }}>
+                    ✅ Verified
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="phone">Phone</label>
-            <div style={{ display: 'flex', alignItems: 'stretch' }}>
-              <div style={{ padding: '0 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-subtle)', borderRight: 'none', borderRadius: '12px 0 0 12px', color: 'var(--text)', fontWeight: '600' }}>
-                +91
+            <label className="form-label" htmlFor="phone">Phone *</label>
+            <div style={{ display: 'flex', alignItems: 'stretch', gap: '8px' }}>
+              <div style={{ flex: 1, display: 'flex' }}>
+                <div style={{ padding: '0 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: 'var(--bg-card)', border: '2px solid var(--border-subtle)', borderRight: 'none', borderRadius: '12px 0 0 12px', color: 'var(--text)', fontWeight: '600' }}>
+                  +91
+                </div>
+                <input id="phone" type="tel" className="form-input" style={{ borderRadius: '0 12px 12px 0', flex: 1 }} placeholder="9876543210"
+                  value={form.phone} onChange={e => {
+                    const val = e.target.value.replace(/\D/g, '');
+                    if (val.length <= 10) setForm({ ...form, phone: val });
+                  }} disabled={phoneOtpSent} />
               </div>
-              <input id="phone" type="tel" className="form-input" style={{ borderRadius: '0 12px 12px 0', flex: 1 }} placeholder="9876543210"
-                value={form.phone} onChange={e => {
-                  const val = e.target.value.replace(/\D/g, '');
-                  if (val.length <= 10) setForm({ ...form, phone: val });
-                }} />
+              {!phoneOtpSent && (
+                <button type="button" className="btn btn-secondary" onClick={handleSendPhoneOTP} disabled={sendingPhoneOtp}>
+                  {sendingPhoneOtp ? 'Sending...' : 'Send OTP'}
+                </button>
+              )}
             </div>
+            {phoneOtpSent && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginTop: '10px' }}>
+                <div className="otp-container" style={{ flex: 1 }}>
+                  {phoneOtp.map((digit, index) => (
+                    <input
+                      key={`p-${index}`}
+                      type="text"
+                      maxLength={1}
+                      className={`otp-input ${otpStatus}`}
+                      value={digit}
+                      onChange={(e) => {
+                        if (isNaN(e.target.value)) return;
+                        setOtpStatus('');
+                        const newOtp = [...phoneOtp];
+                        newOtp[index] = e.target.value;
+                        setPhoneOtp(newOtp);
+                        if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
+                      }}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Backspace' && !phoneOtp[index] && e.target.previousSibling) {
+                          e.target.previousSibling.focus();
+                        }
+                      }}
+                      disabled={loading || phoneVerified}
+                    />
+                  ))}
+                </div>
+                {!phoneVerified ? (
+                  <button type="button" className="btn btn-primary" onClick={handleVerifyPhone} disabled={verifyingPhone || phoneOtp.join('').length < 6} style={{ height: '48px', padding: '0 16px' }}>
+                    {verifyingPhone ? '...' : 'Verify'}
+                  </button>
+                ) : (
+                  <div style={{ height: '48px', display: 'flex', alignItems: 'center', color: '#2ECC71', fontWeight: 'bold' }}>
+                    ✅ Verified
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="form-group">
@@ -500,92 +667,10 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <button id="register-btn" type="submit" className="btn btn-primary btn-full" disabled={loading} style={{ marginTop: '1.25rem' }}>
-            {loading ? <span className="spinner-sm" /> : <>Continue <ArrowRight size={16} /></>}
+          <button id="register-btn" type="submit" className="btn btn-primary btn-full" disabled={loading || !phoneVerified || !emailVerified} style={{ marginTop: '1.25rem' }}>
+            {loading ? <span className="spinner-sm" /> : <>Verify & Create Account <ArrowRight size={16} /></>}
           </button>
         </form>
-        ) : (
-          <div className="auth-form animate-in">
-            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-              <h3 style={{ marginBottom: 8 }}>Verify Identity</h3>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
-                Enter the codes sent to your phone and email.
-              </p>
-            </div>
-
-            <label className="form-label" style={{textAlign: 'left', display: 'block', marginTop: '1rem'}}>Phone OTP (+91 {form.phone})</label>
-            <div className="otp-container" style={{marginBottom: '1rem'}}>
-              {phoneOtp.map((digit, index) => (
-                <input
-                  key={`p-${index}`}
-                  type="text"
-                  maxLength={1}
-                  className={`otp-input ${otpStatus}`}
-                  value={digit}
-                  onChange={(e) => {
-                    if (isNaN(e.target.value)) return;
-                    setOtpStatus('');
-                    const newOtp = [...phoneOtp];
-                    newOtp[index] = e.target.value;
-                    setPhoneOtp(newOtp);
-                    if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Backspace' && !phoneOtp[index] && e.target.previousSibling) {
-                      e.target.previousSibling.focus();
-                    }
-                  }}
-                  autoFocus={index === 0}
-                  disabled={loading}
-                />
-              ))}
-            </div>
-
-            <label className="form-label" style={{textAlign: 'left', display: 'block'}}>Email OTP ({form.email})</label>
-            <div className="otp-container" style={{marginBottom: '1.5rem'}}>
-              {emailOtp.map((digit, index) => (
-                <input
-                  key={`e-${index}`}
-                  type="text"
-                  maxLength={1}
-                  className={`otp-input ${otpStatus}`}
-                  value={digit}
-                  onChange={(e) => {
-                    if (isNaN(e.target.value)) return;
-                    setOtpStatus('');
-                    const newOtp = [...emailOtp];
-                    newOtp[index] = e.target.value;
-                    setEmailOtp(newOtp);
-                    if (e.target.nextSibling && e.target.value) e.target.nextSibling.focus();
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Backspace' && !emailOtp[index] && e.target.previousSibling) {
-                      e.target.previousSibling.focus();
-                    }
-                  }}
-                  disabled={loading}
-                />
-              ))}
-            </div>
-
-            <button 
-              className="btn btn-primary btn-block mb-3" 
-              onClick={() => verifyAndRegister(phoneOtp.join(''), emailOtp.join(''))} 
-              disabled={loading || phoneOtp.join('').length < 6 || emailOtp.join('').length < 6}
-            >
-              {loading ? <span className="spinner-sm" /> : "Verify & Create Account"}
-            </button>
-            
-            <button 
-              className="auth-back-btn" 
-              onClick={() => { setStep(1); setPhoneOtp(new Array(6).fill('')); setEmailOtp(new Array(6).fill('')); setOtpStatus(''); }}
-              style={{ marginTop: '1rem', margin: '1rem auto 0' }}
-              disabled={loading}
-            >
-              ← Back to Registration
-            </button>
-          </div>
-        )}
 
         <p className="auth-switch">
           Already have an account? <Link to="/login" id="go-login-link">Sign in</Link>

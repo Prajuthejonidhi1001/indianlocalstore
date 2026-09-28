@@ -65,21 +65,18 @@ api.interceptors.response.use(
 
 // ========== Authentication API ==========
 export const authAPI = {
+  checkUser: (email, phone) => api.post('/users/check_user/', { email, phone }),
   sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
   verifyOtp: (firebase_token, email_otp) => api.post('/users/verify_otp/', { firebase_token, email_otp }),
+  verifyEmailOnly: (email, email_otp) => api.post('/users/verify_email_only/', { email, email_otp }),
   refreshToken: (refresh_token) => api.post('/users/token/refresh/', { refresh: refresh_token }),
   logout: (refresh_token) => api.post('/users/logout/', { refresh: refresh_token }),
   getProfile: () => api.get('/users/me/'),
   updateProfile: (data) => api.put('/users/update_profile/', data),
   getSellers: () => api.get('/users/sellers/'),
-};
-
-// ========== Address API ==========
-export const addressAPI = {
-  getAddresses: () => api.get('/users/addresses/'),
-  addAddress: (data) => api.post('/users/addresses/', data),
-  updateAddress: (id, data) => api.patch(`/users/addresses/${id}/`, data),
-  deleteAddress: (id) => api.delete(`/users/addresses/${id}/`),
+  // Wishlist API
+  toggleWishlist: (productId) => api.post('/users/toggle_wishlist/', { product_id: productId }),
+  getWishlist: () => api.get('/users/wishlist/'),
 };
 
 // ========== User API (password reset etc.) ==========
@@ -100,13 +97,6 @@ export const productAPI = {
   deleteProduct: (id) => api.delete(`/products/products/${id}/`),
   addProductReview: (productId, data) => api.post(`/products/products/${productId}/add_review/`, data),
   getMyProducts: () => api.get('/products/products/my_products/'),
-};
-
-// ========== Wishlist API ==========
-export const wishlistAPI = {
-  getWishlist: () => api.get('/products/wishlist/'),
-  addToWishlist: (productId) => api.post('/products/wishlist/', { product_id: productId }),
-  removeFromWishlist: (wishlistId) => api.delete(`/products/wishlist/${wishlistId}/`),
 };
 
 // ========== Shop API ==========
@@ -132,8 +122,6 @@ export const cartAPI = {
     data: { item_id: itemId },
   }),
   clearCart: () => api.delete('/orders/cart/clear_cart/'),
-  applyCoupon: (code) => api.post('/orders/cart/apply_coupon/', { code }),
-  removeCoupon: () => api.delete('/orders/cart/remove_coupon/'),
 };
 
 // ========== Order API ==========
@@ -144,9 +132,6 @@ export const orderAPI = {
   cancelOrder: (id) => api.post(`/orders/orders/${id}/cancel/`),
   createPayment: (orderId) => api.post(`/orders/orders/${orderId}/create_payment/`),
   verifyPayment: (orderId, data) => api.post(`/orders/orders/${orderId}/verify_payment/`, data),
-  getSellerOrders: () => api.get('/orders/orders/seller_orders/'),
-  dispatchOrder: (id) => api.post(`/orders/orders/${id}/dispatch_order/`),
-  updateOrderStatus: (id, data) => api.patch(`/orders/orders/${id}/update_status/`, data),
 };
 
 export default api;
