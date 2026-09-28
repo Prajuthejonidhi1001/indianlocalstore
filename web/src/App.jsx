@@ -22,6 +22,7 @@ import SellerDashboardPage from './pages/SellerDashboardPage';
 import WishlistPage from './pages/WishlistPage';
 import SearchPage from './pages/SearchPage';
 import AdminDashboardPage from './pages/AdminDashboardPage';
+import Chatbot from './components/Chatbot';
 
 function PrivateRoute({ children }) {
   const { isAuthenticated, loading } = useAuth();
@@ -72,6 +73,7 @@ function AppRoutes() {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
+      <Chatbot />
       <Footer />
     </>
   );
