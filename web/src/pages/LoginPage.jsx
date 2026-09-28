@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Store, ArrowRight, Smartphone, ShieldCheck, RefreshCw, Mail } from 'lucide-react';
+import { Store, ArrowRight, Smartphone, ShieldCheck, RefreshCw, Mail, User } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { authAPI } from '../api';
 import toast from 'react-hot-toast';
@@ -174,9 +174,9 @@ export default function LoginPage() {
               id="send-otp-btn"
               type="submit"
               className="btn btn-primary btn-block btn-lg mt-4"
-              disabled={loading || phone.length < 10}
+              disabled={loading || identifier.length < 10}
             >
-              {loading ? 'Sending OTPs...' : 'Get OTP'} <ArrowRight size={18} />
+              {loading ? 'Sending OTP...' : 'Get OTP'} <ArrowRight size={18} />
             </button>
           </form>
         ) : (
@@ -186,8 +186,7 @@ export default function LoginPage() {
                 <ShieldCheck size={48} className="text-saffron mx-auto" />
               </div>
               <h3 className="font-medium">Verify your details</h3>
-              <p className="text-muted text-sm mt-1">We've sent a 6-digit code to +91 {phone}</p>
-              {email && <p className="text-muted text-sm">And an email code to {email}</p>}
+              <p className="text-muted text-sm mt-1">We've sent a 6-digit code to {identifier}</p>
               <button 
                 type="button" 
                 className="btn-link text-sm mt-1"
@@ -198,39 +197,24 @@ export default function LoginPage() {
             </div>
 
             <div className="form-group">
-              <label className="form-label">Phone Verification Code</label>
+              <label className="form-label">Verification Code</label>
               <input
                 id="phone-otp-input"
                 type="text"
                 className="form-input text-center text-xl tracking-widest"
                 placeholder="• • • • • •"
-                value={phoneOtp}
-                onChange={(e) => setPhoneOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 maxLength={6}
                 autoFocus
               />
             </div>
-            
-            {email && (
-              <div className="form-group mt-3">
-                <label className="form-label">Email Verification Code</label>
-                <input
-                  id="email-otp-input"
-                  type="text"
-                  className="form-input text-center text-xl tracking-widest"
-                  placeholder="• • • • • •"
-                  value={emailOtp}
-                  onChange={(e) => setEmailOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                  maxLength={6}
-                />
-              </div>
-            )}
 
             <button
               id="verify-otp-btn"
               type="submit"
               className="btn btn-primary btn-block btn-lg mt-4"
-              disabled={loading || phoneOtp.length < 6 || (email && emailOtp.length < 6)}
+              disabled={loading || otp.length < 6}
             >
               {loading ? 'Verifying...' : 'Verify & Login'}
             </button>
