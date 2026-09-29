@@ -6,11 +6,13 @@ from rest_framework.throttling import AnonRateThrottle
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.exceptions import TokenError
-from .models import User, Wishlist
+from .models import User
 from .serializers import (
     UserSerializer, UserRegisterSerializer,
-    CustomTokenObtainPairSerializer, ProfileUpdateSerializer, WishlistSerializer
+    CustomTokenObtainPairSerializer, ProfileUpdateSerializer
 )
+from products.models import Wishlist, Product
+from products.serializers import WishlistSerializer
 import random
 from django.utils import timezone
 from datetime import timedelta

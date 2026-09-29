@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, MapPin, Store, Package, Shield, RefreshCw, ChevronLeft, ChevronRight, Share2, Heart, Plus } from 'lucide-react';
+import { Star, MapPin, Store, Package, Shield, RefreshCw, ChevronLeft, ChevronRight, Share2, Heart, Plus, Eye, Tag } from 'lucide-react';
 import { productAPI } from '../api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -206,6 +206,7 @@ export default function ProductDetailPage() {
                 ))}
               </div>
               <a href="#reviews" className="pd-rating-text">{product.average_rating || 'New'} ({reviews.length} reviews)</a>
+              <span className="text-muted ml-3 flex-center gap-1"><Eye size={14} className="text-primary"/> {product.view_count || 1} people viewed this</span>
             </div>
 
             <div className="pd-pricing mb-4 pb-4 border-bottom">
@@ -213,6 +214,15 @@ export default function ProductDetailPage() {
               <span className="pd-price-value">{product.price}</span>
               <span className="pd-old-price">₹{(parseFloat(product.price) * 1.2).toFixed(2)}</span>
               <span className="pd-discount text-green">20% off</span>
+            </div>
+            
+            {/* Bank Offers (Myntra/Amazon style) */}
+            <div className="pd-offers mb-4 pb-4 border-bottom">
+              <div className="font-medium flex-center gap-2 mb-2"><Tag size={16} className="text-saffron"/> Available Offers</div>
+              <ul className="text-sm text-muted" style={{ paddingLeft: 20, listStyleType: 'circle' }}>
+                <li><strong>Bank Offer:</strong> 10% instant discount on HDFC Bank Credit Cards.</li>
+                <li><strong>Partner Offer:</strong> Sign up for IndianLocalStore Pay Later and get free delivery.</li>
+              </ul>
             </div>
 
             {/* Variants */}
@@ -251,6 +261,13 @@ export default function ProductDetailPage() {
             </div>
 
             <div className="pd-delivery-info card bg-elevated mb-4">
+              <div className="mb-3 border-bottom pb-3">
+                <div className="font-medium text-primary mb-2 flex-center gap-2"><MapPin size={18} className="text-saffron" /> Check Delivery Option</div>
+                <div className="flex-center gap-2">
+                  <input type="text" className="form-input" placeholder="Enter Pincode" style={{ maxWidth: 150 }} />
+                  <button className="btn btn-outline btn-sm">Check</button>
+                </div>
+              </div>
               <div className="flex-center gap-3 mb-2">
                 <MapPin size={20} className="text-saffron" />
                 <div>

@@ -73,8 +73,8 @@ class Product(models.Model):
     image = models.ImageField(upload_to='products/', blank=True, default='')
     rating = models.FloatField(default=0)
     reviews_count = models.IntegerField(default=0)
-    
     is_active = models.BooleanField(default=True)
+    view_count = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

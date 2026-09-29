@@ -64,6 +64,14 @@ class ProductViewSet(viewsets.ModelViewSet):
             return ProductCreateUpdateSerializer
         return ProductListSerializer
 
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        # Increment view_count
+        instance.view_count += 1
+        instance.save(update_fields=['view_count'])
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
     @transaction.atomic
     def perform_create(self, serializer):
         # Force is_active=True so new products are immediately visible in shops
@@ -113,6 +121,16 @@ class ProductViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
     def add_review(self, request, pk=None):
         product = self.get_object()
+        
+        # Check if user has purchased the product
+        from orders.models import OrderItem
+        has_purchased = OrderItem.objects.filter(
+            order__user=request.user,
+            product=product
+        ).exists()
+        
+        if not has_purchased:
+            return Response({'detail': 'You must purchase this product before you can review it.'}, status=status.HTTP_403_FORBIDDEN)
         
         # Check if user already reviewed
         if ProductReview.objects.filter(product=product, user=request.user).exists():

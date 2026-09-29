@@ -58,7 +58,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'name', 'description', 'price', 'discount_price',
                   'discount_percentage', 'stock', 'variants', 'image', 'images', 'rating', 'reviews_count',
-                  'category', 'subcategory', 'seller', 'product_reviews', 'created_at', 'is_active']
+                  'category', 'subcategory', 'seller', 'product_reviews', 'created_at', 'is_active', 'view_count']
 
     def get_discount_percentage(self, obj):
         return obj.get_discount_percentage()
