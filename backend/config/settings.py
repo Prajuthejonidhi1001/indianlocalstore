@@ -275,5 +275,5 @@ EMAIL_BACKEND = "anymail.backends.brevo.EmailBackend"
 DEFAULT_FROM_EMAIL = f"Indian Local Store <{EMAIL_HOST_USER}>" if EMAIL_HOST_USER else 'Indian Local Store <stiratechindianlocalstore@gmail.com>'
 SERVER_EMAIL = 'stiratechindianlocalstore@gmail.com'
 
-FIREBASE_WEB_API_KEY = env('FIREBASE_WEB_API_KEY', default='AIzaSyC4Yhpk0zw-Om-mNWSFn4mwQOy97tufzHE')
+FIREBASE_WEB_API_KEY = config('FIREBASE_WEB_API_KEY', default='AIzaSyC4Yhpk0zw-Om-mNWSFn4mwQOy97tufzHE')
 
