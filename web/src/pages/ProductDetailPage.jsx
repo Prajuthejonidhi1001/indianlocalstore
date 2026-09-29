@@ -48,6 +48,17 @@ export default function ProductDetailPage() {
         if (typeof p.variants === 'string') {
           try { p.variants = JSON.parse(p.variants); } catch (e) { p.variants = null; }
         }
+        
+        if (Array.isArray(p.variants)) {
+           const normalized = {};
+           p.variants.forEach(v => {
+             if (v.type && v.type !== '_MATRIX_') {
+               normalized[v.type] = v.values;
+             }
+           });
+           p.variants = Object.keys(normalized).length > 0 ? normalized : null;
+        }
+
         setProduct(p);
         setReviews(p.product_reviews || []);
       } catch (err) {
