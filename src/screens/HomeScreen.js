@@ -245,7 +245,12 @@ export default function HomeScreen({ navigation }) {
         shopAPI.getNearbyShops({ city: location?.district }),
       ]);
       setCategories(catRes.data.results || catRes.data);
-      setShops(shopRes.data.results || shopRes.data);
+      let shopData = shopRes.data.results || shopRes.data;
+      if (shopData.length === 0) {
+        const allShopRes = await shopAPI.getShops({ page_size: 8 });
+        shopData = allShopRes.data.results || allShopRes.data;
+      }
+      setShops(shopData);
     } catch (error) {
       console.error('Error fetching home data:', error);
     } finally {
