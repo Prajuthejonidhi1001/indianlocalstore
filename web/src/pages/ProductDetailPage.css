@@ -178,7 +178,7 @@
   transition: top 0.3s cubic-bezier(0.25, 1, 0.5, 1);
   backdrop-filter: blur(10px);
 }
-.sticky-cart-bar.visible { top: 0; }
+.sticky-cart-bar.visible { top: 72px; }
 .scb-inner {
   display: flex;
   align-items: center;
