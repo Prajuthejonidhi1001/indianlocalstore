@@ -1,32 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Dimensions, Modal, Animated, TextInput, Share
+  Image, Dimensions, Modal, Animated
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { productAPI } from '../utils/api';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 
 const { width, height } = Dimensions.get('window');
 
 export default function ProductDetailScreen({ route, navigation }) {
-  const { product: initialProduct } = route.params;
+  const { product } = route.params;
   const { addToCart } = useCart();
-  const { user } = useAuth();
-  
-  const [product, setProduct] = useState(initialProduct);
+  const { user, toggleWishlist, getWishlist } = useAuth();
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
   const [selectedVariants, setSelectedVariants] = useState({});
+  const [wishlist, setWishlist] = useState(false);
 
-  // Review State
-  const [reviewModalVisible, setReviewModalVisible] = useState(false);
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewComment, setReviewComment] = useState('');
-  const [submittingReview, setSubmittingReview] = useState(false);
+  // Fetch wishlist state on component mount and when user or product changes
+  useEffect(() => {
+    const fetchWishlist = async () => {
+      if (!user) return;
+      try {
+        const wishlistItems = await getWishlist();
+        const wishlistProductIds = wishlistItems.map(item => item.product);
+        setWishlist(wishlistProductIds.includes(product.id));
+      } catch (error) {
+        console.error('Failed to fetch wishlist:', error);
+      }
+    };
+    fetchWishlist();
+  }, [user, product.id, getWishlist]);
 
   const price = parseFloat(product.price || 0);
   const discountPrice = product.discount_price ? parseFloat(product.discount_price) : null;
@@ -54,39 +61,6 @@ export default function ProductDetailScreen({ route, navigation }) {
     setTimeout(() => setAddedToCart(false), 2000);
   };
 
-  const submitReview = async () => {
-    if (!reviewComment.trim()) {
-      alert('Please enter a comment.');
-      return;
-    }
-    setSubmittingReview(true);
-    try {
-      await productAPI.addProductReview(product.id, { rating: reviewRating, comment: reviewComment });
-      setReviewModalVisible(false);
-      setReviewComment('');
-      setReviewRating(5);
-      // Refresh product details
-      const res = await productAPI.getProductDetail(product.id);
-      setProduct(res.data);
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.detail || 'Failed to submit review');
-    } finally {
-      setSubmittingReview(false);
-    }
-  };
-
-  const handleShare = async () => {
-    try {
-      const result = await Share.share({
-        message: `Check out ${product.name} on Indian Local Store!`,
-        title: product.name,
-      });
-    } catch (error) {
-      alert(error.message);
-    }
-  };
-
   return (
     <View style={styles.container}>
       {/* Full-screen image modal */}
@@ -103,52 +77,15 @@ export default function ProductDetailScreen({ route, navigation }) {
         </View>
       </Modal>
 
-      {/* Review Modal */}
-      <Modal visible={reviewModalVisible} transparent animationType="slide">
-        <View style={styles.reviewModalContainer}>
-          <View style={styles.reviewModalContent}>
-            <View style={styles.reviewModalHeader}>
-              <Text style={styles.reviewModalTitle}>Write a Review</Text>
-              <TouchableOpacity onPress={() => setReviewModalVisible(false)}>
-                <Ionicons name="close" size={24} color={COLORS.text} />
-              </TouchableOpacity>
-            </View>
-            <View style={styles.starSelection}>
-              {[1, 2, 3, 4, 5].map(s => (
-                <TouchableOpacity key={s} onPress={() => setReviewRating(s)}>
-                  <Ionicons name={s <= reviewRating ? "star" : "star-outline"} size={36} color={COLORS.secondary} />
-                </TouchableOpacity>
-              ))}
-            </View>
-            <TextInput
-              style={styles.reviewInput}
-              placeholder="Share your thoughts about this product..."
-              multiline
-              numberOfLines={4}
-              value={reviewComment}
-              onChangeText={setReviewComment}
-            />
-            <TouchableOpacity style={styles.submitReviewBtn} onPress={submitReview} disabled={submittingReview}>
-              <Text style={styles.submitReviewText}>{submittingReview ? 'Submitting...' : 'Submit Review'}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
-
       {/* Navigation Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color={COLORS.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{product.name}</Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          <TouchableOpacity style={[styles.backBtn, { marginRight: 10 }]} onPress={handleShare}>
-            <Ionicons name="share-social-outline" size={20} color={COLORS.text} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Cart')}>
-            <Ionicons name="cart-outline" size={20} color={COLORS.primary} />
-          </TouchableOpacity>
-        </View>
+        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.navigate('Cart')}>
+          <Ionicons name="cart-outline" size={22} color={COLORS.primary} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -165,6 +102,27 @@ export default function ProductDetailScreen({ route, navigation }) {
                 <Ionicons name="expand" size={16} color="#fff" />
                 <Text style={styles.expandText}>Tap to enlarge</Text>
               </View>
+            </TouchableOpacity>
+            {/* Wishlist Button */}
+            <TouchableOpacity
+              activeOpacity={0.7}
+              onPress={async () => {
+                if (!user) {
+                  alert('Please login to save items to wishlist');
+                  return;
+                }
+                try {
+                  await toggleWishlist(product.id);
+                  setWishlist(!wishlist);
+                } catch (error) {
+                  alert('Failed to update wishlist');
+                }
+              }}
+              style={[
+                styles.wishlistButton,
+                wishlist && styles.wishlistButtonActive
+              ]}>
+              <Ionicons name={wishlist ? 'heart' : 'heart-outline'} size={24} color={wishlist ? COLORS.primary : COLORS.textMuted} />
             </TouchableOpacity>
             {images.length > 1 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.thumbnailRow} contentContainerStyle={{ paddingHorizontal: 16 }}>
@@ -272,35 +230,6 @@ export default function ProductDetailScreen({ route, navigation }) {
                 <Text style={styles.detailLabel}>Seller</Text>
                 <Text style={styles.detailValue}>{product.seller_name}</Text>
               </View>
-            )}
-          </View>
-          
-          {/* Reviews Section */}
-          <View style={{ marginTop: 24 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-              <Text style={styles.sectionTitle}>Reviews ({product.reviews_count || 0})</Text>
-              {user && (
-                <TouchableOpacity onPress={() => setReviewModalVisible(true)}>
-                  <Text style={{ color: COLORS.primary, fontWeight: '700', fontSize: 13 }}>Write Review</Text>
-                </TouchableOpacity>
-              )}
-            </View>
-            {product.product_reviews && product.product_reviews.length > 0 ? (
-              product.product_reviews.map((rev) => (
-                <View key={rev.id} style={styles.reviewCard}>
-                  <View style={styles.reviewCardHeader}>
-                    <Text style={styles.reviewUser}>{rev.username || 'User'}</Text>
-                    <View style={{ flexDirection: 'row' }}>
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <Ionicons key={s} name="star" size={12} color={s <= rev.rating ? COLORS.secondary : COLORS.border} />
-                      ))}
-                    </View>
-                  </View>
-                  <Text style={styles.reviewComment}>{rev.comment}</Text>
-                </View>
-              ))
-            ) : (
-              <Text style={styles.noReviews}>No reviews yet. Be the first to review!</Text>
             )}
           </View>
         </View>
@@ -442,24 +371,21 @@ const styles = StyleSheet.create({
   cartBtnSuccess: { backgroundColor: '#00C853' },
   cartBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
 
-  // Reviews
-  reviewCard: {
-    backgroundColor: COLORS.card, padding: 12, borderRadius: RADIUS.md,
-    borderWidth: 1, borderColor: COLORS.border, marginBottom: 10,
+  // Wishlist Button
+  wishlistButton: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOWS.md,
   },
-  reviewCardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 },
-  reviewUser: { fontWeight: '700', fontSize: 13, color: COLORS.text },
-  reviewComment: { fontSize: 13, color: COLORS.textMuted, marginTop: 4 },
-  noReviews: { color: COLORS.textMuted, fontSize: 13, fontStyle: 'italic', marginBottom: 12 },
-  
-  // Review Modal
-  reviewModalContainer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  reviewModalContent: { backgroundColor: COLORS.surface, borderTopLeftRadius: RADIUS.xl, borderTopRightRadius: RADIUS.xl, padding: 20 },
-  reviewModalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  reviewModalTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text },
-  starSelection: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 20 },
-  reviewInput: { backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: 12, minHeight: 100, textAlignVertical: 'top', color: COLORS.text, marginBottom: 20 },
-  submitReviewBtn: { backgroundColor: COLORS.primary, padding: 16, borderRadius: RADIUS.md, alignItems: 'center' },
-  submitReviewText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  wishlistButtonActive: {
+    backgroundColor: 'rgba(255,107,53,0.15)',
+  },
 });
 

@@ -12,7 +12,6 @@ import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
 import { useCart } from '../context/CartContext';
 import * as Location from 'expo-location';
-import ChatbotModal from '../components/ChatbotModal';
 
 const { width, height } = Dimensions.get('window');
 
@@ -210,7 +209,6 @@ export default function HomeScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
   const [locating, setLocating] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [chatVisible, setChatVisible] = useState(false);
   const { cartCount } = useCart();
 
   // Header animation
@@ -366,7 +364,7 @@ export default function HomeScreen({ navigation }) {
             activeOpacity={0.8}
           >
             <Ionicons name="search" size={16} color={COLORS.textMuted} />
-            <Text style={styles.searchPlaceholder}>Search products...</Text>
+            <Text style={styles.searchPlaceholder}>Search nearby shops...</Text>
             <View style={styles.searchFilter}>
               <Ionicons name="options" size={14} color={COLORS.primary} />
             </View>
@@ -447,17 +445,6 @@ export default function HomeScreen({ navigation }) {
 
         <View style={{ height: 120 }} />
       </Animated.ScrollView>
-
-      {/* Floating Chat Button */}
-      <TouchableOpacity 
-        style={styles.chatFab}
-        onPress={() => setChatVisible(true)}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="chatbubbles" size={24} color="#fff" />
-      </TouchableOpacity>
-
-      <ChatbotModal visible={chatVisible} onClose={() => setChatVisible(false)} />
     </View>
   );
 }
@@ -714,19 +701,4 @@ const styles = StyleSheet.create({
   emptyIcon: { fontSize: 54 },
   emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textMuted },
   emptySub: { fontSize: 13, color: COLORS.textDim, textAlign: 'center' },
-
-  chatFab: {
-    position: 'absolute',
-    right: 20,
-    bottom: Platform.OS === 'ios' ? 100 : 85,
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.lg,
-    elevation: 8,
-    zIndex: 999,
-  }
 });

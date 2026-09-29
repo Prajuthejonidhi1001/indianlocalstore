@@ -183,26 +183,6 @@ export default function ProfileScreen({ navigation }) {
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
               </TouchableOpacity>
-
-              <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('AddressBook')}>
-                <View style={styles.linkLeft}>
-                  <View style={[styles.linkIcon, { backgroundColor: 'rgba(52,152,219,0.1)' }]}>
-                    <Ionicons name="map" size={20} color="#3498db" />
-                  </View>
-                  <Text style={styles.linkText}>Saved Addresses</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.linkBtn} onPress={() => navigation.navigate('Support')}>
-                <View style={styles.linkLeft}>
-                  <View style={[styles.linkIcon, { backgroundColor: 'rgba(155,89,182,0.1)' }]}>
-                    <Ionicons name="help-buoy" size={20} color="#9b59b6" />
-                  </View>
-                  <Text style={styles.linkText}>Help & Support</Text>
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={COLORS.textMuted} />
-              </TouchableOpacity>
             </View>
           )}
 

@@ -15,93 +15,69 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderAPI, addressAPI } from '../utils/api';
-import { Picker } from '@react-native-picker/picker';
+import { orderAPI } from '../utils/api';
 
 export default function CheckoutScreen({ navigation }) {
-  const { cart, cartTotal, cartSubtotal, clearCart } = useCart();
+  const { cartTotal, clearCart } = useCart();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
 
+  // These keys must match the API's field names exactly. They were previously
+  // `city` / `state` / `pincode`, which the serializer ignored -- so every
+  // order failed with "this field is required" for the delivery_* fields.
   const [form, setForm] = useState({
     delivery_address: user?.address || '',
-    city: user?.city || '',
-    state: user?.state || '',
-    pincode: user?.pincode || '',
+    delivery_city: user?.city || '',
+    delivery_state: user?.state || '',
+    delivery_pincode: user?.pincode || '',
   });
 
-  const [addresses, setAddresses] = useState([]);
-  const [selectedAddressId, setSelectedAddressId] = useState('new');
-  const [addressesLoading, setAddressesLoading] = useState(true);
-
-  React.useEffect(() => {
-    addressAPI.getAddresses()
-      .then(res => {
-        const data = res.data.results || res.data;
-        setAddresses(data);
-        const defaultAddr = data.find(a => a.is_default);
-        if (defaultAddr) {
-          setSelectedAddressId(defaultAddr.id);
-          populateFormWithAddress(defaultAddr);
-        } else if (data.length > 0) {
-          setSelectedAddressId(data[0].id);
-          populateFormWithAddress(data[0]);
-        }
-      })
-      .catch(console.error)
-      .finally(() => setAddressesLoading(false));
-  }, []);
-
-  const populateFormWithAddress = (addr) => {
-    setForm(prev => ({
-      ...prev,
-      delivery_address: addr.address_line,
-      city: addr.city,
-      state: addr.state,
-      pincode: addr.pincode,
-    }));
-  };
-
-  const handleAddressSelect = (addrId) => {
-    setSelectedAddressId(addrId);
-    if (addrId === 'new') {
-      setForm(prev => ({
-        ...prev,
-        delivery_address: '',
-        city: '',
-        state: '',
-        pincode: '',
-      }));
-    } else {
-      const addr = addresses.find(a => a.id === addrId);
-      if (addr) populateFormWithAddress(addr);
-    }
-  };
-
   const handlePlaceOrder = async () => {
-    if (!form.delivery_address || !form.city || !form.pincode) {
-      return Alert.alert('Error', 'Please fill in all address fields.');
+    if (!form.delivery_address.trim()) {
+      return Alert.alert('Address needed', 'Please enter your delivery address.');
+    }
+    if (!form.delivery_city.trim() || !form.delivery_state.trim()) {
+      return Alert.alert('Address needed', 'Please enter your city and state.');
+    }
+    if (!/^\d{6}$/.test(form.delivery_pincode.trim())) {
+      return Alert.alert('Check pincode', 'Please enter a valid 6-digit pincode.');
     }
 
     setLoading(true);
     try {
-      const orderData = {
-        ...form,
+      const res = await orderAPI.createOrder({
+        delivery_address: form.delivery_address.trim(),
+        delivery_city: form.delivery_city.trim(),
+        delivery_state: form.delivery_state.trim(),
+        delivery_pincode: form.delivery_pincode.trim(),
         payment_method: paymentMethod,
-      };
+      });
 
-      const res = await orderAPI.createOrder(orderData);
       await clearCart();
-      
+
+      const orderNumber = res.data?.order_id || res.data?.id || '';
+
       Alert.alert(
-        'Order Placed Successfully! 🎉', 
-        `Your order #${res.data.id} has been confirmed.`,
+        'Order placed 🎉',
+        orderNumber
+          ? `Your order ${orderNumber} is confirmed. Pay cash when it arrives.`
+          : 'Your order is confirmed. Pay cash when it arrives.',
         [{ text: 'View Orders', onPress: () => navigation.navigate('Orders') }]
       );
     } catch (err) {
-      console.error(err);
-      Alert.alert('Error', err.response?.data?.error || 'Failed to place order');
+      // DRF returns either {error: "..."} or {field: ["..."]}. Surface whichever
+      // arrived instead of a blanket failure message the customer can't act on.
+      const data = err.response?.data;
+      let message = 'Could not place your order. Please try again.';
+      if (typeof data?.error === 'string') {
+        message = data.error;
+      } else if (data && typeof data === 'object') {
+        const firstField = Object.values(data)[0];
+        if (Array.isArray(firstField) && firstField.length) message = String(firstField[0]);
+        else if (typeof firstField === 'string') message = firstField;
+      }
+      Alert.alert('Order failed', message);
     } finally {
       setLoading(false);
     }
@@ -122,11 +98,6 @@ export default function CheckoutScreen({ navigation }) {
         <View style={styles.summaryBox}>
           <Text style={styles.summaryLabel}>Total Amount Payable</Text>
           <Text style={styles.summaryValue}>₹{cartTotal.toFixed(2)}</Text>
-          {cart?.applied_coupon_code && (
-            <Text style={{ color: COLORS.green, fontSize: 13, fontWeight: 'bold', marginTop: 8 }}>
-              {cart.applied_coupon_code} applied! (-₹{(cartSubtotal - cartTotal).toFixed(2)})
-            </Text>
-          )}
         </View>
 
         {/* Address Form */}
@@ -134,65 +105,43 @@ export default function CheckoutScreen({ navigation }) {
           <Text style={styles.sectionTitle}>Delivery Address</Text>
           
           <View style={styles.card}>
-            {!addressesLoading && addresses.length > 0 && (
-              <View style={{ marginBottom: 15 }}>
-                <Text style={styles.fieldLabel}>Saved Addresses</Text>
-                <View style={styles.pickerContainer}>
-                  <Picker
-                    selectedValue={selectedAddressId}
-                    onValueChange={(itemValue) => handleAddressSelect(itemValue)}
-                    style={styles.picker}
-                  >
-                    {addresses.map((addr) => (
-                      <Picker.Item key={addr.id} label={`${addr.title} - ${addr.address_line}, ${addr.city}`} value={addr.id} />
-                    ))}
-                    <Picker.Item label="+ Enter new address" value="new" />
-                  </Picker>
-                </View>
-              </View>
-            )}
-
             <Text style={styles.fieldLabel}>Complete Address</Text>
             <TextInput 
-              style={[styles.input, { height: 80, textAlignVertical: 'top' }, selectedAddressId !== 'new' && styles.inputDisabled]}
+              style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
               value={form.delivery_address}
               onChangeText={t => setForm({...form, delivery_address: t})}
               multiline
               placeholder="House, Street, Area..."
               placeholderTextColor={COLORS.textDim}
-              editable={selectedAddressId === 'new'}
             />
             
             <View style={styles.row}>
               <View style={[styles.field, { flex: 1, marginRight: 10 }]}>
                  <Text style={styles.fieldLabel}>City</Text>
-                 <TextInput 
-                  style={[styles.input, selectedAddressId !== 'new' && styles.inputDisabled]}
-                  value={form.city}
-                  onChangeText={t => setForm({...form, city: t})}
-                  editable={selectedAddressId === 'new'}
+                 <TextInput
+                  style={styles.input}
+                  value={form.delivery_city}
+                  onChangeText={t => setForm({...form, delivery_city: t})}
                 />
               </View>
               <View style={[styles.field, { flex: 1 }]}>
                  <Text style={styles.fieldLabel}>State</Text>
-                 <TextInput 
-                  style={[styles.input, selectedAddressId !== 'new' && styles.inputDisabled]}
-                  value={form.state}
-                  onChangeText={t => setForm({...form, state: t})}
-                  editable={selectedAddressId === 'new'}
+                 <TextInput
+                  style={styles.input}
+                  value={form.delivery_state}
+                  onChangeText={t => setForm({...form, delivery_state: t})}
                 />
               </View>
             </View>
 
             <View style={[styles.field, { width: '50%' }]}>
               <Text style={styles.fieldLabel}>Pincode</Text>
-              <TextInput 
-                style={[styles.input, selectedAddressId !== 'new' && styles.inputDisabled]}
-                value={form.pincode}
-                onChangeText={t => setForm({...form, pincode: t})}
+              <TextInput
+                style={styles.input}
+                value={form.delivery_pincode}
+                onChangeText={t => setForm({...form, delivery_pincode: t})}
                 keyboardType="number-pad"
                 maxLength={6}
-                editable={selectedAddressId === 'new'}
               />
             </View>
           </View>
@@ -218,14 +167,22 @@ export default function CheckoutScreen({ navigation }) {
             </View>
           </TouchableOpacity>
 
+          {/* Online payment is intentionally not selectable yet. Razorpay live
+              keys require completed business KYC; until then an order marked
+              "online" would ship with no way for the customer to actually pay.
+              Leaving it visible but disabled sets the expectation without
+              creating an unpaid-order hole. */}
           <View style={[styles.paymentCard, { opacity: 0.5 }]}>
             <View style={styles.paymentRow}>
               <Ionicons name="card-outline" size={24} color={COLORS.textMuted} />
               <View style={styles.paymentInfo}>
-                <Text style={styles.paymentName}>Pay Online (Coming Soon)</Text>
+                <View style={styles.paymentNameRow}>
+                  <Text style={styles.paymentName}>Pay Online</Text>
+                  <View style={styles.comingSoonBadge}>
+                    <Text style={styles.comingSoonText}>COMING SOON</Text>
+                  </View>
+                </View>
                 <Text style={styles.paymentDesc}>UPI, Credit Card, Net Banking</Text>
-              </View>
-              <View style={styles.radio}>
               </View>
             </View>
           </View>
@@ -273,18 +230,6 @@ const styles = StyleSheet.create({
   field: { marginBottom: 15 },
   fieldLabel: { fontSize: 11, fontWeight: '800', color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: 8 },
   input: { backgroundColor: COLORS.elevated, borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: 12, color: COLORS.text, fontSize: 15 },
-  inputDisabled: { opacity: 0.6, backgroundColor: COLORS.background },
-  pickerContainer: {
-    backgroundColor: COLORS.elevated,
-    borderWidth: 1.5,
-    borderColor: COLORS.border,
-    borderRadius: RADIUS.md,
-    overflow: 'hidden',
-  },
-  picker: {
-    height: 50,
-    width: '100%',
-  },
 
   paymentCard: { backgroundColor: COLORS.card, padding: 15, borderRadius: RADIUS.lg, borderWidth: 1.5, borderColor: COLORS.border, marginBottom: 12 },
   paymentActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(255,107,53,0.05)' },
@@ -292,6 +237,9 @@ const styles = StyleSheet.create({
   paymentInfo: { flex: 1, marginLeft: 15 },
   paymentName: { color: COLORS.text, fontSize: 16, fontWeight: '700', marginBottom: 2 },
   paymentDesc: { color: COLORS.textMuted, fontSize: 12 },
+  paymentNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
+  comingSoonBadge: { backgroundColor: 'rgba(255,107,53,0.15)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(255,107,53,0.3)' },
+  comingSoonText: { color: COLORS.primary, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: COLORS.textDim, alignItems: 'center', justifyContent: 'center' },
   radioActive: { borderColor: COLORS.primary },
