@@ -157,7 +157,7 @@ export default function ProductDetailPage() {
         {/* Breadcrumb */}
         <div className="breadcrumb mt-4 mb-4 text-sm text-muted">
           <Link to="/home">Home</Link> <ChevronRight size={14}/>
-          <Link to={`/categories?id=${product.category}`}>{product.category_name || product.category}</Link> <ChevronRight size={14}/>
+          <Link to={`/categories?id=${product.category?.id || product.category}`}>{product.category?.name || product.category_name || 'Category'}</Link> <ChevronRight size={14}/>
           <span className="text-primary truncate" style={{maxWidth: '200px', display: 'inline-block', verticalAlign: 'bottom'}}>{product.name}</span>
         </div>
 
@@ -256,13 +256,13 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {product.seller_name && (
+            {(product.seller_name || product.seller) && (
               <Link to={`/shops/${product.seller}`} className="pd-shop-card mb-4 card border-hover">
                 <div className="pd-shop-avatar">
-                  {product.seller_name[0].toUpperCase()}
+                  {(product.seller_name || product.seller)[0].toUpperCase()}
                 </div>
                 <div className="pd-shop-info">
-                  <div className="font-medium text-primary">Sold by {product.seller_name}</div>
+                  <div className="font-medium text-primary">Sold by {product.seller_name || product.seller}</div>
                   <div className="text-sm text-saffron mt-1 flex-center gap-1"><Store size={14}/> Visit Store</div>
                 </div>
               </Link>

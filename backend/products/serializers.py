@@ -40,7 +40,7 @@ class ProductListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['id', 'name', 'price', 'discount_price', 'discount_percentage',
-                  'variants', 'image', 'images', 'rating', 'stock', 'category_name', 'subcategory_name', 'seller_name']
+                  'variants', 'image', 'images', 'rating', 'stock', 'category_name', 'subcategory_name', 'seller_name', 'is_active']
 
     def get_discount_percentage(self, obj):
         return obj.get_discount_percentage()
@@ -58,7 +58,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'name', 'description', 'price', 'discount_price',
                   'discount_percentage', 'stock', 'variants', 'image', 'images', 'rating', 'reviews_count',
-                  'category', 'subcategory', 'seller', 'product_reviews', 'created_at']
+                  'category', 'subcategory', 'seller', 'product_reviews', 'created_at', 'is_active']
 
     def get_discount_percentage(self, obj):
         return obj.get_discount_percentage()
@@ -68,10 +68,8 @@ class ProductCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
         fields = ['category', 'subcategory', 'name', 'description', 'price',
-                  'discount_price', 'stock', 'variants', 'image']
+                  'discount_price', 'stock', 'variants', 'image', 'is_active']
         read_only_fields = ['category', 'subcategory']
-        # is_active is intentionally excluded — new products are always active
-        # Sellers can deactivate via a separate admin/edit flow
 
 
 class WishlistSerializer(serializers.ModelSerializer):
