@@ -279,7 +279,7 @@ export default function ProductDetailPage() {
                 content: (
                   <ul className="pd-specs-list">
                     <li><span>Brand</span><span>{product.brand || 'Generic'}</span></li>
-                    <li><span>Category</span><span>{product.category_name || product.category}</span></li>
+                    <li><span>Category</span><span>{product.category?.name || product.category_name || 'Category'}</span></li>
                     <li><span>Stock</span><span>{product.stock} units</span></li>
                   </ul>
                 )
