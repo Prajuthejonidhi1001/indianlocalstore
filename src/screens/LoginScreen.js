@@ -214,8 +214,8 @@ export default function LoginScreen({ navigation }) {
 
             <View style={styles.logoWrap}>
               <Animated.View style={[styles.hologramRing, { transform: [{ rotate: logoRotation }] }]} />
-              <View style={[styles.logoBox, { padding: 0, overflow: 'hidden' }]}>
-                <Image source={require('../../assets/logo.png')} style={{width: '100%', height: '100%', resizeMode: 'cover'}} />
+              <View style={styles.logoBox}>
+                <Ionicons name="flash" size={36} color="#FFF" />
               </View>
             </View>
 

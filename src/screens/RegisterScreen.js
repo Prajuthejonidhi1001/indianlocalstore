@@ -370,8 +370,8 @@ export default function RegisterScreen({ navigation }) {
               <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
                 <Ionicons name="arrow-back" size={22} color="#fff" />
               </TouchableOpacity>
-              <View style={[styles.logoBox, { padding: 0, overflow: 'hidden' }]}>
-                <Image source={require('../../assets/logo.png')} style={{width: '100%', height: '100%', resizeMode: 'cover'}} />
+              <View style={styles.logoBox}>
+                <Ionicons name="storefront" size={20} color="#fff" />
               </View>
             </View>
 
