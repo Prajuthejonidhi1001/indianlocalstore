@@ -57,7 +57,7 @@ api.interceptors.response.use(
       } catch {
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
-        if (window.location.pathname !== '/login') { window.location.href = '/login'; }
+        window.location.href = '/login';
       }
     }
     return Promise.reject(error);
@@ -131,6 +131,22 @@ export const orderAPI = {
   // Seller Actions
   getSellerOrders: () => api.get('/orders/orders/seller_orders/'),
   dispatchOrder: (id) => api.post(`/orders/orders/${id}/dispatch_order/`),
+};
+
+export const addressAPI = {
+  getAddresses: () => api.get('/users/addresses/'),
+  createAddress: (data) => api.post('/users/addresses/', data),
+  updateAddress: (id, data) => api.patch(`/users/addresses/${id}/`, data),
+  deleteAddress: (id) => api.delete(`/users/addresses/${id}/`),
+};
+
+export const wishlistAPI = {
+  getWishlist: () => api.get('/users/wishlist/'),
+  toggleWishlist: (productId) => api.post('/users/toggle_wishlist/', { product_id: productId }),
+};
+
+export const adminAPI = {
+  getStats: () => api.get('/users/admin/stats/'),
 };
 
 export default api;
