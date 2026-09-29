@@ -94,14 +94,24 @@ export default function HomePage() {
     const fetchAll = async () => {
       setLoading(true);
       try {
-        const [catRes, shopRes, prodRes] = await Promise.all([
+        const [catRes, prodRes] = await Promise.all([
           productAPI.getCategories(),
-          shopAPI.getShops({ page_size: 8, city: location?.district }),
           productAPI.getProducts({ page_size: 10 }) // Get some products for the flash deals/trending sections
         ]);
         setCategories(catRes.data.results || catRes.data);
-        setShops(shopRes.data.results || shopRes.data);
         setTrendingProducts(prodRes.data.results || prodRes.data);
+        
+        try {
+          const shopRes = await shopAPI.getShops({ page_size: 8, city: location?.district });
+          let shopData = shopRes.data.results || shopRes.data;
+          if (shopData.length === 0) {
+            const allShopRes = await shopAPI.getShops({ page_size: 8 });
+            shopData = allShopRes.data.results || allShopRes.data;
+          }
+          setShops(shopData);
+        } catch (e) {
+          console.error(e);
+        }
       } catch (err) {
         console.error(err);
       } finally {
