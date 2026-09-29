@@ -50,6 +50,8 @@ class ProductDetailSerializer(serializers.ModelSerializer):
     category = CategorySerializer(read_only=True)
     subcategory = SubCategorySerializer(read_only=True)
     seller = serializers.StringRelatedField(read_only=True)
+    seller_name = serializers.CharField(source='seller.shop.name', read_only=True)
+    shop_id = serializers.IntegerField(source='seller.shop.id', read_only=True)
     product_reviews = ProductReviewSerializer(many=True, read_only=True)
     discount_percentage = serializers.SerializerMethodField()
     images = ProductImageSerializer(many=True, read_only=True)
@@ -58,7 +60,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id', 'name', 'description', 'price', 'discount_price',
                   'discount_percentage', 'stock', 'variants', 'image', 'images', 'rating', 'reviews_count',
-                  'category', 'subcategory', 'seller', 'product_reviews', 'created_at', 'is_active', 'view_count']
+                  'category', 'subcategory', 'seller', 'seller_name', 'shop_id', 'product_reviews', 'created_at', 'is_active', 'view_count']
 
     def get_discount_percentage(self, obj):
         return obj.get_discount_percentage()

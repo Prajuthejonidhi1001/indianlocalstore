@@ -284,13 +284,13 @@ export default function ProductDetailPage() {
               </div>
             </div>
 
-            {(product.seller_name || product.seller) && (
-              <Link to={`/shops/${product.seller}`} className="pd-shop-card mb-4 card border-hover">
+            {(product.seller_name || product.seller) && product.shop_id && (
+              <Link to={`/shops/${product.shop_id}`} className="pd-shop-card mb-4 card border-hover">
                 <div className="pd-shop-avatar">
                   {String(product.seller_name || product.seller)[0].toUpperCase()}
                 </div>
                 <div className="pd-shop-info">
-                  <div className="font-medium text-primary">Sold by {product.seller_name || `Shop #${product.seller}`}</div>
+                  <div className="font-medium text-primary">Sold by {product.seller_name || `Shop #${product.shop_id}`}</div>
                   <div className="text-sm text-saffron mt-1 flex-center gap-1"><Store size={14}/> Visit Store</div>
                 </div>
               </Link>
