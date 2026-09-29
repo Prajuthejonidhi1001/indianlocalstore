@@ -288,7 +288,7 @@ export default function LoginScreen({ navigation }) {
                       maxLength={6}
                     />
                   </View>
-                ) : null}
+                )}
 
                 <TouchableOpacity style={styles.loginBtn} onPress={handleVerifyOTP} disabled={loading} activeOpacity={0.85}>
                   <View style={styles.btnHologram} />
