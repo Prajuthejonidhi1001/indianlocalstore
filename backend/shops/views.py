@@ -41,6 +41,8 @@ class ShopViewSet(viewsets.ModelViewSet):
         return ShopListSerializer
 
     def get_permissions(self):
+        if self.action in ['list', 'retrieve', 'nearby']:
+            return [AllowAny()]
         return [IsAuthenticated()]
 
     def perform_create(self, serializer):
@@ -58,7 +60,7 @@ class ShopViewSet(viewsets.ModelViewSet):
         except Shop.DoesNotExist:
             return Response({'error': 'Shop not found'}, status=status.HTTP_404_NOT_FOUND)
 
-    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    @action(detail=False, methods=['get'], permission_classes=[AllowAny])
     def nearby(self, request):
         """Get nearby shops based on user location using Haversine distance"""
         import math
