@@ -205,7 +205,8 @@ export default function SellerDashboardPage() {
       const freshProducts = await productAPI.getMyProducts();
       setProducts(freshProducts.data.results || freshProducts.data);
     } catch (err) {
-      toast.error('Failed to update status');
+      console.error(err);
+      toast.error(`Error: ${err?.response?.data?.detail || err?.response?.statusText || err.message}`);
     }
   };
 
