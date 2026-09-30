@@ -41,10 +41,11 @@ export const AuthProvider = ({ children }) => {
     fetchUser();
   }, [fetchUser]);
 
-  const loginWithPhoneOTP = async (firebase_token, email_otp) => {
+  const loginWithPhoneOTP = async (firebase_token, email_otp, email = null) => {
     try {
       setLoading(true);
-      const { data } = await authAPI.verifyOtp(firebase_token, email_otp);
+      const { data } = await authAPI.verifyOtp(firebase_token, email_otp, email);
+      
       await AsyncStorage.setItem('access_token', data.access);
       await AsyncStorage.setItem('refresh_token', data.refresh);
       await fetchUser();

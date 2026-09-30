@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Dimensions, Animated, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
-import { shopAPI, productAPI } from '../utils/api';
+import { shopAPI, productAPI, authAPI } from '../utils/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const HEADER_HEIGHT = 280;
 
 export default function ShopProductsScreen({ route, navigation }) {
   const { shopId, shopName } = route.params;
@@ -16,17 +17,19 @@ export default function ShopProductsScreen({ route, navigation }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [wishlistItems, setWishlistItems] = useState(new Set());
   const { addToCart, cartCount } = useCart();
-  const { user, toggleWishlist, getWishlist } = useAuth();
+  const { user } = useAuth();
+  
+  const scrollY = useRef(new Animated.Value(0)).current;
 
   // Fetch wishlist on mount and when user changes
   useEffect(() => {
     if (user) {
-      getWishlist().then(items => {
-        const wishlistProductIds = new Set(items.map(item => item.product));
+      authAPI.getWishlist().then(res => {
+        const wishlistProductIds = new Set(res.data.map(item => item.product));
         setWishlistItems(wishlistProductIds);
       }).catch(err => console.error('Failed to fetch wishlist:', err));
     }
-  }, [user, getWishlist]);
+  }, [user]);
 
   useEffect(() => {
     fetchShopData();
@@ -35,7 +38,6 @@ export default function ShopProductsScreen({ route, navigation }) {
   const fetchShopData = async () => {
     try {
       setLoading(true);
-      // Parallel fetch — backend resolves shop->seller->products via ?shop=id
       const [shopRes, prodRes] = await Promise.all([
         shopAPI.getShopDetail(shopId),
         productAPI.getProducts({ shop: shopId }),
@@ -51,28 +53,20 @@ export default function ShopProductsScreen({ route, navigation }) {
 
   const handleToggleWishlist = async (e, productId) => {
     e?.stopPropagation?.();
-
     if (!user) {
       alert('Please login to add items to wishlist');
       return;
     }
-
     try {
-      const success = await toggleWishlist(productId);
-      if (success) {
-        setWishlistItems(prev => {
-          const newSet = new Set(prev);
-          if (newSet.has(productId)) {
-            newSet.delete(productId);
-          } else {
-            newSet.add(productId);
-          }
-          return newSet;
-        });
-      }
+      await authAPI.toggleWishlist(productId);
+      setWishlistItems(prev => {
+        const newSet = new Set(prev);
+        if (newSet.has(productId)) newSet.delete(productId);
+        else newSet.add(productId);
+        return newSet;
+      });
     } catch (err) {
       console.error('Failed to toggle wishlist:', err);
-      alert('Failed to update wishlist');
     }
   };
 
@@ -95,167 +89,161 @@ export default function ShopProductsScreen({ route, navigation }) {
     );
   }
 
+  const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase()));
+
+  const headerTranslateY = scrollY.interpolate({
+    inputRange: [0, HEADER_HEIGHT],
+    outputRange: [0, -HEADER_HEIGHT / 2],
+    extrapolate: 'clamp',
+  });
+  const imageScale = scrollY.interpolate({
+    inputRange: [-HEADER_HEIGHT, 0],
+    outputRange: [2, 1],
+    extrapolate: 'clamp',
+  });
+  const headerOpacity = scrollY.interpolate({
+    inputRange: [HEADER_HEIGHT - 100, HEADER_HEIGHT - 20],
+    outputRange: [0, 1],
+    extrapolate: 'clamp',
+  });
+
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
+      {/* Sticky Header Nav */}
+      <Animated.View style={[styles.stickyNav, { opacity: headerOpacity }]}>
+        <Text style={styles.stickyNavTitle} numberOfLines={1}>{shop.name}</Text>
+      </Animated.View>
+
+      <View style={styles.topActions}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={24} color={COLORS.text} />
         </TouchableOpacity>
-        
-        <View style={styles.shopInfo}>
-          <Text style={styles.shopTitle} numberOfLines={1}>{shop.name}</Text>
-          <Text style={styles.shopSubtitle}>{shop.category_name} · {shop.distance_km || '1.2'} km</Text>
-        </View>
-
-        <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.navigate('Cart')}>
-          <Ionicons name="cart" size={20} color={COLORS.primary} />
+        <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Cart')}>
+          <Ionicons name="cart" size={22} color={COLORS.primary} />
           {cartCount > 0 && (
-            <View style={styles.cartBadge}>
-              <Text style={styles.cartBadgeText}>{cartCount}</Text>
-            </View>
+            <View style={styles.cartBadge}><Text style={styles.cartBadgeText}>{cartCount}</Text></View>
           )}
         </TouchableOpacity>
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <Image 
-          source={{ uri: shop.logo || shop.banner_image || 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=800&q=80' }} 
-          style={styles.banner} 
-        />
-        
-        <View style={styles.detailsCard}>
-          <View style={styles.ratingRow}>
-            <View style={styles.badge}>
-              <Ionicons name="star" size={14} color={COLORS.secondary} />
-              <Text style={styles.badgeText}>{shop.rating || '4.5'}</Text>
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: true })}
+        scrollEventThrottle={16}
+      >
+        {/* Parallax Header */}
+        <Animated.View style={[styles.parallaxHeader, { transform: [{ translateY: headerTranslateY }] }]}>
+          <Animated.Image 
+            source={{ uri: shop.banner_url || shop.logo || 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?w=800&q=80' }} 
+            style={[styles.bannerImg, { transform: [{ scale: imageScale }] }]} 
+          />
+          <View style={styles.bannerOverlay} />
+        </Animated.View>
+
+        {/* Shop Info Card */}
+        <View style={styles.contentWrap}>
+          <View style={styles.shopInfoCard}>
+            <View style={styles.shopLogoWrap}>
+              {shop.logo ? (
+                <Image source={{ uri: shop.logo }} style={styles.shopLogo} />
+              ) : (
+                <View style={[styles.shopLogo, { backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' }]}>
+                  <Text style={styles.shopLogoText}>{shop.name[0]?.toUpperCase()}</Text>
+                </View>
+              )}
             </View>
-            <View style={styles.badge}>
-              <Ionicons name="cube" size={14} color={COLORS.primary} />
-              <Text style={styles.badgeText}>{products.length} Products</Text>
+            <View style={{ flex: 1, paddingLeft: 16 }}>
+              <Text style={styles.shopTitle} numberOfLines={1}>{shop.name}</Text>
+              <Text style={styles.shopCatText}>{shop.category_name || 'Retail'} · {shop.distance_km || '1.2'} km away</Text>
             </View>
-            <TouchableOpacity style={styles.badge}>
-              <Ionicons name="location" size={14} color={COLORS.textMuted} />
-              <Text style={styles.badgeText}>Map</Text>
+          </View>
+
+          <View style={styles.statsRow}>
+            <View style={styles.statBox}>
+              <Ionicons name="star" size={16} color={COLORS.secondary} />
+              <Text style={styles.statVal}>{shop.rating?.toFixed(1) || '4.5'}</Text>
+            </View>
+            <View style={styles.statBox}>
+              <Ionicons name="cube" size={16} color={COLORS.primary} />
+              <Text style={styles.statVal}>{products.length} Items</Text>
+            </View>
+            <TouchableOpacity style={styles.statBox}>
+              <Ionicons name="map" size={16} color={COLORS.textMuted} />
+              <Text style={styles.statVal}>Map</Text>
             </TouchableOpacity>
           </View>
-          {/* Shop unique ID */}
-          <View style={styles.shopIdRow}>
-            <Ionicons name="barcode-outline" size={13} color={COLORS.textMuted} />
-            <Text style={styles.shopIdText}>Shop ID: #{shop.id} · {String(shop.shop_code || '').slice(0, 8).toUpperCase()}</Text>
-          </View>
-          <Text style={styles.description}>{shop.description || 'Welcome to our shop! We provide the best quality products for our local community.'}</Text>
-          <View style={styles.locationRow}>
-            <Ionicons name="map-outline" size={16} color={COLORS.textMuted} />
-            <Text style={styles.addressText}>{shop.address || 'Local Market Area'}</Text>
-          </View>
-        </View>
 
-        <View style={styles.section}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
-            <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Product Catalog</Text>
+          <Text style={styles.shopDesc}>{shop.description || 'Welcome to our shop! We provide the best quality products for our local community.'}</Text>
+          
+          <View style={styles.metaRow}>
+            <Ionicons name="location-outline" size={16} color={COLORS.textMuted} />
+            <Text style={styles.metaText} numberOfLines={1}>{shop.address || shop.city || 'Local Market Area'}</Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.elevated, borderRadius: 12, paddingHorizontal: 12, height: 44, marginBottom: 20, borderWidth: 1, borderColor: COLORS.border }}>
-            <Ionicons name="search" size={18} color={COLORS.textMuted} />
+          {shop.shop_code && (
+            <View style={styles.metaRow}>
+              <Ionicons name="shield-checkmark-outline" size={16} color={COLORS.secondary} />
+              <Text style={styles.metaText}>ID: {String(shop.shop_code).slice(0, 8).toUpperCase()}</Text>
+            </View>
+          )}
+
+          {/* Search Bar */}
+          <View style={styles.searchBar}>
+            <Ionicons name="search" size={20} color={COLORS.textMuted} />
             <TextInput
-              style={{ flex: 1, marginLeft: 8, color: COLORS.text, fontSize: 14 }}
+              style={styles.searchInput}
               placeholder="Search products in this shop..."
               placeholderTextColor={COLORS.textMuted}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
           </View>
+
+          <Text style={styles.sectionHeading}>Product Catalog</Text>
           
-          {products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).length > 0 ? (
-            products.filter(p => p.name.toLowerCase().includes(searchQuery.toLowerCase())).map((item) => {
-              const isInWishlist = wishlistItems.has(item.id);
-              return (
-                <View key={item.id} style={{ marginBottom: 12 }}>
+          {filteredProducts.length === 0 ? (
+            <View style={styles.emptyWrap}>
+              <Ionicons name="cube-outline" size={48} color={COLORS.border} />
+              <Text style={styles.emptyText}>No products found.</Text>
+            </View>
+          ) : (
+            <View style={styles.productGrid}>
+              {filteredProducts.map((item) => {
+                const isInWishlist = wishlistItems.has(item.id);
+                return (
                   <TouchableOpacity
-                    activeOpacity={0.85}
+                    key={item.id}
+                    activeOpacity={0.9}
                     onPress={() => navigation.navigate('ProductDetail', { product: item })}
                     style={styles.productCard}
                   >
-                    <View style={{ position: 'relative', flexDirection: 'row' }}>
-                      <TouchableOpacity
-                        onPress={() => navigation.navigate('ProductDetail', { product: item })}
-                        activeOpacity={0.9}
-                      >
-                        <Image
-                          source={{ uri: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80' }}
-                          style={styles.productImage}
-                        />
-                      </TouchableOpacity>
-
-                      {/* Wishlist Button */}
+                    <View style={styles.imageWrap}>
+                      <Image source={{ uri: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80' }} style={styles.productImg} />
                       <TouchableOpacity
                         activeOpacity={0.7}
-                        onPress={async (e) => {
-                          e.stopPropagation();
-
-                          if (!user) {
-                            alert('Please login to save items to wishlist');
-                            return;
-                          }
-
-                          try {
-                            const success = await toggleWishlist(item.id);
-                            if (success) {
-                              setWishlistItems(prev => {
-                                const newSet = new Set(prev);
-                                if (newSet.has(item.id)) {
-                                  newSet.delete(item.id);
-                                } else {
-                                  newSet.add(item.id);
-                                }
-                                return newSet;
-                              });
-                            }
-                          } catch (err) {
-                            console.error('Failed to toggle wishlist:', err);
-                            alert('Failed to update wishlist');
-                          }
-                        }}
-                        style={[
-                          styles.wishlistButton,
-                          isInWishlist && styles.wishlistButtonActive
-                        ]}
+                        onPress={(e) => handleToggleWishlist(e, item.id)}
+                        style={styles.heartBtn}
                       >
-                        <Ionicons
-                          name={isInWishlist ? 'heart' : 'heart-outline'}
-                          size={20}
-                          color={isInWishlist ? COLORS.primary : COLORS.textMuted}
-                        />
+                        <Ionicons name={isInWishlist ? 'heart' : 'heart-outline'} size={18} color={isInWishlist ? COLORS.primary : COLORS.textMuted} />
                       </TouchableOpacity>
                     </View>
-
-                    <View style={styles.productDetails}>
-                      <Text style={styles.productName}>{item.name}</Text>
-                      <Text style={styles.productCategory}>{item.category_name}</Text>
+                    <View style={styles.productInfo}>
+                      <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+                      <Text style={styles.productCat} numberOfLines={1}>{item.category_name}</Text>
                       <View style={styles.priceRow}>
-                        <Text style={styles.price}>₹{item.price}</Text>
-                        <View style={styles.productActions}>
-                          <TouchableOpacity
-                            style={styles.detailBtn}
-                            onPress={() => navigation.navigate('ProductDetail', { product: item })}
-                          >
-                            <Text style={styles.detailBtnText}>View</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity style={styles.addBtn} onPress={() => addToCart(item.id)}>
-                            <Ionicons name="cart-outline" size={16} color="#fff" />
-                          </TouchableOpacity>
-                        </View>
+                        <Text style={styles.productPrice}>₹{item.price}</Text>
+                        <TouchableOpacity style={styles.addCartBtn} onPress={() => addToCart(item.id)}>
+                          <Ionicons name="add" size={18} color="#fff" />
+                        </TouchableOpacity>
                       </View>
                     </View>
                   </TouchableOpacity>
-                </View>
-              );
-            })
-          ) : (
-            <Text style={styles.emptyText}>No products listed yet.</Text>
+                );
+              })}
+            </View>
           )}
+          <View style={{ height: 100 }} />
         </View>
-        <View style={{ height: 100 }} />
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -263,89 +251,77 @@ export default function ShopProductsScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   centered: { justifyContent: 'center', alignItems: 'center' },
-  header: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    paddingTop: 60, 
-    paddingHorizontal: 20, 
-    paddingBottom: 20,
-    backgroundColor: COLORS.background,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border
-  },
-  backBtn: { width: 40, height: 40, alignItems: 'center', justifyContent: 'center' },
-  shopInfo: { flex: 1, marginLeft: 10 },
-  shopTitle: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
-  shopSubtitle: { color: COLORS.textMuted, fontSize: 13, marginTop: 2 },
-  actionBtn: { width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: COLORS.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border },
-  cartBadge: { position: 'absolute', top: -5, right: -5, backgroundColor: COLORS.red, borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: COLORS.background },
-  cartBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
-
-  banner: { width: '100%', height: 200 },
-  detailsCard: { 
-    backgroundColor: COLORS.card, 
-    margin: 20, 
-    marginTop: -30, 
-    borderRadius: 20, 
-    padding: 20,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
-    elevation: 10
-  },
-  ratingRow: { flexDirection: 'row', gap: 10, marginBottom: 15 },
-  badge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(255,107,53,0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,107,53,0.1)' },
-  badgeText: { color: COLORS.text, fontSize: 12, fontWeight: '700' },
-  description: { color: COLORS.text, fontSize: 14, lineHeight: 22, marginBottom: 15 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  addressText: { color: COLORS.textMuted, fontSize: 13 },
-
-  section: { paddingHorizontal: 20 },
-  sectionTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text, marginBottom: 15 },
-  productCard: { 
-    flexDirection: 'row', 
-    backgroundColor: COLORS.card, 
-    borderRadius: 18, 
-    padding: 12, 
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: COLORS.border
-  },
-  productImage: { width: 90, height: 90, borderRadius: 12 },
-  productDetails: { flex: 1, marginLeft: 15, justifyContent: 'space-between' },
-  productName: { color: COLORS.text, fontSize: 16, fontWeight: '700' },
-  productCategory: { color: COLORS.textMuted, fontSize: 12 },
-  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  price: { color: COLORS.primary, fontSize: 18, fontWeight: '800' },
-  addBtn: { backgroundColor: COLORS.primary, width: 32, height: 32, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
-  productActions: { flexDirection: 'row', gap: 8, alignItems: 'center' },
-  detailBtn: { backgroundColor: 'rgba(255,107,53,0.12)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,107,53,0.3)' },
-  detailBtnText: { color: COLORS.primary, fontSize: 12, fontWeight: '700' },
-  shopIdRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 12, backgroundColor: 'rgba(255,255,255,0.03)', padding: 8, borderRadius: 8 },
-  shopIdText: { color: COLORS.textMuted, fontSize: 11, fontWeight: '600', fontFamily: 'monospace' },
+  errorText: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: 20 },
+  backBtnLarge: { paddingHorizontal: 24, paddingVertical: 12, backgroundColor: COLORS.primary, borderRadius: RADIUS.md },
+  backBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   
-  emptyText: { color: COLORS.textMuted, textAlign: 'center', marginTop: 30 },
-  errorText: { color: COLORS.text, fontSize: 18, marginBottom: 20 },
-  backBtnLarge: { backgroundColor: COLORS.primary, paddingHorizontal: 30, paddingVertical: 12, borderRadius: 10 },
-  backBtnText: { color: '#fff', fontWeight: '700' },
+  topActions: {
+    position: 'absolute', top: Platform.OS === 'ios' ? 50 : 40, left: 16, right: 16,
+    flexDirection: 'row', justifyContent: 'space-between', zIndex: 10
+  },
+  iconBtn: {
+    width: 42, height: 42, borderRadius: 21, backgroundColor: 'rgba(255,255,255,0.95)',
+    justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 4, elevation: 3
+  },
+  cartBadge: {
+    position: 'absolute', top: 0, right: 0,
+    backgroundColor: COLORS.secondary, width: 18, height: 18, borderRadius: 9,
+    justifyContent: 'center', alignItems: 'center',
+    borderWidth: 1.5, borderColor: '#fff'
+  },
+  cartBadgeText: { color: '#fff', fontSize: 10, fontWeight: 'bold' },
 
-  // Wishlist Button
-  wishlistButton: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255,255,255,0.95)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...SHADOWS.sm,
-    zIndex: 10,
+  stickyNav: {
+    position: 'absolute', top: 0, left: 0, right: 0, height: Platform.OS === 'ios' ? 100 : 80,
+    backgroundColor: '#fff', zIndex: 9,
+    justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 16,
+    borderBottomWidth: 1, borderBottomColor: COLORS.border,
+    shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 3
   },
-  wishlistButtonActive: {
-    backgroundColor: 'rgba(255,107,53,0.15)',
+  stickyNavTitle: { fontSize: 16, fontWeight: '800', color: COLORS.text, maxWidth: 200 },
+
+  parallaxHeader: { height: HEADER_HEIGHT, width: '100%', position: 'absolute', top: 0 },
+  bannerImg: { width: '100%', height: '100%', resizeMode: 'cover' },
+  bannerOverlay: { position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.3)' },
+
+  contentWrap: { marginTop: HEADER_HEIGHT - 40, backgroundColor: COLORS.background, borderTopLeftRadius: 32, borderTopRightRadius: 32, paddingHorizontal: 16, minHeight: height },
+  shopInfoCard: { flexDirection: 'row', alignItems: 'center', marginTop: -40, marginBottom: 20 },
+  shopLogoWrap: {
+    width: 80, height: 80, borderRadius: 24, backgroundColor: '#fff',
+    justifyContent: 'center', alignItems: 'center',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 5
   },
+  shopLogo: { width: 72, height: 72, borderRadius: 20, resizeMode: 'cover' },
+  shopLogoText: { fontSize: 32, fontWeight: '900', color: '#fff' },
+  shopTitle: { fontSize: 24, fontWeight: '900', color: COLORS.text, marginBottom: 4, letterSpacing: -0.5 },
+  shopCatText: { fontSize: 13, color: COLORS.textMuted, fontWeight: '600' },
+
+  statsRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
+  statBox: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: COLORS.elevated, paddingHorizontal: 12, paddingVertical: 8, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border },
+  statVal: { fontSize: 13, fontWeight: '700', color: COLORS.text },
+
+  shopDesc: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22, marginBottom: 16 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 },
+  metaText: { fontSize: 13, color: COLORS.textSecondary, flex: 1 },
+
+  searchBar: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.elevated, height: 48, borderRadius: RADIUS.md, paddingHorizontal: 16, marginTop: 16, marginBottom: 24, borderWidth: 1, borderColor: COLORS.border },
+  searchInput: { flex: 1, marginLeft: 10, fontSize: 15, color: COLORS.text },
+
+  sectionHeading: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 16, letterSpacing: -0.3 },
+
+  emptyWrap: { alignItems: 'center', paddingVertical: 40 },
+  emptyText: { fontSize: 15, color: COLORS.textMuted, marginTop: 12 },
+
+  productGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  productCard: { width: (width - 44) / 2, backgroundColor: COLORS.elevated, borderRadius: RADIUS.md, marginBottom: 16, ...SHADOWS.small, overflow: 'hidden' },
+  imageWrap: { width: '100%', height: 140, position: 'relative' },
+  productImg: { width: '100%', height: '100%', resizeMode: 'cover' },
+  heartBtn: { position: 'absolute', top: 8, right: 8, width: 30, height: 30, borderRadius: 15, backgroundColor: 'rgba(255,255,255,0.9)', justifyContent: 'center', alignItems: 'center' },
+  productInfo: { padding: 12 },
+  productName: { fontSize: 14, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
+  productCat: { fontSize: 11, color: COLORS.textMuted, marginBottom: 8 },
+  priceRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  productPrice: { fontSize: 16, fontWeight: '900', color: COLORS.primary },
+  addCartBtn: { width: 28, height: 28, borderRadius: 8, backgroundColor: COLORS.text, justifyContent: 'center', alignItems: 'center' },
 });

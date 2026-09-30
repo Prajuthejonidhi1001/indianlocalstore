@@ -1,17 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  ActivityIndicator,
-  TextInput,
-  Alert,
-  Modal,
-  Platform,
-  Image
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert, Modal, Platform, Image, Switch } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
@@ -20,23 +9,20 @@ import { shopAPI, productAPI } from '../utils/api';
 
 export default function SellerDashboardScreen({ navigation }) {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState('Dashboard');
   const [shop, setShop] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Shop Form
   const [shopForm, setShopForm] = useState({ name: '', description: '', phone: '', email: '', address: '', city: '', state: '', pincode: '', is_open: true, online_delivery_enabled: false });
   const [savingShop, setSavingShop] = useState(false);
 
-  // Product Form — no category/subcat
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '' });
   const [productVariants, setProductVariants] = useState({ sizes: [], colors: [] });
   const [productImages, setProductImages] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
 
-  // Categories tab
   const [allCategories, setAllCategories] = useState([]);
   const [allSubcats, setAllSubcats] = useState({});
   const [selectedCats, setSelectedCats] = useState([]);
@@ -106,9 +92,7 @@ export default function SellerDashboardScreen({ navigation }) {
 
   const handleCatToggle = async (catId) => {
     if (catsLocked) return;
-    const newSel = selectedCats.includes(catId)
-      ? selectedCats.filter(id => id !== catId)
-      : [...selectedCats, catId];
+    const newSel = selectedCats.includes(catId) ? selectedCats.filter(id => id !== catId) : [...selectedCats, catId];
     setSelectedCats(newSel);
     if (!allSubcats[catId]) {
       try {
@@ -124,9 +108,7 @@ export default function SellerDashboardScreen({ navigation }) {
 
   const handleSubcatToggle = (subcatId) => {
     if (catsLocked) return;
-    setSelectedSubcats(prev =>
-      prev.includes(subcatId) ? prev.filter(id => id !== subcatId) : [...prev, subcatId]
-    );
+    setSelectedSubcats(prev => prev.includes(subcatId) ? prev.filter(id => id !== subcatId) : [...prev, subcatId]);
   };
 
   const handleSaveCats = async () => {
@@ -136,7 +118,7 @@ export default function SellerDashboardScreen({ navigation }) {
     try {
       await shopAPI.updateShop(shop.id, { categories: selectedCats, subcategories: selectedSubcats });
       setCatsLocked(true);
-      Alert.alert('Saved', 'Categories locked. This selection cannot be changed.');
+      Alert.alert('Saved', 'Categories locked.');
     } catch {
       Alert.alert('Error', 'Failed to save categories');
     } finally {
@@ -145,288 +127,200 @@ export default function SellerDashboardScreen({ navigation }) {
   };
 
   const pickProductImage = async () => {
-    if (productImages.length >= 5) {
-      Alert.alert('Limit Reached', 'Maximum 5 images allowed per product.');
-      return;
-    }
+    if (productImages.length >= 5) return Alert.alert('Limit Reached', 'Max 5 images allowed');
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (status !== 'granted') {
-      Alert.alert('Permission Denied', 'Camera roll access is required.');
-      return;
-    }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsMultipleSelection: true,
-      selectionLimit: 5 - productImages.length,
-      quality: 0.8,
-    });
+    if (status !== 'granted') return Alert.alert('Permission Denied', 'Camera roll access required.');
+    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, allowsMultipleSelection: true, selectionLimit: 5 - productImages.length, quality: 0.8 });
     if (!result.canceled) {
       const newImgs = result.assets.slice(0, 5 - productImages.length);
       setProductImages(prev => [...prev, ...newImgs].slice(0, 5));
     }
   };
 
-  const removeProductImage = (index) => {
-    setProductImages(prev => prev.filter((_, i) => i !== index));
-  };
+  const removeProductImage = (index) => setProductImages(prev => prev.filter((_, i) => i !== index));
 
   const handleSaveProduct = async () => {
     if (!shop) return Alert.alert('Error', 'Complete shop setup first');
-    if (!productForm.name || !productForm.price) return Alert.alert('Error', 'Name and price are required');
-    if (productImages.length === 0) return Alert.alert('Error', 'At least 1 product image is required');
+    if (!productForm.name || !productForm.price) return Alert.alert('Error', 'Name and price required');
+    if (productImages.length === 0) return Alert.alert('Error', 'At least 1 product image required');
 
     setSavingProduct(true);
     try {
       const formData = new FormData();
-      Object.keys(productForm).forEach(key => {
-        if (productForm[key]) formData.append(key, productForm[key]);
-      });
-
+      Object.keys(productForm).forEach(key => { if (productForm[key]) formData.append(key, productForm[key]); });
       if (productVariants.sizes.length > 0 || productVariants.colors.length > 0) {
         const variantsArr = [];
         if (productVariants.sizes.length > 0) variantsArr.push({ type: 'Size', values: productVariants.sizes });
         if (productVariants.colors.length > 0) variantsArr.push({ type: 'Color', values: productVariants.colors });
         formData.append('variants', JSON.stringify(variantsArr));
       }
-
-      // First image = main image field
       const makeFileObj = (asset) => {
         const uri = asset.uri;
         const filename = uri.split('/').pop();
         const ext = filename.split('.').pop();
-        return { uri, name: filename, type: `image/${ext === 'jpg' ? 'jpeg' : ext}` };
+        return { uri, name: filename, type: "image/" };
       };
       formData.append('image', makeFileObj(productImages[0]));
       productImages.slice(1).forEach(asset => formData.append('images', makeFileObj(asset)));
 
       await productAPI.createProduct(formData);
-      const freshProducts = await productAPI.getMyProducts();
-      setProducts(freshProducts.data.results || freshProducts.data);
+      const prodRes = await productAPI.getMyProducts();
+      setProducts(prodRes.data.results || prodRes.data);
       setShowProductModal(false);
       setProductForm({ name: '', description: '', price: '', stock: '' });
       setProductImages([]);
-      Alert.alert('Success', '✅ Product added! It is now visible in your shop.');
+      setProductVariants({ sizes: [], colors: [] });
+      Alert.alert('Success', 'Product added!');
     } catch (err) {
-      console.error('Error saving product:', err.response?.data || err);
-      const msg = err.response?.data;
-      const firstKey = msg ? Object.keys(msg)[0] : null;
-      Alert.alert('Error', firstKey ? `${firstKey}: ${Array.isArray(msg[firstKey]) ? msg[firstKey][0] : msg[firstKey]}` : 'Failed to add product');
+      Alert.alert('Error', 'Failed to add product');
     } finally {
       setSavingProduct(false);
     }
   };
 
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.center]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-      </View>
-    );
-  }
+  if (loading) return <View style={[styles.container, styles.center]}><ActivityIndicator size="large" color={COLORS.primary} /></View>;
+
+  const menuItems = [
+    { name: 'Dashboard', icon: 'grid-outline' },
+    { name: 'Inventory', icon: 'cube-outline' },
+    { name: 'Orders', icon: 'receipt-outline' },
+    { name: 'Financials', icon: 'wallet-outline' },
+    { name: 'Customer Reviews', icon: 'star-outline' },
+    { name: 'Marketing', icon: 'megaphone-outline' },
+    { name: 'Shop Settings', icon: 'settings-outline' },
+  ];
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
+    <SafeAreaView style={styles.container} edges={['top']}>
+      {/* Exact Header matching website */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
-        </TouchableOpacity>
-        <View style={styles.headerInfo}>
-          <Text style={styles.title}>Seller Dashboard</Text>
-          <Text style={styles.subtitle}>Manage your shop and products</Text>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+            <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+          </TouchableOpacity>
+          <View style={styles.badgesWrap}>
+            <View style={styles.hexBadge}><Text style={styles.hexText}># 1B7F79E9</Text></View>
+            <View style={styles.statusBadge}><Text style={styles.statusText}>Open</Text></View>
+            <View style={styles.unverifiedBadge}><Text style={styles.unverifiedText}>UNVERIFIED</Text></View>
+          </View>
         </View>
+        <Text style={styles.headerTitle}>Seller Dashboard</Text>
+        <Text style={styles.headerSubtitle}>Manage your shop, products, and catalog</Text>
       </View>
 
-      {/* Tabs */}
-      <View style={styles.tabContainer}>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'overview' && styles.tabActive]}
-          onPress={() => setActiveTab('overview')}
-        >
-          <Ionicons name="storefront" size={18} color={activeTab === 'overview' ? COLORS.primary : COLORS.textMuted} />
-          <Text style={[styles.tabText, activeTab === 'overview' && styles.tabTextActive]}>Shop</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === 'products' && styles.tabActive]}
-          onPress={() => setActiveTab('products')}
-        >
-          <Ionicons name="layers" size={18} color={activeTab === 'products' ? COLORS.primary : COLORS.textMuted} />
-          <Text style={[styles.tabText, activeTab === 'products' && styles.tabTextActive]}>Products</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scroll}>
-        
-        {activeTab === 'overview' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Shop Settings</Text>
-
-            {/* ── Toggles at TOP ── */}
-            <View style={styles.togglesRow}>
-              <View style={styles.toggleCard}>
-                <View style={styles.toggleCardInfo}>
-                  <Text style={styles.toggleCardIcon}>{shopForm.is_open ? '🟢' : '🔴'}</Text>
-                  <View>
-                    <Text style={styles.toggleCardLabel}>Shop Status</Text>
-                    <Text style={styles.toggleCardSub}>{shopForm.is_open ? 'Open' : 'Closed'}</Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={[styles.toggleTrack, shopForm.is_open && styles.toggleTrackOn]}
-                  onPress={() => setShopForm(f => ({ ...f, is_open: !f.is_open }))}
-                >
-                  <View style={[styles.toggleThumb, shopForm.is_open && styles.toggleThumbOn]} />
-                </TouchableOpacity>
-              </View>
-
-              <View style={styles.toggleCard}>
-                <View style={styles.toggleCardInfo}>
-                  <Ionicons name="bicycle" size={18} color={COLORS.primary} />
-                  <View>
-                    <Text style={styles.toggleCardLabel}>Delivery</Text>
-                    <Text style={styles.toggleCardSub}>{shopForm.online_delivery_enabled ? 'On' : 'Off'}</Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={[styles.toggleTrack, shopForm.online_delivery_enabled && styles.toggleTrackOn]}
-                  onPress={() => setShopForm(f => ({ ...f, online_delivery_enabled: !f.online_delivery_enabled }))}
-                >
-                  <View style={[styles.toggleThumb, shopForm.online_delivery_enabled && styles.toggleThumbOn]} />
-                </TouchableOpacity>
-              </View>
-            </View>
-
-            {/* ── Shop Details Form ── */}
-            <View style={styles.field}>
-              <Text style={styles.label}>Shop Name *</Text>
-              <TextInput style={styles.input} value={shopForm.name} placeholder="My Local Shop" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, name: t})} />
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Description</Text>
-              <TextInput style={[styles.input, {height: 80, textAlignVertical: 'top'}]} multiline value={shopForm.description} placeholder="Tell customers about your shop" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, description: t})} />
-            </View>
-
-            <View style={styles.row}>
-              <View style={[styles.field, {flex: 1, marginRight: 10}]}>
-                <Text style={styles.label}>Phone</Text>
-                <TextInput style={styles.input} keyboardType="phone-pad" value={shopForm.phone} placeholder="98765 43210" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, phone: t})} />
-              </View>
-              <View style={[styles.field, {flex: 1}]}>
-                <Text style={styles.label}>City / Area</Text>
-                <TextInput style={styles.input} value={shopForm.city} placeholder="Bangalore" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, city: t})} />
-              </View>
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Full Address</Text>
-              <TextInput style={[styles.input, {height: 60}]} multiline value={shopForm.address} placeholder="Street, area, landmark" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, address: t})} />
-            </View>
-
-            {/* Shop ID badge — shown after shop is created */}
-            {shop?.shop_code && (
-              <View style={styles.idCard}>
-                <View style={styles.idCardHeader}>
-                  <Ionicons name="finger-print" size={16} color={COLORS.primary} />
-                  <Text style={styles.idCardTitle}>Shop ID</Text>
-                </View>
-                <Text style={styles.idCardValue} numberOfLines={1}>{shop.shop_code}</Text>
-              </View>
-            )}
-
-            <TouchableOpacity style={styles.primaryBtn} onPress={handleSaveShop} disabled={savingShop}>
-              {savingShop
-                ? <ActivityIndicator color="#fff" />
-                : <Text style={styles.primaryBtnText}>{shop ? 'Update Shop' : 'Create Shop'}</Text>
-              }
+      {/* Horizontal Nav mimicking Website Sidebar */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.navScroll} contentContainerStyle={styles.navContainer}>
+        {menuItems.map(item => {
+          const isActive = activeTab === item.name;
+          return (
+            <TouchableOpacity key={item.name} style={[styles.navItem, isActive && styles.navItemActive]} onPress={() => setActiveTab(item.name)}>
+              <Ionicons name={item.icon} size={18} color={isActive ? COLORS.primary : COLORS.textMuted} />
+              <Text style={[styles.navText, isActive && styles.navTextActive]}>{item.name}</Text>
             </TouchableOpacity>
-          </View>
-        )}
+          )
+        })}
+      </ScrollView>
 
-        {/* PRODUCTS TAB - continues below */}
-        {/* CATEGORIES TAB */}
-        {activeTab === 'categories' && (
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Shop Categories</Text>
-            {catsLocked ? (
-              <View style={styles.lockedBanner}>
-                <Ionicons name="lock-closed" size={16} color="#E74C3C" />
-                <Text style={styles.lockedText}>Categories locked — contact support to change.</Text>
-              </View>
-            ) : (
-              <View style={styles.unlockNotice}>
-                <Ionicons name="information-circle" size={16} color={COLORS.primary} />
-                <Text style={styles.unlockText}>Select your shop categories carefully. You can only choose <Text style={{fontWeight:'800'}}>once</Text>.</Text>
-              </View>
-            )}
-            {allCategories.map(cat => {
-              const isSel = selectedCats.includes(cat.id);
-              return (
-                <View key={cat.id} style={[styles.catBlock, isSel && styles.catBlockSelected]}>
-                  <TouchableOpacity
-                    style={styles.catBtn}
-                    onPress={() => handleCatToggle(cat.id)}
-                    disabled={catsLocked}
-                  >
-                    <View style={[styles.catCheck, isSel && styles.catCheckOn]}>
-                      {isSel && <Ionicons name="checkmark" size={12} color="#fff" />}
-                    </View>
-                    <Text style={[styles.catBtnText, isSel && { color: COLORS.primary }]}>{cat.name}</Text>
-                  </TouchableOpacity>
-                  {isSel && allSubcats[cat.id] && allSubcats[cat.id].length > 0 && (
-                    <View style={styles.subcatRow}>
-                      {allSubcats[cat.id].map(sub => (
-                        <TouchableOpacity
-                          key={sub.id}
-                          style={[styles.subcatChip, selectedSubcats.includes(sub.id) && styles.subcatChipOn]}
-                          onPress={() => handleSubcatToggle(sub.id)}
-                          disabled={catsLocked}
-                        >
-                          <Text style={[styles.subcatChipText, selectedSubcats.includes(sub.id) && { color: COLORS.primary }]}>{sub.name}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
+      {/* Main Content Area */}
+      <ScrollView contentContainerStyle={styles.content}>
+        
+        {activeTab === 'Dashboard' && (
+          <View>
+            <Text style={styles.sectionTitle}>Dashboard Overview</Text>
+            <Text style={styles.sectionSub}>Track your shop's performance and recent activity</Text>
+
+            <View style={styles.metricGrid}>
+              <View style={styles.metricCard}>
+                <View style={styles.metricIcon}><Ionicons name="trending-up" size={16} color={COLORS.green} /></View>
+                <View>
+                  <Text style={styles.metricLabel}>TOTAL REVENUE</Text>
+                  <Text style={styles.metricValue}>?0.00</Text>
                 </View>
-              );
-            })}
-            {!catsLocked && (
-              <TouchableOpacity style={[styles.primaryBtn, { marginTop: 20 }]} onPress={handleSaveCats} disabled={savingCats || selectedCats.length === 0}>
-                {savingCats ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryBtnText}>🔒 Lock & Save Categories</Text>}
-              </TouchableOpacity>
-            )}
-          </View>
-        )}
+              </View>
+              <View style={styles.metricCard}>
+                <View style={[styles.metricIcon, { backgroundColor: 'rgba(255,107,53,0.1)' }]}><Ionicons name="cube" size={16} color={COLORS.primary} /></View>
+                <View>
+                  <Text style={styles.metricLabel}>TOTAL ORDERS</Text>
+                  <Text style={styles.metricValue}>0</Text>
+                </View>
+              </View>
+              <View style={styles.metricCard}>
+                <View style={[styles.metricIcon, { backgroundColor: 'rgba(255,107,53,0.1)' }]}><Ionicons name="cube-outline" size={16} color={COLORS.primary} /></View>
+                <View>
+                  <Text style={styles.metricLabel}>ACTIVE PRODUCTS</Text>
+                  <Text style={styles.metricValue}>{products.length}</Text>
+                </View>
+              </View>
+            </View>
 
-        {/* PRODUCTS TAB */}
-        {activeTab === 'products' && (
-          <View style={styles.card}>
-            <View style={styles.flexBetween}>
-              <Text style={styles.sectionTitle}>Inventory</Text>
-              <TouchableOpacity style={styles.addBtn} onPress={() => setShowProductModal(true)} disabled={!shop}>
-                <Ionicons name="add" size={16} color="#fff" />
-                <Text style={styles.addBtnText}>New</Text>
+            <View style={styles.actionGrid}>
+              <View style={[styles.actionCard, { flex: 1 }]}>
+                <Text style={styles.cardHeader}>Action Required <Ionicons name="warning-outline" size={14} color={COLORS.red} /></Text>
+                <Text style={styles.cardText}>No urgent alerts at this time.</Text>
+                <View style={styles.cardDivider} />
+                <View style={styles.flexBetween}>
+                  <Text style={styles.cardText}>Account Verification</Text>
+                  <Text style={[styles.cardText, { fontWeight: '700' }]}>Pending</Text>
+                </View>
+              </View>
+
+              <View style={[styles.actionCard, { flex: 1 }]}>
+                <Text style={styles.cardHeader}>7-Day Revenue Trend</Text>
+                <View style={styles.chartMock}>
+                  {[30, 70, 50, 90, 80, 40, 60].map((h, i) => <View key={i} style={[styles.chartBar, { height: `${h}%` }]} />)}
+                </View>
+                <View style={styles.chartLabels}>
+                  {['Day 1','Day 2','Day 3','Day 4','Day 5','Day 6','Day 7'].map(d => <Text key={d} style={styles.chartLabel}>{d}</Text>)}
+                </View>
+              </View>
+            </View>
+
+            <View style={styles.actionCard}>
+              <Text style={styles.cardHeader}>Quick Actions</Text>
+              <TouchableOpacity style={styles.quickBtn} onPress={() => { setActiveTab('Inventory'); setShowProductModal(true); }}>
+                <Ionicons name="add" size={18} color={COLORS.text} />
+                <Text style={styles.quickBtnText}>Add Product</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn}>
+                <Ionicons name="cube-outline" size={18} color={COLORS.text} />
+                <Text style={styles.quickBtnText}>Manage Shipments</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.quickBtn}>
+                <Ionicons name="star-outline" size={18} color={COLORS.text} />
+                <Text style={styles.quickBtnText}>Create Promotion</Text>
               </TouchableOpacity>
             </View>
 
-            {!shop ? (
-              <View style={styles.empty}>
-                <Text style={styles.emptyText}>Complete shop setup first.</Text>
-              </View>
-            ) : products.length === 0 ? (
-              <View style={styles.empty}>
-                <Ionicons name="cube-outline" size={40} color={COLORS.border} />
-                <Text style={styles.emptyText}>No products found.</Text>
+          </View>
+        )}
+
+        {activeTab === 'Inventory' && (
+          <View>
+            <View style={[styles.flexBetween, { marginBottom: 20 }]}>
+              <Text style={styles.sectionTitle}>Inventory</Text>
+              <TouchableOpacity style={styles.addBtn} onPress={() => setShowProductModal(true)}>
+                <Ionicons name="add" size={18} color="#fff" />
+                <Text style={styles.addBtnText}>Add Product</Text>
+              </TouchableOpacity>
+            </View>
+            
+            {products.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Ionicons name="cube-outline" size={48} color={COLORS.borderStrong} />
+                <Text style={styles.emptyTitle}>No products yet</Text>
+                <Text style={styles.emptySub}>Start adding products to your catalog to sell.</Text>
               </View>
             ) : (
-              products.map((p, idx) => (
-                <View key={p.id ? String(p.id) : `${p.name}-${idx}`} style={styles.productRow}>
-                  <View style={styles.productInfo}>
+              products.map(p => (
+                <View key={p.id} style={styles.productRow}>
+                  <View style={{ flex: 1 }}>
                     <Text style={styles.productName}>{p.name}</Text>
-                    <Text style={styles.productStats}>₹{p.price} • {p.stock} in stock</Text>
+                    <Text style={styles.productStats}>?{p.price} • {p.stock} in stock</Text>
                   </View>
-                  <View style={[styles.statusBadge, { backgroundColor: p.is_active !== false ? 'rgba(46,204,113,0.1)' : 'rgba(255,107,53,0.1)' }]}>
-                    <Text style={[styles.statusText, { color: p.is_active !== false ? COLORS.green : COLORS.primary }]}>{p.is_active !== false ? 'ACTIVE' : 'DRAFT'}</Text>
+                  <View style={[styles.badge, p.is_active ? styles.badgeActive : styles.badgeInactive]}>
+                    <Text style={[styles.badgeText, p.is_active ? styles.badgeTextActive : styles.badgeTextInactive]}>
+                      {p.is_active ? 'Active' : 'Inactive'}
+                    </Text>
                   </View>
                 </View>
               ))
@@ -434,208 +328,119 @@ export default function SellerDashboardScreen({ navigation }) {
           </View>
         )}
 
-        <View style={{ height: 120 }} />
-      </ScrollView>
-
-      {/* Add Product Modal */}
-      <Modal visible={showProductModal} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowProductModal(false)}>
-        <View style={styles.modalContainer}>
-          <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>Add Product</Text>
-            <TouchableOpacity onPress={() => setShowProductModal(false)}>
-              <Ionicons name="close" size={24} color={COLORS.text} />
-            </TouchableOpacity>
+        {activeTab === 'Shop Settings' && (
+          <View>
+            <Text style={styles.sectionTitle}>Shop Settings</Text>
+            <View style={styles.formCard}>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Shop Name</Text>
+                <TextInput style={styles.input} value={shopForm.name} onChangeText={t => setShopForm({...shopForm, name: t})} />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Description</Text>
+                <TextInput style={styles.input} value={shopForm.description} onChangeText={t => setShopForm({...shopForm, description: t})} multiline />
+              </View>
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Phone</Text>
+                <TextInput style={styles.input} value={shopForm.phone} onChangeText={t => setShopForm({...shopForm, phone: t})} />
+              </View>
+              <View style={styles.togglesRow}>
+                <View style={styles.toggleItem}>
+                  <Text style={styles.toggleLabel}>Shop Open</Text>
+                  <Switch value={shopForm.is_open} onValueChange={v => setShopForm({...shopForm, is_open: v})} trackColor={{ true: COLORS.primary }} />
+                </View>
+                <View style={styles.toggleItem}>
+                  <Text style={styles.toggleLabel}>Online Delivery</Text>
+                  <Switch value={shopForm.online_delivery_enabled} onValueChange={v => setShopForm({...shopForm, online_delivery_enabled: v})} trackColor={{ true: COLORS.primary }} />
+                </View>
+              </View>
+              <TouchableOpacity style={styles.saveBtn} onPress={handleSaveShop} disabled={savingShop}>
+                {savingShop ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveBtnText}>Save Settings</Text>}
+              </TouchableOpacity>
+            </View>
           </View>
+        )}
 
-          <ScrollView style={styles.modalScroll}>
-            <View style={styles.field}>
-              <Text style={styles.label}>Product Name *</Text>
-              <TextInput style={styles.input} value={productForm.name} onChangeText={t => setProductForm({...productForm, name: t})} />
-            </View>
-
-            <View style={styles.field}>
-              <Text style={styles.label}>Product Images * (1–5)</Text>
-              <View style={styles.imageGrid}>
-                {productImages.map((img, idx) => (
-                  <View key={idx} style={styles.imageThumbWrap}>
-                    <Image source={{ uri: img.uri }} style={styles.imageThumb} />
-                    {idx === 0 && <View style={styles.mainBadge}><Text style={styles.mainBadgeText}>MAIN</Text></View>}
-                    <TouchableOpacity style={styles.removeImgBtn} onPress={() => removeProductImage(idx)}>
-                      <Ionicons name="close-circle" size={20} color="#E74C3C" />
-                    </TouchableOpacity>
-                  </View>
-                ))}
-                {productImages.length < 5 && (
-                  <TouchableOpacity style={styles.addImageTile} onPress={pickProductImage}>
-                    <Ionicons name="camera-outline" size={28} color={COLORS.textMuted} />
-                    <Text style={styles.addImageTileText}>{productImages.length === 0 ? 'Add Image' : 'Add More'}</Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            </View>
-            
-            <View style={styles.row}>
-              <View style={[styles.field, {flex: 1, marginRight: 10}]}>
-                <Text style={styles.label}>Price (₹) *</Text>
-                <TextInput style={styles.input} keyboardType="decimal-pad" value={productForm.price} onChangeText={t => setProductForm({...productForm, price: t})} />
-              </View>
-              <View style={[styles.field, {flex: 1}]}>
-                <Text style={styles.label}>Initial Stock</Text>
-                <TextInput style={styles.input} keyboardType="number-pad" value={productForm.stock} onChangeText={t => setProductForm({...productForm, stock: t})} />
-              </View>
-            </View>
-
-              <View style={styles.field}>
-                <Text style={styles.label}>Sizes</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
-                  {['XS','S','M','L','XL','XXL','38','40','42','6','7','8','9','10','11','12'].map(size => {
-                    const isSel = productVariants.sizes.includes(size);
-                    return (
-                      <TouchableOpacity 
-                        key={size}
-                        style={{ minWidth: 44, height: 38, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 6, borderWidth: 1.5, borderColor: isSel ? COLORS.primary : COLORS.borderStrong, backgroundColor: isSel ? 'rgba(255,107,53,0.08)' : COLORS.glass }}
-                        onPress={() => {
-                          setProductVariants(prev => ({
-                            ...prev,
-                            sizes: isSel ? prev.sizes.filter(s => s !== size) : [...prev.sizes, size]
-                          }));
-                        }}
-                      >
-                        <Text style={{ color: isSel ? COLORS.primary : COLORS.text, fontWeight: '600', fontSize: 13 }}>{size}</Text>
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-
-                <Text style={[styles.label, { marginTop: 16 }]}>Colors</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
-                  {['Black','White','Red','Blue','Green','Yellow','Brown','Grey'].map(color => {
-                    const isSel = productVariants.colors.includes(color);
-                    const colorHexMap = { Black:'#000', White:'#FFF', Red:'#FF3B30', Blue:'#007AFF', Green:'#34C759', Yellow:'#FFCC00', Brown:'#A2845E', Grey:'#8E8E93' };
-                    const hex = colorHexMap[color] || color;
-                    return (
-                      <TouchableOpacity 
-                        key={color}
-                        style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: isSel ? COLORS.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}
-                        onPress={() => {
-                          setProductVariants(prev => ({
-                            ...prev,
-                            colors: isSel ? prev.colors.filter(c => c !== color) : [...prev.colors, color]
-                          }));
-                        }}
-                      >
-                        <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: hex, borderWidth: 1, borderColor: 'rgba(0,0,0,0.1)' }} />
-                      </TouchableOpacity>
-                    );
-                  })}
-                </View>
-              </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Description</Text>
-              <TextInput style={[styles.input, {height: 80, textAlignVertical: 'top'}]} multiline value={productForm.description} onChangeText={t => setProductForm({...productForm, description: t})} />
-            </View>
-
-            <TouchableOpacity style={[styles.primaryBtn, {marginTop: 20}]} onPress={handleSaveProduct} disabled={savingProduct}>
-              {savingProduct ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryBtnText}>Publish Product</Text>}
-            </TouchableOpacity>
-            <View style={{ height: 40 }} />
-          </ScrollView>
-        </View>
-      </Modal>
-
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  center: { justifyContent: 'center', alignItems: 'center' },
   
-  header: { flexDirection: 'row', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 15 },
-  backBtn: { width: 44, height: 44, borderRadius: RADIUS.md, backgroundColor: COLORS.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border, marginRight: 15 },
-  headerInfo: { flex: 1 },
-  title: { fontSize: 24, fontWeight: '800', color: COLORS.text },
-  subtitle: { fontSize: 13, color: COLORS.textMuted },
-
-  tabContainer: { flexDirection: 'row', paddingHorizontal: 20, marginBottom: 15, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  tab: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 12, marginRight: 25, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabActive: { borderBottomColor: COLORS.primary },
-  tabText: { color: COLORS.textMuted, fontSize: 15, fontWeight: '700' },
-  tabTextActive: { color: COLORS.primary },
-
-  scroll: { paddingHorizontal: 20 },
-  card: { backgroundColor: COLORS.card, borderRadius: RADIUS.lg, padding: 20, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm },
-  sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 15 },
-  flexBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 },
+  // Header
+  header: { padding: 24, paddingBottom: 16, backgroundColor: COLORS.background },
+  headerTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  backBtn: { padding: 8, marginLeft: -8 },
+  badgesWrap: { flexDirection: 'row', gap: 8 },
+  hexBadge: { backgroundColor: 'rgba(231,76,60,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
+  hexText: { color: COLORS.red, fontSize: 10, fontWeight: '800' },
+  statusBadge: { backgroundColor: 'rgba(46,204,113,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(46,204,113,0.3)' },
+  statusText: { color: COLORS.green, fontSize: 10, fontWeight: '800' },
+  unverifiedBadge: { backgroundColor: 'rgba(255,107,53,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(255,107,53,0.3)' },
+  unverifiedText: { color: COLORS.primary, fontSize: 10, fontWeight: '800' },
   
-  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: COLORS.primary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.sm },
-  addBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  headerTitle: { fontSize: 28, fontWeight: '900', color: COLORS.text, letterSpacing: -0.5, marginBottom: 4 },
+  headerSubtitle: { color: COLORS.textMuted, fontSize: 15, fontWeight: '500' },
 
-  row: { flexDirection: 'row' },
-  field: { marginBottom: 15 },
-  label: { fontSize: 11, fontWeight: '800', color: COLORS.textMuted, textTransform: 'uppercase', marginBottom: 8, letterSpacing: 0.5 },
-  input: { backgroundColor: COLORS.elevated, borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: 12, color: COLORS.text, fontSize: 15 },
-  
-  primaryBtn: { alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: RADIUS.md, ...SHADOWS.brand },
-  primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  // Nav
+  navScroll: { maxHeight: 54, minHeight: 54, borderBottomWidth: 1, borderBottomColor: COLORS.border, backgroundColor: '#fff' },
+  navContainer: { paddingHorizontal: 20, alignItems: 'center', gap: 8 },
+  navItem: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: 'transparent' },
+  navItemActive: { backgroundColor: 'rgba(255,107,53,0.1)' },
+  navText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
+  navTextActive: { color: COLORS.primary, fontWeight: '800' },
 
-  empty: { padding: 30, alignItems: 'center', justifyContent: 'center' },
-  emptyText: { color: COLORS.textMuted, marginTop: 10, fontSize: 14 },
+  // Content
+  content: { padding: 24, paddingBottom: 60 },
+  sectionTitle: { fontSize: 22, fontWeight: '900', color: COLORS.text, marginBottom: 6, letterSpacing: -0.5 },
+  sectionSub: { fontSize: 14, color: COLORS.textMuted, marginBottom: 24, fontWeight: '500' },
 
-  productRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  productInfo: { flex: 1, paddingRight: 10 },
-  productName: { fontSize: 15, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
-  productStats: { fontSize: 13, color: COLORS.textMuted },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.sm },
-  statusText: { fontSize: 10, fontWeight: '800', letterSpacing: 0.5 },
+  metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
+  metricCard: { flex: 1, minWidth: '45%', backgroundColor: '#fff', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
+  metricIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(46,204,113,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  metricLabel: { fontSize: 11, fontWeight: '800', color: COLORS.textMuted, marginBottom: 4, letterSpacing: 0.5 },
+  metricValue: { fontSize: 24, fontWeight: '900', color: COLORS.text },
 
-  modalContainer: { flex: 1, backgroundColor: COLORS.background },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 20, paddingTop: Platform.OS === 'ios' ? 20 : 40, borderBottomWidth: 1, borderBottomColor: COLORS.border },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: COLORS.text },
-  modalScroll: { padding: 20 },
+  actionGrid: { flexDirection: 'row', gap: 12, marginBottom: 12 },
+  actionCard: { backgroundColor: '#fff', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2, marginBottom: 12 },
+  cardHeader: { fontSize: 15, fontWeight: '800', color: COLORS.text, marginBottom: 16 },
+  cardText: { fontSize: 13, color: COLORS.textMuted, fontWeight: '500' },
+  cardDivider: { height: 1, backgroundColor: COLORS.border, marginVertical: 16 },
+  flexBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
 
-  // Toggles row
-  togglesRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
-  toggleCard: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: COLORS.elevated, borderRadius: RADIUS.md, padding: 12, borderWidth: 1, borderColor: COLORS.border },
-  toggleCardInfo: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  toggleCardIcon: { fontSize: 16 },
-  toggleCardLabel: { color: COLORS.text, fontWeight: '700', fontSize: 13 },
-  toggleCardSub: { color: COLORS.textMuted, fontSize: 11 },
-  toggleTrack: { width: 44, height: 24, borderRadius: 12, backgroundColor: COLORS.border, justifyContent: 'center', paddingHorizontal: 2 },
-  toggleTrackOn: { backgroundColor: COLORS.primary },
-  toggleThumb: { width: 18, height: 18, borderRadius: 9, backgroundColor: '#fff' },
-  toggleThumbOn: { alignSelf: 'flex-end' },
+  chartMock: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 80, marginBottom: 8 },
+  chartBar: { width: '10%', backgroundColor: COLORS.primary, borderRadius: 4 },
+  chartLabels: { flexDirection: 'row', justifyContent: 'space-between' },
+  chartLabel: { fontSize: 9, color: COLORS.textMuted, fontWeight: '700' },
 
-  // Categories tab
-  lockedBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'rgba(231,76,60,0.08)', borderRadius: RADIUS.md, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(231,76,60,0.2)' },
-  lockedText: { color: '#E74C3C', fontSize: 13, fontWeight: '600', flex: 1 },
-  unlockNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, backgroundColor: 'rgba(255,107,53,0.06)', borderRadius: RADIUS.md, padding: 12, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,107,53,0.2)' },
-  unlockText: { color: COLORS.primary, fontSize: 13, flex: 1 },
-  catBlock: { backgroundColor: COLORS.elevated, borderRadius: RADIUS.md, marginBottom: 10, borderWidth: 1.5, borderColor: COLORS.border, overflow: 'hidden' },
-  catBlockSelected: { borderColor: COLORS.primary, backgroundColor: 'rgba(255,107,53,0.05)' },
-  catBtn: { flexDirection: 'row', alignItems: 'center', padding: 14, gap: 10 },
-  catCheck: { width: 20, height: 20, borderRadius: 10, backgroundColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
-  catCheckOn: { backgroundColor: COLORS.primary },
-  catBtnText: { fontSize: 15, fontWeight: '700', color: COLORS.text },
-  subcatRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 14, paddingBottom: 12, borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 10 },
-  subcatChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: RADIUS.full, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: 'transparent' },
-  subcatChipOn: { borderColor: COLORS.primary, backgroundColor: 'rgba(255,107,53,0.1)' },
-  subcatChipText: { fontSize: 12, fontWeight: '600', color: COLORS.textMuted },
+  quickBtn: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  quickBtnText: { fontSize: 14, fontWeight: '600', color: COLORS.text },
 
-  // Multi-image grid
-  imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  imageThumbWrap: { width: 80, height: 80, borderRadius: RADIUS.md, overflow: 'hidden', position: 'relative' },
-  imageThumb: { width: '100%', height: '100%', resizeMode: 'cover' },
-  mainBadge: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(46,204,113,0.85)', paddingVertical: 2, alignItems: 'center' },
-  mainBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
-  removeImgBtn: { position: 'absolute', top: 2, right: 2 },
-  addImageTile: { width: 80, height: 80, borderRadius: RADIUS.md, borderWidth: 1.5, borderColor: COLORS.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: COLORS.elevated },
-  addImageTileText: { color: COLORS.textMuted, fontSize: 10, marginTop: 4, fontWeight: '600' },
+  addBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: COLORS.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: RADIUS.full },
+  addBtnText: { color: '#fff', fontWeight: '800', fontSize: 13 },
+  emptyState: { padding: 40, alignItems: 'center', backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: COLORS.border },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginTop: 16, marginBottom: 8 },
+  emptySub: { fontSize: 14, color: COLORS.textMuted, textAlign: 'center' },
+  productRow: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, marginBottom: 12 },
+  productName: { fontSize: 16, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
+  productStats: { fontSize: 13, color: COLORS.textMuted, fontWeight: '500' },
+  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
+  badgeActive: { backgroundColor: 'rgba(46,204,113,0.1)' },
+  badgeInactive: { backgroundColor: 'rgba(231,76,60,0.1)' },
+  badgeText: { fontSize: 11, fontWeight: '800' },
+  badgeTextActive: { color: COLORS.green },
+  badgeTextInactive: { color: COLORS.red },
 
-  // ID Card
-  idCard: { backgroundColor: COLORS.elevated, borderRadius: RADIUS.md, padding: 15, marginBottom: 20, borderWidth: 1, borderColor: COLORS.border },
-  idCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
-  idCardTitle: { color: COLORS.primary, fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
-  idCardValue: { color: COLORS.text, fontSize: 14, fontWeight: '700', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
-  idCardFooter: { color: COLORS.textDim, fontSize: 10, marginTop: 4, fontStyle: 'italic' },
+  formCard: { backgroundColor: '#fff', padding: 20, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border },
+  inputGroup: { marginBottom: 16 },
+  label: { fontSize: 12, fontWeight: '800', color: COLORS.textMuted, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+  input: { backgroundColor: COLORS.elevated, borderWidth: 1, borderColor: COLORS.border, borderRadius: 8, padding: 12, fontSize: 15, color: COLORS.text, fontWeight: '500' },
+  togglesRow: { flexDirection: 'row', gap: 16, marginBottom: 24 },
+  toggleItem: { flex: 1, alignItems: 'center' },
+  toggleLabel: { fontSize: 13, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
+  saveBtn: { backgroundColor: COLORS.primary, padding: 16, borderRadius: RADIUS.lg, alignItems: 'center' },
+  saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });

@@ -77,7 +77,7 @@ function MainTabs() {
           const icons = {
             Home: focused ? 'home' : 'home-outline',
             Categories: focused ? 'grid' : 'grid-outline',
-            Nearby: focused ? 'location' : 'location-outline',
+            Shops: focused ? 'storefront' : 'storefront-outline',
             Profile: focused ? 'person' : 'person-outline',
           };
           return <Ionicons name={icons[route.name]} size={22} color={color} />;
@@ -95,7 +95,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeStack} />
       <Tab.Screen name="Categories" component={CategoriesStack} />
-      <Tab.Screen name="Nearby" component={NearbyShopsScreen} />
+      <Tab.Screen name="Shops" component={NearbyShopsScreen} />
       <Tab.Screen name="Profile" component={ProfileStack} />
     </Tab.Navigator>
   );

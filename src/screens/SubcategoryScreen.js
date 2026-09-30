@@ -16,18 +16,22 @@ import { shopAPI } from '../utils/api';
 const { width } = Dimensions.get('window');
 
 export default function SubcategoryScreen({ route, navigation }) {
-  const { subcategory, sectorName } = route.params;
+  const { subcategory, category, sectorName } = route.params;
   const [shops, setShops] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchShops();
-  }, [subcategory]);
+  }, [subcategory, category]);
 
   const fetchShops = async () => {
     try {
       setLoading(true);
-      const res = await shopAPI.getNearbyShops({ subcategory: subcategory.name });
+      let params = {};
+      if (subcategory) params.subcategory = subcategory.id;
+      else if (category) params.category = category.id;
+      
+      const res = await shopAPI.getNearbyShops(params);
       setShops(res.data.results || res.data);
     } catch (error) {
       console.error('Error fetching shops:', error);

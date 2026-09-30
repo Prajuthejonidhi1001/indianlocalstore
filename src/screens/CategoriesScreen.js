@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -7,29 +7,32 @@ import {
   TouchableOpacity, 
   Image, 
   ActivityIndicator, 
-  Dimensions,
-  LayoutAnimation,
-  Platform,
-  UIManager
+  TextInput,
+  Dimensions
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { productAPI } from '../utils/api';
 
 const { width } = Dimensions.get('window');
 
-const EMOJIS = ['🥬', '🍎', '🥛', '🌿', '🌾', '🥜', '🧴', '🏠', '🐟', '🍬', '🥦', '🫙'];
+const CAT_COLORS = [
+  ['#FF6B35','#FF8C42'],
+  ['#5521FF','#7C3AED'],
+  ['#00C896','#00A878'],
+  ['#FFB627','#FF9500'],
+  ['#E91E8C','#C2185B'],
+  ['#00B4D8','#0077B6'],
+];
 
 export default function CategoriesScreen({ navigation }) {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [expandedCats, setExpandedCats] = useState({});
+  const [search, setSearch] = useState('');
+  const [activeId, setActiveId] = useState(null);
 
   useEffect(() => {
-    // Enable LayoutAnimation on Android
-    if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-      UIManager.setLayoutAnimationEnabledExperimental(true);
-    }
     fetchCategories();
   }, []);
 
@@ -39,10 +42,7 @@ export default function CategoriesScreen({ navigation }) {
       const res = await productAPI.getCategories();
       const cats = res.data.results || res.data;
       setCategories(cats);
-      // Auto-expand all categories
-      const expanded = {};
-      cats.forEach(c => { expanded[c.id] = true; });
-      setExpandedCats(expanded);
+      if (cats.length > 0) setActiveId(cats[0].id);
     } catch (e) {
       console.error('Fetch categories error:', e);
     } finally {
@@ -50,216 +50,159 @@ export default function CategoriesScreen({ navigation }) {
     }
   };
 
-  const toggleCat = (id) => {
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setExpandedCats(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+  const filtered = categories.filter(c =>
+    c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.subcategories?.some(s => s.name.toLowerCase().includes(search.toLowerCase()))
+  );
 
-
-  const renderCategory = (cat, index) => {
-    const isExpanded = expandedCats[cat.id];
-
-    return (
-      <View key={cat.id} style={styles.catSection}>
-        <TouchableOpacity 
-          style={styles.catHeader} 
-          activeOpacity={0.7} 
-          onPress={() => toggleCat(cat.id)}
-        >
-          {cat.icon ? (
-            <Image source={{ uri: cat.icon }} style={styles.catImg} />
-          ) : (
-            <View style={styles.catEmojiBox}>
-              <Text style={styles.emojiText}>{EMOJIS[index % EMOJIS.length]}</Text>
-            </View>
-          )}
-          
-          <View style={styles.catTitleBox}>
-            <Text style={styles.catName}>{cat.name}</Text>
-            {cat.description && <Text style={styles.catDesc} numberOfLines={1}>{cat.description}</Text>}
-          </View>
-          
-          <Ionicons 
-            name={isExpanded ? "chevron-up" : "chevron-down"} 
-            size={20} 
-            color={COLORS.textMuted} 
-          />
-        </TouchableOpacity>
-
-        {isExpanded && (
-          <View style={styles.subcatBox}>
-            {cat.subcategories?.length > 0 ? (
-              <View style={styles.subcatGrid}>
-                {cat.subcategories.map((sub, j) => (
-                  <TouchableOpacity 
-                    key={sub.id} 
-                    style={styles.subcatCard}
-                    onPress={() => navigation.navigate('Subcategory', { subcategory: sub, sectorName: cat.name })}
-                  >
-                    {sub.icon ? (
-                      <Image source={{ uri: sub.icon }} style={styles.subImg} />
-                    ) : (
-                      <View style={styles.subEmojiBox}>
-                        <Text style={styles.subEmojiText}>{EMOJIS[(index + j + 1) % EMOJIS.length]}</Text>
-                      </View>
-                    )}
-                    <Text style={styles.subName} numberOfLines={2}>{sub.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-            ) : (
-              <Text style={styles.subEmpty}>No subcategories available.</Text>
-            )}
-          </View>
-        )}
-      </View>
-    );
-  };
+  const activeCategory = categories.find(c => c.id === activeId);
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <View style={styles.labelRow}>
-          <Text style={{ fontSize: 13 }}>🛍️</Text>
-          <Text style={styles.headerLabel}>SHOP BY CATEGORY</Text>
+      {/* Hero Header */}
+      <View style={styles.hero}>
+        <View style={styles.heroInner}>
+          <Text style={styles.heroLabel}>🛍️ Browse All</Text>
+          <Text style={styles.heroTitle}>Shop by Category</Text>
+          
+          <View style={styles.searchWrap}>
+            <Ionicons name="search" size={18} color={COLORS.textMuted} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search categories or subcategories..."
+              placeholderTextColor={COLORS.textMuted}
+              value={search}
+              onChangeText={setSearch}
+            />
+          </View>
         </View>
-        <Text style={styles.title}>All Categories</Text>
-        <Text style={styles.subtitle}>Choose a category to explore fresh local products</Text>
       </View>
-      
+
+      {/* Main Body */}
       {loading ? (
         <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
-      ) : categories.length === 0 ? (
+      ) : filtered.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateIcon}>📂</Text>
-          <Text style={styles.emptyTitle}>No categories found</Text>
+          <Text style={styles.emptyIcon}>🔍</Text>
+          <Text style={styles.emptyTitle}>No results for "{search}"</Text>
         </View>
       ) : (
-        <ScrollView 
-          showsVerticalScrollIndicator={false} 
-          contentContainerStyle={styles.list}
-        >
-          {categories.map((cat, i) => renderCategory(cat, i))}
-          <View style={{ height: 120 }} />
-        </ScrollView>
+        <View style={styles.splitView}>
+          {/* Sidebar */}
+          <View style={styles.sidebar}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.sidebarContent}>
+              {filtered.map((cat, i) => {
+                const isActive = activeId === cat.id;
+                return (
+                  <TouchableOpacity
+                    key={cat.id}
+                    style={[styles.sidebarPill, isActive && styles.sidebarPillActive]}
+                    onPress={() => setActiveId(cat.id)}
+                  >
+                    <View style={styles.pillIconWrap}>
+                      {cat.icon ? (
+                        <Image source={{ uri: cat.icon }} style={styles.pillIcon} />
+                      ) : (
+                        <LinearGradient colors={CAT_COLORS[i % CAT_COLORS.length]} style={styles.pillDot} />
+                      )}
+                    </View>
+                    <Text style={[styles.pillText, isActive && styles.pillTextActive]} numberOfLines={2}>
+                      {cat.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+
+          {/* Right Content */}
+          <View style={styles.content}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.contentScroll}>
+              {activeCategory && (
+                <View style={styles.activeSection}>
+                  <View style={styles.activeHeader}>
+                    <Text style={styles.activeTitle}>{activeCategory.name}</Text>
+                    {activeCategory.description && <Text style={styles.activeDesc}>{activeCategory.description}</Text>}
+                  </View>
+
+                  {activeCategory.subcategories?.length > 0 ? (
+                    <View style={styles.subGrid}>
+                      {activeCategory.subcategories.map((sub, j) => (
+                        <TouchableOpacity
+                          key={sub.id}
+                          style={styles.subCard}
+                          onPress={() => navigation.navigate('Subcategory', { subcategory: sub, sectorName: activeCategory.name })}
+                        >
+                          <View style={styles.subIconWrap}>
+                            {sub.icon ? (
+                              <Image source={{ uri: sub.icon }} style={styles.subImg} />
+                            ) : (
+                              <Text style={styles.subEmoji}>🏪</Text>
+                            )}
+                          </View>
+                          <Text style={styles.subName} numberOfLines={2}>{sub.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : (
+                    <TouchableOpacity
+                      style={styles.viewAllBtn}
+                      onPress={() => navigation.navigate('Subcategory', { category: activeCategory, sectorName: activeCategory.name })}
+                    >
+                      <Text style={styles.viewAllText}>Browse {activeCategory.name} Shops</Text>
+                      <Ionicons name="arrow-forward" size={16} color={COLORS.primary} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+              <View style={{ height: 100 }} />
+            </ScrollView>
+          </View>
+        </View>
       )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  header: { paddingHorizontal: 25, paddingTop: 60, paddingBottom: 25 },
-  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  headerLabel: { color: COLORS.primary, fontSize: 11, fontWeight: '800', letterSpacing: 1.5 },
-  title: { fontSize: 28, fontWeight: '800', color: COLORS.text, marginBottom: 5 },
-  subtitle: { fontSize: 13, color: COLORS.textMuted },
-
-  list: { paddingHorizontal: 25 },
+  container: { flex: 1, backgroundColor: COLORS.surface },
   
-  catSection: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.lg,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    marginBottom: 15,
-    overflow: 'hidden',
-    ...SHADOWS.sm
-  },
-  catHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  catImg: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: COLORS.elevated
-  },
-  catEmojiBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,107,53,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,107,53,0.2)'
-  },
-  emojiText: {
-    fontSize: 22
-  },
-  catTitleBox: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  catName: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: COLORS.text,
-    marginBottom: 2
-  },
-  catDesc: {
-    fontSize: 13,
-    color: COLORS.textMuted,
-  },
-  
-  subcatBox: {
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.border,
-    paddingTop: 16,
-    backgroundColor: 'rgba(255,255,255,0.02)'
-  },
-  subcatGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  subcatCard: {
-    width: (width - 50 - 32 - 12) / 2, // width - paddingHorizontal(25+25) - cardPadding(16+16) - gap(12) / 2
-    backgroundColor: COLORS.elevated,
-    borderRadius: RADIUS.md,
-    padding: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    flexDirection: 'row',
-    gap: 10
-  },
-  subImg: {
-    width: 30,
-    height: 30,
-    borderRadius: RADIUS.sm
-  },
-  subEmojiBox: {
-    width: 30,
-    height: 30,
-    borderRadius: RADIUS.sm,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  subEmojiText: {
-    fontSize: 16
-  },
-  subName: {
-    flex: 1,
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  subEmpty: {
-    color: COLORS.textMuted,
-    fontSize: 13,
-    fontStyle: 'italic'
-  },
+  hero: { backgroundColor: '#F8FAFC', paddingHorizontal: 20, paddingTop: 60, paddingBottom: 20, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  heroLabel: { fontSize: 12, fontWeight: '700', color: COLORS.primary, letterSpacing: 0.5, marginBottom: 4 },
+  heroTitle: { fontSize: 24, fontWeight: '900', color: COLORS.text, marginBottom: 16 },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderRadius: RADIUS.lg, paddingHorizontal: 14, height: 44, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.sm },
+  searchInput: { flex: 1, marginLeft: 8, fontSize: 14, color: COLORS.text },
 
   loader: { flex: 1, justifyContent: 'center' },
+  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  emptyIcon: { fontSize: 48, marginBottom: 16 },
+  emptyTitle: { fontSize: 16, fontWeight: '700', color: COLORS.textMuted },
+
+  splitView: { flex: 1, flexDirection: 'row' },
   
-  emptyState: { flex: 1, alignItems: 'center', justifyContent: 'center', marginTop: -50 },
-  emptyStateIcon: { fontSize: 50, marginBottom: 15, opacity: 0.5 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.textMuted },
+  sidebar: { width: 100, backgroundColor: '#F8FAFC', borderRightWidth: 1, borderRightColor: COLORS.border },
+  sidebarContent: { paddingVertical: 10 },
+  sidebarPill: { alignItems: 'center', paddingVertical: 16, paddingHorizontal: 8, borderLeftWidth: 4, borderLeftColor: 'transparent' },
+  sidebarPillActive: { backgroundColor: '#FFF', borderLeftColor: COLORS.primary },
+  pillIconWrap: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', marginBottom: 8, ...SHADOWS.sm, overflow: 'hidden' },
+  pillIcon: { width: '100%', height: '100%' },
+  pillDot: { width: '100%', height: '100%' },
+  pillText: { fontSize: 11, textAlign: 'center', color: COLORS.textMuted, fontWeight: '600' },
+  pillTextActive: { color: COLORS.primary, fontWeight: '800' },
+
+  content: { flex: 1, backgroundColor: '#FFF' },
+  contentScroll: { padding: 16 },
+  activeHeader: { marginBottom: 20 },
+  activeTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
+  activeDesc: { fontSize: 12, color: COLORS.textMuted },
+
+  subGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
+  subCard: { width: '47%', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: RADIUS.md, padding: 12, borderWidth: 1, borderColor: COLORS.border },
+  subIconWrap: { width: 48, height: 48, borderRadius: RADIUS.sm, backgroundColor: '#FFF', alignItems: 'center', justifyContent: 'center', marginBottom: 8, ...SHADOWS.sm, overflow: 'hidden' },
+  subImg: { width: '100%', height: '100%' },
+  subEmoji: { fontSize: 20 },
+  subName: { fontSize: 12, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
+
+  viewAllBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,107,53,0.1)', padding: 16, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: 'rgba(255,107,53,0.2)' },
+  viewAllText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 });

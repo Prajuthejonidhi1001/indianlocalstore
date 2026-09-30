@@ -102,7 +102,14 @@ export default function LoginScreen({ navigation }) {
 
       if (!checkRes.data.exists) {
         triggerErrorShake();
-        Alert.alert('Not Registered', 'Please sign up first.');
+        Alert.alert(
+          'Not Registered', 
+          'No account found with this details. Would you like to create one?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { text: 'Sign Up', onPress: () => navigation.navigate('Register') }
+          ]
+        );
         setLoading(false);
         return;
       }
@@ -208,9 +215,11 @@ export default function LoginScreen({ navigation }) {
             <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
             
             <View style={styles.headerRow}>
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                <Ionicons name="arrow-back" size={24} color="#FFF" />
-              </TouchableOpacity>
+              {navigation.canGoBack() && (
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                  <Ionicons name="arrow-back" size={24} color="#FFF" />
+                </TouchableOpacity>
+              )}
             </View>
 
             <View style={styles.logoWrap}>
@@ -225,18 +234,18 @@ export default function LoginScreen({ navigation }) {
 
             {step === 1 ? (
               <>
-                <View style={{ flexDirection: 'row', marginBottom: 20, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 12, padding: 4 }}>
+                <View style={{ flexDirection: 'row', marginBottom: 20, backgroundColor: 'rgba(0,0,0,0.05)', borderRadius: 12, padding: 4 }}>
                   <TouchableOpacity 
                     style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: loginMethod === 'email' ? '#FF6B00' : 'transparent', borderRadius: 8 }}
                     onPress={() => setLoginMethod('email')}
                   >
-                    <Text style={{ color: '#FFF', fontWeight: '600' }}>Email</Text>
+                    <Text style={{ color: loginMethod === 'email' ? '#FFF' : COLORS.textMuted, fontWeight: '600' }}>Email</Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={{ flex: 1, paddingVertical: 10, alignItems: 'center', backgroundColor: loginMethod === 'phone' ? '#FF6B00' : 'transparent', borderRadius: 8 }}
                     onPress={() => setLoginMethod('phone')}
                   >
-                    <Text style={{ color: '#FFF', fontWeight: '600' }}>Phone</Text>
+                    <Text style={{ color: loginMethod === 'phone' ? '#FFF' : COLORS.textMuted, fontWeight: '600' }}>Phone</Text>
                   </TouchableOpacity>
                 </View>
 
@@ -265,6 +274,15 @@ export default function LoginScreen({ navigation }) {
                   <View style={styles.btnHologram} />
                   <Text style={styles.loginBtnText}>{loading ? 'Sending OTP...' : 'Get OTP'}</Text>
                   {!loading && <Ionicons name="arrow-forward" size={20} color="#FFF" />}
+                </TouchableOpacity>
+
+                <TouchableOpacity 
+                  onPress={() => navigation.navigate('Register')} 
+                  style={{marginTop: 24, alignItems: 'center'}}
+                >
+                  <Text style={{color: COLORS.textMuted, fontSize: 15, fontWeight: '500'}}>
+                    Don't have an account? <Text style={styles.footerAction}>Sign Up</Text>
+                  </Text>
                 </TouchableOpacity>
               </>
             ) : (

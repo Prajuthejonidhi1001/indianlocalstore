@@ -367,9 +367,11 @@ export default function RegisterScreen({ navigation }) {
 
             {/* ── Header ── */}
             <View style={styles.headerRow}>
-              <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
-                <Ionicons name="arrow-back" size={22} color="#fff" />
-              </TouchableOpacity>
+              {navigation.canGoBack() && (
+                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
+                  <Ionicons name="arrow-back" size={22} color="#fff" />
+                </TouchableOpacity>
+              )}
               <View style={styles.logoBox}>
                 <Ionicons name="storefront" size={20} color="#fff" />
               </View>
@@ -651,8 +653,8 @@ const styles = StyleSheet.create({
 
   // Role Cards
   roleCardRow: { flexDirection: 'row', gap: 12, marginBottom: 22 },
-  roleCard: { flex: 1, alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.1)', backgroundColor: 'rgba(255,255,255,0.04)', position: 'relative' },
-  roleCardActiveCustomer: { borderColor: 'rgba(255,255,255,0.35)', backgroundColor: 'rgba(255,255,255,0.08)' },
+  roleCard: { flex: 1, alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(0,0,0,0.1)', backgroundColor: 'rgba(0,0,0,0.02)', position: 'relative' },
+  roleCardActiveCustomer: { borderColor: 'rgba(0,0,0,0.3)', backgroundColor: 'rgba(0,0,0,0.05)' },
   roleCardActiveSeller: { borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.1)' },
   roleCardEmoji: { fontSize: 28, marginBottom: 6 },
   roleCardTitle: { fontSize: 15, fontWeight: '800', color: COLORS.textMuted, marginBottom: 2 },

@@ -67,7 +67,7 @@ api.interceptors.response.use(
 export const authAPI = {
   checkUser: (email, phone) => api.post('/users/check_user/', { email, phone }),
   sendPhoneOtp: (phone, email) => api.post('/users/send_otp/', { phone, email }),
-  verifyOtp: (firebase_token, email_otp) => api.post('/users/verify_otp/', { firebase_token, email_otp }),
+  verifyOtp: (firebase_token, email_otp, email) => api.post('/users/verify_otp/', { firebase_token, email_otp, email }),
   verifyEmailOnly: (email, email_otp) => api.post('/users/verify_email_only/', { email, email_otp }),
   refreshToken: (refresh_token) => api.post('/users/token/refresh/', { refresh: refresh_token }),
   logout: (refresh_token) => api.post('/users/logout/', { refresh: refresh_token }),
@@ -97,6 +97,14 @@ export const productAPI = {
   deleteProduct: (id) => api.delete(`/products/products/${id}/`),
   addProductReview: (productId, data) => api.post(`/products/products/${productId}/add_review/`, data),
   getMyProducts: () => api.get('/products/products/my_products/'),
+};
+
+// ========== Address API ==========
+export const addressAPI = {
+  getAddresses: () => api.get('/users/addresses/'),
+  addAddress: (data) => api.post('/users/addresses/', data),
+  updateAddress: (id, data) => api.put(`/users/addresses/${id}/`, data),
+  deleteAddress: (id) => api.delete(`/users/addresses/${id}/`),
 };
 
 // ========== Shop API ==========

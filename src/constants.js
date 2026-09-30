@@ -67,6 +67,24 @@ export const RADIUS = {
   full: 9999,
 };
 
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 40,
+};
+
+export const TYPOGRAPHY = {
+  h1: { fontSize: 24, fontWeight: '700' },
+  h2: { fontSize: 20, fontWeight: '700' },
+  h3: { fontSize: 18, fontWeight: '600' },
+  body1: { fontSize: 16, fontWeight: '400' },
+  body2: { fontSize: 14, fontWeight: '400' },
+  caption: { fontSize: 12, fontWeight: '400' },
+};
+
 // ... existing CATEGORIES and other data ...
 export const CATEGORIES = [
   { id: 1, name: 'Agriculture', icon: '🌾' },

@@ -8,18 +8,21 @@
     "scheme": "indianlocalstore",
     "description": "Your Trusted Neighbourhood Marketplace - Discover local shops, fresh products & support local businesses",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/splash.jpg",
       "resizeMode": "contain",
-      "backgroundColor": "#050814"
+      "backgroundColor": "#ffffff"
     },
-    "icon": "./assets/icon.png",
+    "icon": "./assets/icon.jpg",
     "plugins": [
       [
         "expo-location",
         {
           "locationAlwaysAndWhenInUsePermission": "Allow $(PRODUCT_NAME) to access your location"
         }
-      ]
+      ],
+      "expo-font",
+      "expo-splash-screen",
+      "expo-status-bar"
     ],
     "android": {
       "package": "com.indianlocalstore.app",

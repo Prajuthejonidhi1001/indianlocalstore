@@ -200,9 +200,7 @@ export default function SellerDashboardPage() {
   
   const toggleProductStatus = async (product) => {
     try {
-      const formData = new FormData();
-      formData.append('is_active', !product.is_active);
-      await productAPI.updateProduct(product.id, formData);
+      await productAPI.updateProduct(product.id, { is_active: !product.is_active });
       toast.success(product.is_active ? 'Product deactivated' : 'Product activated');
       const freshProducts = await productAPI.getMyProducts();
       setProducts(freshProducts.data.results || freshProducts.data);
@@ -939,6 +937,11 @@ export default function SellerDashboardPage() {
                                 <div key={i} className="media-preview-item">
                                   <img src={URL.createObjectURL(img)} alt="" />
                                   {i === 0 && <span className="media-badge">Main</span>}
+                                  <button type="button" className="remove-media-btn" onClick={() => {
+                                    setProductImages(prev => prev.filter((_, idx) => idx !== i));
+                                  }}>
+                                    &times;
+                                  </button>
                                 </div>
                               ))}
                             </div>

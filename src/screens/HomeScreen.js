@@ -2,255 +2,99 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, StatusBar, Dimensions, ActivityIndicator,
-  FlatList, Platform, Animated
+  FlatList, Animated, ImageBackground, Platform, SafeAreaView
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SHADOWS, RADIUS } from '../constants';
-import { shopAPI, productAPI } from '../utils/api';
+import { COLORS, SHADOWS, RADIUS, TYPOGRAPHY } from '../constants';
+import { shopAPI, productAPI, authAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
 import { useLocation } from '../context/LocationContext';
 import { useCart } from '../context/CartContext';
 import * as Location from 'expo-location';
 
-const { width, height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 const CAT_EMOJIS = {
-  'Agriculture':        '🌾',
-  'Automobile':         '🚗',
-  'Construction':       '🏗️',
-  'Electronics':        '📱',
-  'Event Management':   '🎉',
-  'Fashion':            '👗',
-  'Furnitures':         '🪑',
-  'Mart':               '🏪',
-  'Second Hand Vehicles':'🚙',
-  'Traders':            '📦',
-  // fallback extras
-  'Food':               '🍽️',
-  'Clothing':           '👕',
-  'Electronics & Gadgets':'💻',
+  'Vegetables': '🥦', 'Fruits': '🍎', 'Dairy': '🧀', 'Spices': '🌶️',
+  'Grains': '🌾', 'Snacks': '🥨', 'Meat': '🥩', 'Beverages': '🥤',
+  'Bakery': '🥐', 'Personal Care': '🧴', 'Home & Living': '🛋️',
+  'Electronics': '💻', 'Clothing': '👕', 'Pharmacy': '💊',
+  'Fashion': '👗', 'Agriculture': '🚜', 'Automobile': '🚗',
+  'Construction': '🏗️', 'Furniture': '🪑', 'Furnitures': '🪑',
+  'Mart': '🏪', 'Traders': '🏬', 'Event Management': '🎉',
+  'Second Hand Vehicles': '🛵',
 };
 
-const CAT_COLORS = {
-  'Agriculture':        '#2ECC71',
-  'Automobile':         '#3498DB',
-  'Construction':       '#E67E22',
-  'Electronics':        '#9B59B6',
-  'Event Management':   '#E91E8C',
-  'Fashion':            '#FF6B35',
-  'Furnitures':         '#795548',
-  'Mart':               '#00BCD4',
-  'Second Hand Vehicles':'#F39C12',
-  'Traders':            '#1ABC9C',
-};
+const HERO_BANNERS = [
+  { id: 1, title: 'Mega Electronics Sale', subtitle: 'Up to 40% Off on Top Brands', colors: ['#1e3c72', '#2a5298'], image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=800&auto=format&fit=crop' },
+  { id: 2, title: 'Fresh Groceries Delivered', subtitle: 'In 30 Minutes or Less', colors: ['#11998e', '#38ef7d'], image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800&auto=format&fit=crop' },
+  { id: 3, title: 'Fashion Clearance', subtitle: 'Trendy Styles at Unbeatable Prices', colors: ['#ff9a9e', '#fecfef'], image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop' }
+];
 
-// Animated shop card wrapper
-function AnimatedShopCard({ shop, navigation, index }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 400,
-        delay: index * 80,
-        useNativeDriver: true,
-      }),
-      Animated.spring(slideAnim, {
-        toValue: 0,
-        tension: 80,
-        friction: 10,
-        delay: index * 80,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
-
-  const handlePressIn = () => {
-    Animated.spring(scaleAnim, { toValue: 0.97, useNativeDriver: true, tension: 300, friction: 10 }).start();
-  };
-  const handlePressOut = () => {
-    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, tension: 300, friction: 10 }).start();
-  };
-
-  const catColor = CAT_COLORS[shop.category_name] || COLORS.primary;
-
-  return (
-    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }}>
-      <TouchableOpacity
-        style={styles.shopCard}
-        onPress={() => navigation.navigate('ShopProducts', { shopId: shop.id, shopName: shop.name })}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={1}
-      >
-        {/* Glow strip at top */}
-        <View style={[styles.shopCardAccent, { backgroundColor: catColor + '40' }]} />
-
-        <View style={styles.shopHeader}>
-          {/* Avatar with gradient ring */}
-          <View style={styles.shopAvatarWrap}>
-            {shop.logo ? (
-              <Image source={{ uri: shop.logo }} style={styles.shopLogo} />
-            ) : (
-              <LinearGradient
-                colors={[catColor + 'CC', catColor + '44']}
-                style={styles.shopAvatar}
-              >
-                <Text style={styles.avatarText}>{shop.name[0].toUpperCase()}</Text>
-              </LinearGradient>
-            )}
-            {shop.verification_status === 'verified' && (
-              <View style={styles.verifiedDot}>
-                <Ionicons name="checkmark" size={8} color="#fff" />
-              </View>
-            )}
-          </View>
-
-          <View style={styles.shopBasicInfo}>
-            <Text style={styles.shopName} numberOfLines={1}>{shop.name}</Text>
-            <View style={styles.shopMetaRow}>
-              <Ionicons name="location" size={11} color={COLORS.textMuted} />
-              <Text style={styles.shopCity}>{shop.city || 'Local'}</Text>
-              {shop.distance && (
-                <>
-                  <Text style={styles.shopDot}>·</Text>
-                  <Text style={styles.shopDist}>{shop.distance} km</Text>
-                </>
-              )}
-            </View>
-          </View>
-
-          <View style={styles.shopRating}>
-            <Ionicons name="star" size={12} color={COLORS.secondary} />
-            <Text style={styles.ratingValue}>{shop.rating?.toFixed(1) || '4.5'}</Text>
-          </View>
-        </View>
-
-        {shop.description && (
-          <Text style={styles.shopDesc} numberOfLines={1}>{shop.description}</Text>
-        )}
-
-        <View style={styles.shopFooter}>
-          <View style={[styles.statusBadge, {
-            backgroundColor: shop.verification_status === 'verified' ? 'rgba(0,230,118,0.1)' : 'rgba(255,107,53,0.1)',
-            borderColor: shop.verification_status === 'verified' ? 'rgba(0,230,118,0.3)' : 'rgba(255,107,53,0.3)',
-          }]}>
-            <View style={[styles.statusDot, { backgroundColor: shop.verification_status === 'verified' ? '#00E676' : COLORS.primary }]} />
-            <Text style={[styles.statusText, {
-              color: shop.verification_status === 'verified' ? '#00E676' : COLORS.primary
-            }]}>
-              {shop.verification_status === 'verified' ? 'VERIFIED' : 'UNVERIFIED'}
-            </Text>
-          </View>
-          <View style={styles.shopArrow}>
-            <Ionicons name="arrow-forward" size={14} color={COLORS.textMuted} />
-          </View>
-        </View>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-}
-
-// Animated category pill
-function AnimatedCatPill({ item, isActive, onPress, index }) {
-  const scaleAnim = useRef(new Animated.Value(0)).current;
-  const catColor = CAT_COLORS[item.name] || COLORS.primary;
-
-  useEffect(() => {
-    Animated.spring(scaleAnim, {
-      toValue: 1,
-      tension: 100,
-      friction: 8,
-      delay: index * 50,
-      useNativeDriver: true,
-    }).start();
-  }, []);
-
-  const handlePress = () => {
-    Animated.sequence([
-      Animated.spring(scaleAnim, { toValue: 0.9, tension: 300, friction: 5, useNativeDriver: true }),
-      Animated.spring(scaleAnim, { toValue: 1, tension: 300, friction: 5, useNativeDriver: true }),
-    ]).start();
-    onPress();
-  };
-
-  return (
-    <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-      <TouchableOpacity
-        style={[styles.catPill, isActive && { backgroundColor: catColor + '25', borderColor: catColor }]}
-        onPress={handlePress}
-        activeOpacity={0.8}
-      >
-        <Text style={[styles.catEmoji]}>{CAT_EMOJIS[item.name] || '🛍️'}</Text>
-        <Text style={[styles.catText, isActive && { color: catColor, fontWeight: '800' }]}>
-          {item.name}
-        </Text>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-}
+const CAT_GRADIENTS = [
+  ['#FF9A9E', '#FECFEF'],
+  ['#a18cd1', '#fbc2eb'],
+  ['#84fab0', '#8fd3f4'],
+  ['#fccb90', '#d57eeb'],
+  ['#e0c3fc', '#8ec5fc'],
+];
 
 export default function HomeScreen({ navigation }) {
   const { user } = useAuth();
   const { location, setLocation } = useLocation();
-  const [categories, setCategories] = useState([
-    { id: '1', name: 'Agriculture' },
-    { id: '2', name: 'Automobile' },
-    { id: '3', name: 'Construction' },
-    { id: '4', name: 'Electronics' },
-    { id: '5', name: 'Fashion' },
-    { id: '6', name: 'Mart' },
-  ]);
+  const { cartItems } = useCart();
+  const [categories, setCategories] = useState([]);
   const [shops, setShops] = useState([]);
+  const [trendingProducts, setTrendingProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [locating, setLocating] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState(null);
-  const { cartCount } = useCart();
-
-  // Header animation
+  const [timeLeft, setTimeLeft] = useState(3600 * 5);
+  const [wishlistItems, setWishlistItems] = useState(new Set());
+  
   const scrollY = useRef(new Animated.Value(0)).current;
-  const headerOpacity = scrollY.interpolate({ inputRange: [0, 120], outputRange: [1, 0.85], extrapolate: 'clamp' });
-  const headerScale = scrollY.interpolate({ inputRange: [0, 120], outputRange: [1, 0.96], extrapolate: 'clamp' });
-
-  // Hero elements fade in
-  const heroFade = useRef(new Animated.Value(0)).current;
-  const heroSlide = useRef(new Animated.Value(20)).current;
-  const orbFloat = useRef(new Animated.Value(0)).current;
+  const flatListRef = useRef(null);
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(heroFade, { toValue: 1, duration: 600, useNativeDriver: true }),
-      Animated.spring(heroSlide, { toValue: 0, tension: 80, friction: 10, useNativeDriver: true }),
-    ]).start();
-    
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(orbFloat, { toValue: 1, duration: 4000, useNativeDriver: true }),
-        Animated.timing(orbFloat, { toValue: 0, duration: 4000, useNativeDriver: true })
-      ])
-    ).start();
-
     fetchInitialData();
   }, [location?.district]);
+  
+  useEffect(() => {
+    const timer = setInterval(() => setTimeLeft(prev => prev > 0 ? prev - 1 : 0), 1000);
+    return () => clearInterval(timer);
+  }, []);
+  
+  useEffect(() => {
+    const autoScroll = setInterval(() => {
+      let nextIndex = currentIndex + 1;
+      if (nextIndex >= HERO_BANNERS.length) nextIndex = 0;
+      flatListRef.current?.scrollToIndex({ index: nextIndex, animated: true });
+      setCurrentIndex(nextIndex);
+    }, 4000);
+    return () => clearInterval(autoScroll);
+  }, [currentIndex]);
 
   const fetchInitialData = async () => {
     try {
       setLoading(true);
-      const [catRes, shopRes] = await Promise.all([
+      const [catRes, prodRes] = await Promise.all([
         productAPI.getCategories(),
-        shopAPI.getNearbyShops({ city: location?.district }),
+        productAPI.getProducts({ page_size: 15 })
       ]);
       setCategories(catRes.data.results || catRes.data);
-      let shopData = shopRes.data.results || shopRes.data;
-      if (shopData.length === 0) {
-        const allShopRes = await shopAPI.getShops({ page_size: 8 });
-        shopData = allShopRes.data.results || allShopRes.data;
-      }
-      setShops(shopData);
+      setTrendingProducts(prodRes.data.results || prodRes.data);
+      
+      try {
+        const shopRes = await shopAPI.getShops({ page_size: 8, city: location?.district });
+        let shopData = shopRes.data.results || shopRes.data;
+        if (shopData.length === 0) {
+          const allShopRes = await shopAPI.getShops({ page_size: 8 });
+          shopData = allShopRes.data.results || allShopRes.data;
+        }
+        setShops(shopData);
+      } catch (e) { console.error('Shop fetch error:', e); }
+      
     } catch (error) {
       console.error('Error fetching home data:', error);
     } finally {
@@ -264,446 +108,274 @@ export default function HomeScreen({ navigation }) {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') return alert('Location permission denied');
       let loc = await Location.getCurrentPositionAsync({});
-      
-      let geocode = await Location.reverseGeocodeAsync({
-        latitude: loc.coords.latitude,
-        longitude: loc.coords.longitude
-      });
-      
+      let geocode = await Location.reverseGeocodeAsync({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
       let city = geocode[0]?.city || geocode[0]?.subregion || geocode[0]?.district || 'Unknown Location';
+      setLocation({ name: city, district: city, coords: { lat: loc.coords.latitude, lng: loc.coords.longitude }});
       
-      setLocation({
-        name: city,
-        district: city,
-        coords: { lat: loc.coords.latitude, lng: loc.coords.longitude },
-      });
+      const res = await shopAPI.getNearbyShops({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
+      setShops(res.data.results || res.data);
     } catch (e) {
       console.error('GPS error:', e);
       alert('Failed to get location');
     } finally { setLocating(false); }
   };
 
-  const filteredShops = selectedCategory
-    ? shops.filter(s => s.category === selectedCategory || (s.categories && s.categories.includes(selectedCategory)))
-    : shops;
-
-  const getGreeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return 'Good Morning';
-    if (h < 17) return 'Good Afternoon';
-    return 'Good Evening';
+  const formatTime = (seconds) => {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return ${h.toString().padStart(2, '0')}h : m : s;
   };
 
-  return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+  const renderBanner = ({ item }) => (
+    <View style={styles.bannerSlide}>
+      <LinearGradient colors={item.colors} style={styles.bannerGradient} start={{x: 0, y: 0}} end={{x: 1, y: 1}}>
+        <Image source={{ uri: item.image }} style={styles.bannerImage} />
+        <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.bannerOverlay} start={{x: 0, y: 0.5}} end={{x: 1, y: 0.5}} />
+        <View style={styles.bannerContent}>
+          <View style={styles.ltoBadge}><Text style={styles.ltoText}>Limited Time Offer</Text></View>
+          <Text style={styles.bannerTitle}>{item.title}</Text>
+          <Text style={styles.bannerSubtitle}>{item.subtitle}</Text>
+          <TouchableOpacity style={styles.bannerBtn} onPress={() => navigation.navigate('Categories')}>
+            <Text style={styles.bannerBtnText}>Shop Now</Text>
+            <Ionicons name="arrow-forward" size={14} color="#FFF" />
+          </TouchableOpacity>
+        </View>
+      </LinearGradient>
+    </View>
+  );
 
-      <Animated.ScrollView
+  return (
+    <SafeAreaView style={styles.safeArea}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFF" />
+      
+      {/* Sticky Premium Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.welcomeText}>Hello, {user?.first_name || 'Guest'} 👋</Text>
+            <TouchableOpacity style={styles.locationSelector} onPress={triggerGPS}>
+              <Ionicons name="location" size={16} color={COLORS.primary} />
+              <Text style={styles.locationText} numberOfLines={1}>
+                {locating ? 'Locating...' : (location?.name || 'Set your location')}
+              </Text>
+              <Ionicons name="chevron-down" size={14} color={COLORS.textMuted} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.headerActions}>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Search')}>
+              <Ionicons name="search" size={22} color={COLORS.text} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Cart')}>
+              <Ionicons name="cart-outline" size={24} color={COLORS.text} />
+              {cartItems?.length > 0 && (
+                <View style={styles.badge}><Text style={styles.badgeText}>{cartItems.length}</Text></View>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+
+      <ScrollView 
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
         onScroll={Animated.event([{ nativeEvent: { contentOffset: { y: scrollY } } }], { useNativeDriver: false })}
         scrollEventThrottle={16}
       >
-        {/* ── HERO BANNER ── */}
-        <LinearGradient
-          colors={['#0A0D14', '#150E1F', '#1F1410']}
-          style={styles.banner}
-        >
-          {/* Decorative orb */}
-          <Animated.View style={[styles.heroOrb1, { transform: [{ translateY: orbFloat.interpolate({ inputRange: [0, 1], outputRange: [0, -30] }) }] }]} />
-          <Animated.View style={[styles.heroOrb2, { transform: [{ translateY: orbFloat.interpolate({ inputRange: [0, 1], outputRange: [-20, 10] }) }] }]} />
+        {/* Animated Hero Carousel */}
+        <View style={styles.heroContainer}>
+          <FlatList
+            ref={flatListRef}
+            data={HERO_BANNERS}
+            renderItem={renderBanner}
+            keyExtractor={item => item.id.toString()}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            onMomentumScrollEnd={(e) => {
+              const idx = Math.round(e.nativeEvent.contentOffset.x / width);
+              setCurrentIndex(idx);
+            }}
+          />
+          <View style={styles.dotsContainer}>
+            {HERO_BANNERS.map((_, i) => (
+              <View key={i} style={[styles.dot, i === currentIndex && styles.dotActive]} />
+            ))}
+          </View>
+        </View>
 
-          {/* Cart button */}
-          <TouchableOpacity style={styles.cartBtn} onPress={() => navigation.navigate('Cart')}>
-            <Ionicons name="cart-outline" size={22} color={COLORS.text} />
-            {cartCount > 0 && (
-              <View style={styles.cartBadge}>
-                <Text style={styles.cartBadgeText}>{cartCount}</Text>
+        {/* Categories Grid (Vibrant) */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Shop by Category</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Categories')}>
+              <Text style={styles.seeAllText}>See All</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
+            {categories.slice(0, 10).map((cat, idx) => {
+              const gradient = CAT_GRADIENTS[idx % CAT_GRADIENTS.length];
+              return (
+                <TouchableOpacity key={cat.id} style={styles.catWrap} onPress={() => navigation.navigate('ShopList', { categoryId: cat.id })}>
+                  <LinearGradient colors={gradient} style={styles.catCircle}>
+                    <Text style={styles.catEmoji}>{CAT_EMOJIS[cat.name] || '🛍️'}</Text>
+                  </LinearGradient>
+                  <Text style={styles.catName} numberOfLines={1}>{cat.name}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </View>
+
+        {/* Flash Deals with Timer */}
+        {trendingProducts.length > 0 && (
+          <View style={styles.section}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.titleRow}>
+                <Ionicons name="flash" size={24} color="#FF6B35" />
+                <Text style={[styles.sectionTitle, { marginLeft: 6 }]}>Flash Deals</Text>
+                <View style={styles.timerBadge}>
+                  <Text style={styles.timerText}>{formatTime(timeLeft)}</Text>
+                </View>
               </View>
-            )}
-          </TouchableOpacity>
-
-          <Animated.View style={[styles.bannerContent, { opacity: heroFade, transform: [{ translateY: heroSlide }] }]}>
-            <View style={styles.heroBadge}>
-              <View style={styles.herobadgeDot} />
-              <Text style={styles.heroBadgeText}>🇮🇳 India's Local Market</Text>
             </View>
-
-            <Text style={styles.greeting}>
-              {getGreeting()},
-            </Text>
-            <Text style={styles.greetingName}>
-              {user?.first_name || user?.username || 'Guest'} 🙏
-            </Text>
-            <Text style={styles.subGreeting}>
-              {location ? `Discover fresh products near ${location.name}` : 'Find the best local shops near you'}
-            </Text>
-
-            {/* Location + GPS row */}
-            <View style={styles.locRow}>
-              <TouchableOpacity
-                style={styles.locationSelector}
-                onPress={() => navigation.navigate('LocationPicker')}
-              >
-                <Ionicons name="location" size={14} color={COLORS.primary} />
-                <Text style={styles.locText} numberOfLines={1}>
-                  {location ? location.name : 'Select Area'}
-                </Text>
-                <Ionicons name="chevron-down" size={12} color={COLORS.textMuted} />
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.gpsBtn} onPress={triggerGPS} disabled={locating}>
-                {locating
-                  ? <ActivityIndicator size="small" color="#fff" />
-                  : <Ionicons name="navigate" size={15} color="#fff" />
-                }
-              </TouchableOpacity>
-            </View>
-          </Animated.View>
-        </LinearGradient>
-
-        {/* ── SEARCH BAR ── */}
-        <View style={styles.searchWrap}>
-          <TouchableOpacity
-            style={styles.searchBar}
-            onPress={() => navigation.navigate('Search')}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="search" size={16} color={COLORS.textMuted} />
-            <Text style={styles.searchPlaceholder}>Search nearby shops...</Text>
-            <View style={styles.searchFilter}>
-              <Ionicons name="options" size={14} color={COLORS.primary} />
-            </View>
-          </TouchableOpacity>
-        </View>
-
-        {/* ── QUICK STATS ── */}
-        <View style={styles.statsRow}>
-          {[
-            { icon: '🏪', value: `${shops.length}+`, label: 'Local Shops' },
-            { icon: '📦', value: '10K+', label: 'Products' },
-            { icon: '⭐', value: '4.8', label: 'Avg Rating' },
-          ].map((s, i) => (
-            <View key={i} style={styles.statCard}>
-              <Text style={styles.statIcon}>{s.icon}</Text>
-              <Text style={styles.statValue}>{s.value}</Text>
-              <Text style={styles.statLabel}>{s.label}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* ── CATEGORIES ── */}
-        <View style={styles.sectionHead}>
-          <View style={styles.labelRow}>
-            <Ionicons name="bag-handle" size={12} color={COLORS.primary} />
-            <Text style={styles.sectionLabel}>SHOP BY CATEGORY</Text>
-          </View>
-          <Text style={styles.sectionTitle}>Browse Products</Text>
-        </View>
-
-        <FlatList
-          data={categories}
-          renderItem={({ item, index }) => (
-            <AnimatedCatPill
-              item={item}
-              index={index}
-              isActive={selectedCategory === item.id}
-              onPress={() => setSelectedCategory(selectedCategory === item.id ? null : item.id)}
-            />
-          )}
-          keyExtractor={item => item.id.toString()}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.catList}
-        />
-
-        {/* ── SHOPS ── */}
-        <View style={styles.sectionHead}>
-          <View style={styles.labelRow}>
-            <Ionicons name="pin" size={12} color={COLORS.primary} />
-            <Text style={styles.sectionLabel}>NEARBY SHOPS</Text>
-          </View>
-          <Text style={styles.sectionTitle}>
-            {location ? `Near ${location.name}` : 'Local Shops'}
-          </Text>
-        </View>
-
-        {loading ? (
-          <View style={styles.loaderWrap}>
-            <ActivityIndicator size="large" color={COLORS.primary} />
-            <Text style={styles.loaderText}>Finding shops near you...</Text>
-          </View>
-        ) : (
-          <View style={styles.shopsList}>
-            {filteredShops.length > 0 ? (
-              filteredShops.map((shop, i) => (
-                <AnimatedShopCard key={shop.id} shop={shop} navigation={navigation} index={i} />
-              ))
-            ) : (
-              <View style={styles.emptyContainer}>
-                <Text style={styles.emptyIcon}>🏪</Text>
-                <Text style={styles.emptyTitle}>No shops found</Text>
-                <Text style={styles.emptySub}>Try a different area or be the first seller!</Text>
-              </View>
-            )}
+            
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
+              {trendingProducts.map(product => (
+                <TouchableOpacity key={product.id} style={styles.flashCard} onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}>
+                  <Image source={{ uri: product.image || 'https://via.placeholder.com/150' }} style={styles.flashImage} />
+                  <View style={styles.discountBadge}>
+                    <Text style={styles.discountText}>-20%</Text>
+                  </View>
+                  <View style={styles.flashInfo}>
+                    <Text style={styles.flashName} numberOfLines={2}>{product.name}</Text>
+                    <View style={styles.flashPriceRow}>
+                      <Text style={styles.flashPrice}>₹{product.price}</Text>
+                      <Text style={styles.flashOldPrice}>₹{(product.price * 1.2).toFixed(0)}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
           </View>
         )}
 
-        <View style={{ height: 120 }} />
-      </Animated.ScrollView>
-    </View>
+        {/* Premium Shops Near You */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.titleRow}>
+              <Ionicons name="storefront" size={22} color={COLORS.primary} />
+              <Text style={[styles.sectionTitle, { marginLeft: 8 }]}>Premium Local Shops</Text>
+            </View>
+          </View>
+          
+          <View style={styles.shopGrid}>
+            {shops.map((shop, idx) => (
+              <TouchableOpacity key={shop.id} style={styles.shopCard} onPress={() => navigation.navigate('ShopList', { categoryId: shop.category })}>
+                <ImageBackground 
+                  source={{ uri: shop.banner_image || 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=800&auto=format&fit=crop' }} 
+                  style={styles.shopBanner} 
+                  imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
+                >
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={styles.shopBannerOverlay} />
+                  <View style={styles.shopRating}>
+                    <Ionicons name="star" size={12} color="#FFD700" />
+                    <Text style={styles.shopRatingText}>{shop.rating}</Text>
+                  </View>
+                </ImageBackground>
+                
+                <View style={styles.shopInfo}>
+                  <Image source={{ uri: shop.logo || 'https://via.placeholder.com/100' }} style={styles.shopLogo} />
+                  <View style={styles.shopTextWrap}>
+                    <Text style={styles.shopName} numberOfLines={1}>{shop.name}</Text>
+                    <Text style={styles.shopDesc} numberOfLines={1}>{shop.address}</Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-
-  // Banner
-  banner: {
-    paddingTop: Platform.OS === 'ios' ? 60 : 50,
-    paddingBottom: 30,
-    paddingHorizontal: 22,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  heroOrb1: {
-    position: 'absolute',
-    width: 300, height: 300,
-    borderRadius: 150,
-    backgroundColor: 'rgba(255,107,53,0.12)',
-    top: -100, right: -80,
-  },
-  heroOrb2: {
-    position: 'absolute',
-    width: 250, height: 250,
-    borderRadius: 125,
-    backgroundColor: 'rgba(155,89,182,0.1)',
-    bottom: -80, left: -40,
-  },
-  cartBtn: {
-    position: 'absolute',
-    top: Platform.OS === 'ios' ? 58 : 48,
-    right: 22,
-    zIndex: 10,
-    width: 42, height: 42,
-    borderRadius: 21,
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cartBadge: {
-    position: 'absolute',
-    top: -4, right: -4,
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-    minWidth: 18, height: 18,
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: COLORS.background,
-  },
-  cartBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
-
-  bannerContent: { paddingTop: 8 },
-
-  heroBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    backgroundColor: 'rgba(255,107,53,0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,107,53,0.25)',
-    borderRadius: 100,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    marginBottom: 16,
-  },
-  herobadgeDot: {
-    width: 6, height: 6,
-    borderRadius: 3,
-    backgroundColor: COLORS.primary,
-  },
-  heroBadgeText: { color: COLORS.primary, fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
-
-  greeting: { fontSize: 16, color: COLORS.textMuted, fontWeight: '400' },
-  greetingName: { fontSize: 30, fontWeight: '900', color: COLORS.text, marginBottom: 6 },
-  subGreeting: { color: COLORS.textMuted, fontSize: 14, lineHeight: 20, marginBottom: 20 },
-
-  locRow: { flexDirection: 'row', gap: 10, alignItems: 'center' },
-  locationSelector: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: RADIUS.full,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-    gap: 6,
-  },
-  locText: { color: COLORS.text, fontSize: 13, fontWeight: '600', flex: 1 },
-  gpsBtn: {
-    width: 40, height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.primary,
-    alignItems: 'center', justifyContent: 'center',
-    ...SHADOWS.brand,
-  },
-
-  // Search
-  searchWrap: { paddingHorizontal: 20, marginTop: -18, marginBottom: 8 },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: COLORS.elevated,
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.08)',
-    ...SHADOWS.md,
-  },
-  searchPlaceholder: { flex: 1, color: COLORS.textMuted, fontSize: 13 },
-  searchFilter: {
-    width: 28, height: 28,
-    borderRadius: RADIUS.sm,
-    backgroundColor: 'rgba(255,107,53,0.1)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-
-  // Stats
-  statsRow: {
-    flexDirection: 'row',
+  safeArea: { flex: 1, backgroundColor: '#F8F9FA' },
+  header: {
+    backgroundColor: '#FFF',
     paddingHorizontal: 20,
-    gap: 10,
-    marginTop: 4,
-    marginBottom: 4,
+    paddingTop: Platform.OS === 'android' ? 40 : 20,
+    paddingBottom: 15,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
   },
-  statCard: {
-    flex: 1,
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.md,
-    padding: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
+  headerTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  welcomeText: { fontSize: 13, color: COLORS.textMuted, fontWeight: '600', marginBottom: 2 },
+  locationSelector: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  locationText: { fontSize: 16, fontWeight: '800', color: COLORS.text, maxWidth: 200 },
+  headerActions: { flexDirection: 'row', gap: 16, alignItems: 'center' },
+  iconBtn: { padding: 4, position: 'relative' },
+  badge: {
+    position: 'absolute', top: -4, right: -4, backgroundColor: '#FF3B30',
+    minWidth: 18, height: 18, borderRadius: 9, alignItems: 'center', justifyContent: 'center',
+    borderWidth: 2, borderColor: '#FFF'
   },
-  statIcon: { fontSize: 18, marginBottom: 4 },
-  statValue: { fontSize: 15, fontWeight: '900', color: COLORS.text },
-  statLabel: { fontSize: 9, color: COLORS.textMuted, fontWeight: '600', letterSpacing: 0.5, textTransform: 'uppercase', marginTop: 2 },
+  badgeText: { color: '#FFF', fontSize: 10, fontWeight: 'bold' },
+  scrollContent: { paddingBottom: 40 },
+  
+  heroContainer: { height: 200, marginTop: 16, paddingHorizontal: 16 },
+  bannerSlide: { width: width - 32, height: 200, borderRadius: 20, overflow: 'hidden' },
+  bannerGradient: { flex: 1 },
+  bannerImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', opacity: 0.6 },
+  bannerOverlay: { ...StyleSheet.absoluteFillObject },
+  bannerContent: { flex: 1, justifyContent: 'center', padding: 24, paddingRight: 80 },
+  ltoBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 12 },
+  ltoText: { color: '#FFF', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
+  bannerTitle: { fontSize: 24, fontWeight: '900', color: '#FFF', marginBottom: 8, lineHeight: 30 },
+  bannerSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '500', marginBottom: 16 },
+  bannerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24, alignSelf: 'flex-start', gap: 6 },
+  bannerBtnText: { color: '#000', fontSize: 13, fontWeight: '800' },
+  dotsContainer: { flexDirection: 'row', justifyContent: 'center', position: 'absolute', bottom: 12, width: '100%' },
+  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: 'rgba(255,255,255,0.4)', marginHorizontal: 3 },
+  dotActive: { width: 16, backgroundColor: '#FFF' },
 
-  // Section headers
-  sectionHead: { paddingHorizontal: 22, marginTop: 28, marginBottom: 12 },
-  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 3 },
-  sectionLabel: { color: COLORS.primary, fontSize: 10, fontWeight: '800', letterSpacing: 2, textTransform: 'uppercase' },
-  sectionTitle: { fontSize: 20, fontWeight: '900', color: COLORS.text },
-
-  // Categories
-  catList: { paddingLeft: 22, paddingRight: 8, gap: 12, paddingBottom: 10 },
-  catPill: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    width: 85,
-    height: 95,
-    borderRadius: RADIUS.xl,
-    backgroundColor: COLORS.card,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    marginRight: 0,
-    ...SHADOWS.sm,
-  },
+  section: { marginTop: 32 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 16 },
+  titleRow: { flexDirection: 'row', alignItems: 'center' },
+  sectionTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
+  seeAllText: { fontSize: 14, fontWeight: '600', color: COLORS.primary },
+  
+  catScroll: { paddingHorizontal: 20 },
+  catWrap: { alignItems: 'center', marginRight: 20, width: 70 },
+  catCircle: { width: 64, height: 64, borderRadius: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 8, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 3 },
   catEmoji: { fontSize: 28 },
-  catText: { color: COLORS.textMuted, fontWeight: '700', fontSize: 11, textAlign: 'center' },
+  catName: { fontSize: 12, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
 
-  // Shop list
-  shopsList: { paddingHorizontal: 20, gap: 12 },
-  shopCard: {
-    backgroundColor: COLORS.card,
-    borderRadius: RADIUS.xl,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.06)',
-    overflow: 'hidden',
-    position: 'relative',
-    ...SHADOWS.md,
-  },
-  shopCardAccent: {
-    position: 'absolute',
-    top: 0, left: 0, right: 0,
-    height: 2,
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
-  },
+  timerBadge: { backgroundColor: '#FF6B35', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginLeft: 12 },
+  timerText: { color: '#FFF', fontSize: 12, fontWeight: '800', fontVariant: ['tabular-nums'] },
+  
+  hScroll: { paddingHorizontal: 20 },
+  flashCard: { width: 150, backgroundColor: '#FFF', borderRadius: 16, marginRight: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 },
+  flashImage: { width: '100%', height: 130, borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: '#F0F0F0' },
+  discountBadge: { position: 'absolute', top: 8, left: 8, backgroundColor: '#FF3B30', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  discountText: { color: '#FFF', fontSize: 11, fontWeight: '900' },
+  flashInfo: { padding: 12 },
+  flashName: { fontSize: 13, fontWeight: '700', color: COLORS.text, marginBottom: 8, height: 36, lineHeight: 18 },
+  flashPriceRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  flashPrice: { fontSize: 15, fontWeight: '900', color: COLORS.primary },
+  flashOldPrice: { fontSize: 12, color: COLORS.textMuted, textDecorationLine: 'line-through' },
 
-  shopHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 8 },
-  shopAvatarWrap: { position: 'relative' },
-  shopAvatar: {
-    width: 48, height: 48,
-    borderRadius: 24,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  shopLogo: { width: 48, height: 48, borderRadius: 24 },
-  verifiedDot: {
-    position: 'absolute',
-    bottom: -1, right: -1,
-    width: 16, height: 16,
-    borderRadius: 8,
-    backgroundColor: '#00E676',
-    alignItems: 'center', justifyContent: 'center',
-    borderWidth: 2, borderColor: COLORS.card,
-  },
-
-  shopBasicInfo: { flex: 1 },
-  shopName: { fontSize: 16, fontWeight: '800', color: COLORS.text, marginBottom: 3 },
-  shopMetaRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  shopCity: { fontSize: 12, color: COLORS.textMuted },
-  shopDot: { color: COLORS.textMuted, fontSize: 12 },
-  shopDist: { fontSize: 12, color: COLORS.primary, fontWeight: '600' },
-
-  shopRating: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    backgroundColor: 'rgba(255,182,39,0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: RADIUS.sm,
-  },
-  ratingValue: { color: COLORS.secondary, fontSize: 12, fontWeight: '800' },
-
-  shopDesc: { color: COLORS.textMuted, fontSize: 12, lineHeight: 18, marginBottom: 10 },
-
-  shopFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: RADIUS.sm,
-    borderWidth: 1,
-  },
-  statusDot: { width: 5, height: 5, borderRadius: 3 },
-  statusText: { fontSize: 9, fontWeight: '800', letterSpacing: 1 },
-  shopArrow: {
-    width: 28, height: 28,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.04)',
-    alignItems: 'center', justifyContent: 'center',
-  },
-
-  // Loading
-  loaderWrap: { alignItems: 'center', paddingVertical: 40, gap: 12 },
-  loaderText: { color: COLORS.textMuted, fontSize: 13 },
-
-  // Empty
-  emptyContainer: { alignItems: 'center', padding: 50, gap: 10 },
-  emptyIcon: { fontSize: 54 },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.textMuted },
-  emptySub: { fontSize: 13, color: COLORS.textDim, textAlign: 'center' },
+  shopGrid: { paddingHorizontal: 20, gap: 16 },
+  shopCard: { backgroundColor: '#FFF', borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 3 },
+  shopBanner: { height: 140, justifyContent: 'flex-end', padding: 12 },
+  shopBannerOverlay: { ...StyleSheet.absoluteFillObject, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
+  shopRating: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, gap: 4, backdropFilter: 'blur(4px)' },
+  shopRatingText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
+  shopInfo: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
+  shopLogo: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: '#FFF', marginTop: -32, backgroundColor: '#FFF' },
+  shopTextWrap: { flex: 1 },
+  shopName: { fontSize: 16, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
+  shopDesc: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
 });
