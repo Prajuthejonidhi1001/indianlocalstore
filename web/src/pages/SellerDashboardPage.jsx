@@ -1098,12 +1098,14 @@ export default function SellerDashboardPage() {
                   <div className="product-modal-footer">
                     <button type="button" className="btn btn-ghost" onClick={() => setShowProductModal(false)}>Cancel</button>
                     <div style={{ display: 'flex', gap: '12px' }}>
-                      {activeProductTab === 'basic' && <button type="button" className="btn btn-outline" onClick={() => setActiveProductTab('pricing')}>Next: Pricing &amp; Inventory</button>}
-                      {activeProductTab === 'pricing' && <button type="button" className="btn btn-outline" onClick={() => setActiveProductTab('media')}>Next: Media</button>}
-                      {activeProductTab === 'media' && <button type="button" className="btn btn-outline" onClick={() => setActiveProductTab('variants')}>Next: Variants</button>}
-                      <button type="submit" className="btn btn-primary" disabled={savingProduct} id="publish-product-btn">
-                        {savingProduct ? 'Saving...' : (productForm.id ? 'Update Product' : 'Publish Product')}
-                      </button>
+                      {activeProductTab === 'basic' && <button type="button" className="btn btn-primary" style={{ backgroundColor: '#FF6B35', borderColor: '#FF6B35' }} onClick={() => setActiveProductTab('pricing')}>Next: Pricing &amp; Inventory</button>}
+                      {activeProductTab === 'pricing' && <button type="button" className="btn btn-primary" style={{ backgroundColor: '#FF6B35', borderColor: '#FF6B35' }} onClick={() => setActiveProductTab('media')}>Next: Media</button>}
+                      {activeProductTab === 'media' && <button type="button" className="btn btn-primary" style={{ backgroundColor: '#FF6B35', borderColor: '#FF6B35' }} onClick={() => setActiveProductTab('variants')}>Next: Variants</button>}
+                      {activeProductTab === 'variants' && (
+                        <button type="submit" className="btn btn-primary" disabled={savingProduct} id="publish-product-btn">
+                          {savingProduct ? 'Saving...' : (productForm.id ? 'Update Product' : 'Publish Product')}
+                        </button>
+                      )}
                     </div>
                   </div>
                 </form>
