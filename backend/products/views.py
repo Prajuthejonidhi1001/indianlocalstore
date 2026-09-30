@@ -42,7 +42,7 @@ class SubCategoryViewSet(viewsets.ReadOnlyModelViewSet):
 
 class ProductViewSet(viewsets.ModelViewSet):
     """Product listing and management"""
-    queryset = Product.objects.filter(is_active=True)
+    queryset = Product.objects.all()
     filter_backends = [DjangoFilterBackend, filters.SearchFilter, filters.OrderingFilter]
     filterset_class = ProductFilter
     search_fields = ['name', 'description']
@@ -102,8 +102,16 @@ class ProductViewSet(viewsets.ModelViewSet):
         return Response(full_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
     def get_queryset(self):
-        qs = super().get_queryset()
-        # Allow direct shop-based filtering — backend resolves Shop→seller→Products
+        qs = Product.objects.all()
+        
+        if self.request.user.is_authenticated and self.request.user.role == 'seller':
+            if self.request.query_params.get('my_products'):
+                return qs.filter(seller=self.request.user)
+            if self.action in ['retrieve', 'update', 'partial_update', 'destroy']:
+                return qs.filter(seller=self.request.user) | qs.filter(is_active=True)
+        
+        qs = qs.filter(is_active=True)
+
         shop_id = self.request.query_params.get('shop')
         if shop_id:
             from shops.models import Shop
@@ -112,10 +120,7 @@ class ProductViewSet(viewsets.ModelViewSet):
                 return qs.filter(seller=shop.seller)
             except Shop.DoesNotExist:
                 return qs.none()
-        # seller filter (by user id) handled automatically by DjangoFilterBackend
-        if self.request.user.is_authenticated and self.request.user.role == 'seller':
-            if self.request.query_params.get('my_products'):
-                return Product.objects.filter(seller=self.request.user)
+        
         return qs
 
     @action(detail=True, methods=['post'], permission_classes=[IsAuthenticated])
