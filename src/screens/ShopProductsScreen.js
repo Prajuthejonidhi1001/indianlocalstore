@@ -5,7 +5,6 @@ import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { shopAPI, productAPI } from '../utils/api';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
 
 const { width } = Dimensions.get('window');
 

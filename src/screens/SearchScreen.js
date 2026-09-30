@@ -7,7 +7,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../constants';
 import { productAPI } from '../utils/api';
-import ProductCard from '../components/ProductCard';
 
 export default function SearchScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -116,11 +115,17 @@ export default function SearchScreen({ navigation }) {
           contentContainerStyle={styles.listContent}
           columnWrapperStyle={styles.listRow}
           renderItem={({ item }) => (
-            <ProductCard 
-              product={item} 
-              onPress={() => navigation.navigate('ProductDetail', { productId: item.id })}
-              style={{ width: '48%' }}
-            />
+            <TouchableOpacity 
+              activeOpacity={0.8}
+              onPress={() => navigation.navigate('ProductDetail', { product: item })}
+              style={[styles.productCard, { width: '48%' }]}
+            >
+              <Image source={{ uri: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80' }} style={styles.productImage} />
+              <View style={styles.productDetails}>
+                <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+                <Text style={styles.price}>₹{item.price}</Text>
+              </View>
+            </TouchableOpacity>
           )}
         />
       ) : (
@@ -377,5 +382,37 @@ const styles = StyleSheet.create({
   applyBtnText: {
     color: '#fff',
     fontWeight: '700',
+  },
+  listRow: {
+    justifyContent: 'space-between',
+    paddingHorizontal: SPACING.md,
+  },
+  productCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.md,
+    overflow: 'hidden',
+    marginBottom: SPACING.md,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  productImage: {
+    width: '100%',
+    height: 150,
+    backgroundColor: '#f5f5f5',
+  },
+  productDetails: {
+    padding: SPACING.sm,
+  },
+  productName: {
+    ...TYPOGRAPHY.body2,
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  price: {
+    ...TYPOGRAPHY.h6,
+    color: COLORS.primary,
   }
 });

@@ -170,7 +170,8 @@ export default function LoginScreen({ navigation }) {
     } catch (err) {
       console.error(err);
       triggerErrorShake();
-      Alert.alert('Error', 'Invalid or expired OTP');
+      const errorMsg = err.response?.data?.error || err.message || 'Invalid or expired OTP';
+      Alert.alert('Error', errorMsg);
     } finally {
       setLoading(false);
     }

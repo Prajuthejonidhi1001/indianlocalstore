@@ -378,9 +378,7 @@ export default function RegisterScreen({ navigation }) {
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Shop & sell locally</Text>
 
-            {step === 1 ? (
-              <>
-                {/* ── Role Selector — large cards ── */}
+            {/* ── Role Selector — large cards ── */}
                 <View style={styles.roleCardRow}>
                   <TouchableOpacity
                     style={[styles.roleCard, form.role === 'customer' && styles.roleCardActiveCustomer]}
