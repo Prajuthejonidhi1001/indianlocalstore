@@ -15,6 +15,8 @@ export default function SellerDashboardScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
 
   const [shopForm, setShopForm] = useState({ name: '', description: '', phone: '', email: '', address: '', city: '', state: '', pincode: '', is_open: true, online_delivery_enabled: false, gst_number: '' });
+  const [shopLogo, setShopLogo] = useState(null);
+  const [shopBanner, setShopBanner] = useState(null);
   const [savingShop, setSavingShop] = useState(false);
   const [fetchingPin, setFetchingPin] = useState(false);
 
@@ -93,21 +95,58 @@ export default function SellerDashboardScreen({ navigation }) {
 
 
   const handleSaveShop = async () => {
+    if (!shopForm.name || !shopForm.phone || !shopForm.address || !shopForm.pincode) {
+      Alert.alert('Error', 'Please fill all required fields');
+      return;
+    }
     setSavingShop(true);
     try {
-      if (shop) {
-        const res = await shopAPI.updateShop(shop.id, shopForm);
-        setShop(res.data);
-        Alert.alert('Success', 'Shop details updated successfully');
-      } else {
-        const res = await shopAPI.createShop(shopForm);
-        setShop(res.data);
-        Alert.alert('Success', 'Shop created successfully');
+      const formData = new FormData();
+      Object.keys(shopForm).forEach(key => {
+        if (shopForm[key] !== null && shopForm[key] !== undefined) {
+          formData.append(key, shopForm[key]);
+        }
+      });
+      if (shopLogo) {
+        formData.append('logo', {
+          uri: shopLogo.uri,
+          name: 'logo.jpg',
+          type: 'image/jpeg',
+        });
       }
-    } catch {
+      if (shopBanner) {
+        formData.append('banner', {
+          uri: shopBanner.uri,
+          name: 'banner.jpg',
+          type: 'image/jpeg',
+        });
+      }
+
+      const isUpdate = !!shop?.id;
+      const res = isUpdate 
+        ? await shopAPI.updateShop(shop.id, formData, { headers: { 'Content-Type': 'multipart/form-data' } })
+        : await shopAPI.createShop(formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+
+      setShop(res.data);
+      Alert.alert('Success', isUpdate ? 'Shop details updated successfully' : 'Shop created successfully');
+    } catch (err) {
+      console.log('Error saving shop:', err);
       Alert.alert('Error', 'Failed to save shop. Check required fields.');
     } finally {
       setSavingShop(false);
+    }
+  };
+
+  const pickShopImage = async (type) => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: type === 'banner' ? [16, 9] : [1, 1],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      if (type === 'banner') setShopBanner(result.assets[0]);
+      if (type === 'logo') setShopLogo(result.assets[0]);
     }
   };
 
@@ -688,6 +727,9 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: COLORS.primary, padding: 16, borderRadius: RADIUS.lg, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });
+
+
+
 
 
 
