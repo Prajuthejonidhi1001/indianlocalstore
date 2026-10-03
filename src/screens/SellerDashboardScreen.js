@@ -218,7 +218,7 @@ export default function SellerDashboardScreen({ navigation }) {
         const uri = asset.uri;
         const filename = uri.split('/').pop();
         const ext = filename.split('.').pop();
-        return { uri, name: filename, type: "image/" };
+        return { uri, name: filename, type: "image/jpeg" };
       };
       formData.append('image', makeFileObj(productImages[0]));
       productImages.slice(1).forEach(asset => formData.append('images', makeFileObj(asset)));
@@ -727,6 +727,10 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: COLORS.primary, padding: 16, borderRadius: RADIUS.lg, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });
+
+
+
+
 
 
 
