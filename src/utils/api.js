@@ -1,4 +1,4 @@
-import axios from 'axios';
+﻿import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import config from '../config';
 
@@ -8,7 +8,7 @@ const API_URL = config.API_BASE_URL;
 // Create axios instance
 const api = axios.create({
   baseURL: API_URL,
-  timeout: 30000,
+  timeout: 60000,
 });
 
 // Request interceptor to add JWT token
@@ -140,3 +140,4 @@ export const orderAPI = {
 };
 
 export default api;
+
