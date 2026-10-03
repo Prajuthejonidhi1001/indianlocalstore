@@ -170,7 +170,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             if seller and seller.id not in notified_sellers and seller.expo_push_token:
                 send_push_notification(
                     expo_push_token=seller.expo_push_token,
-                    title="New Order Received! Ã°Å¸â€ºÂÃ¯Â¸Â",
+                    title="New Order Received! 🚀",
                     body=f"You have a new order (#{order.order_id}). Please prepare the items for dispatch.",
                     data={"order_id": order.id}
                 )
@@ -310,7 +310,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             if order.user.expo_push_token:
                 send_push_notification(
                     expo_push_token=order.user.expo_push_token,
-                    title="Order Dispatched! Ã°Å¸Å¡Å¡",
+                    title="Order Dispatched! 📦",
                     body=f"Your order #{order.order_id} has been dispatched. Track it now!",
                     data={"order_id": order.id}
                 )
@@ -364,12 +364,13 @@ class OrderViewSet(viewsets.ModelViewSet):
             if new_status in status_msgs:
                 send_push_notification(
                     expo_push_token=order.user.expo_push_token,
-                    title=f"Order Update: {new_status.capitalize()} Ã°Å¸â€œÂ¦",
+                    title=f"Order Update: {new_status.capitalize()} 🔔",
                     body=f"Your order #{order.order_id} {status_msgs[new_status]}",
                     data={"order_id": order.id}
                 )
         
         serializer = self.get_serializer(order)
         return Response(serializer.data)
+
 
 

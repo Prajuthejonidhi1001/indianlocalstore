@@ -64,7 +64,7 @@ export default function CartScreen({ navigation }) {
 
       {isEmpty ? (
          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>ðŸ›’</Text>
+            <Text style={styles.emptyIcon}>🛒</Text>
             <Text style={styles.emptyTitle}>Your cart is empty</Text>
             <Text style={styles.emptySub}>Looks like you haven't added anything to your cart yet.</Text>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('Home')}>
@@ -94,7 +94,7 @@ export default function CartScreen({ navigation }) {
                   </View>
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemName} numberOfLines={2}>{name}</Text>
-                    <Text style={styles.itemPrice}>â‚¹{parseFloat(price).toFixed(2)}</Text>
+                    <Text style={styles.itemPrice}>₹{parseFloat(price).toFixed(2)}</Text>
                     
                     {Object.keys(itemVariants).length > 0 && (
                       <Text style={styles.itemVariants}>
@@ -119,7 +119,7 @@ export default function CartScreen({ navigation }) {
                     </View>
                   </View>
                   <View style={styles.itemLineTotal}>
-                    <Text style={styles.lineTotalText}>â‚¹{(parseFloat(price) * item.quantity).toFixed(2)}</Text>
+                    <Text style={styles.lineTotalText}>₹{(parseFloat(price) * item.quantity).toFixed(2)}</Text>
                   </View>
                 </View>
               );
@@ -133,7 +133,7 @@ export default function CartScreen({ navigation }) {
             
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal ({items.length} items)</Text>
-              <Text style={styles.summaryValue}>â‚¹{cartSubtotal?.toFixed(2)}</Text>
+              <Text style={styles.summaryValue}>₹{cartSubtotal?.toFixed(2)}</Text>
             </View>
 
             {cart?.applied_coupon_code ? (
@@ -145,7 +145,7 @@ export default function CartScreen({ navigation }) {
                     <Ionicons name="close" size={14} color={COLORS.textMuted} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.discountValue}>-â‚¹{(cartSubtotal - cartTotal).toFixed(2)}</Text>
+                <Text style={styles.discountValue}>-₹{(cartSubtotal - cartTotal).toFixed(2)}</Text>
               </View>
             ) : (
               <View style={styles.couponInputRow}>
@@ -170,7 +170,7 @@ export default function CartScreen({ navigation }) {
             <View style={styles.divider} />
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>â‚¹{cartTotal.toFixed(2)}</Text>
+              <Text style={styles.totalValue}>₹{cartTotal.toFixed(2)}</Text>
             </View>
 
             <TouchableOpacity style={styles.checkoutBtn} onPress={() => navigation.navigate('Checkout')}>
@@ -211,9 +211,9 @@ const styles = StyleSheet.create({
   primaryBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
 
   scroll: { paddingBottom: 60 },
-  itemsList: { paddingHorizontal: 20 },
+  itemsList: { paddingHorizontal: 20, paddingTop: 10 },
   
-  cartCard: { flexDirection: 'row', padding: 16, borderBottomWidth: 1, borderBottomColor: COLORS.border, backgroundColor: COLORS.surface },
+  cartCard: { flexDirection: 'row', padding: 16, backgroundColor: COLORS.elevated, borderRadius: RADIUS.lg, marginBottom: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', ...SHADOWS.medium },
   itemImageWrap: { width: 80, height: 80, borderRadius: RADIUS.md, backgroundColor: COLORS.elevated, overflow: 'hidden' },
   itemImage: { width: '100%', height: '100%' },
   itemDetails: { flex: 1, marginLeft: 16, justifyContent: 'space-between' },
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   removeBtn: { padding: 6 },
   
   itemLineTotal: { justifyContent: 'center' },
-  lineTotalText: { fontSize: 15, fontWeight: '800', color: '#FFB627' },
+  lineTotalText: { fontSize: 16, fontWeight: '900', color: '#FFB627' },
 
   summaryCard: { marginHorizontal: 20, marginTop: 24, borderRadius: RADIUS.lg, padding: 24, backgroundColor: COLORS.elevated, borderWidth: 1, borderColor: COLORS.border },
   summaryTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 8 },
@@ -251,10 +251,12 @@ const styles = StyleSheet.create({
   totalLabel: { color: COLORS.text, fontSize: 18, fontWeight: '800' },
   totalValue: { color: COLORS.primary, fontSize: 24, fontWeight: '900' },
 
-  checkoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: COLORS.primary, paddingVertical: 16, borderRadius: RADIUS.full, ...SHADOWS.brand },
+  checkoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#FF6B00', paddingVertical: 18, borderRadius: RADIUS.full, shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.4, shadowRadius: 12, elevation: 10 },
   checkoutBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
   
   continueBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 },
   continueBtnText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
 });
+
+
 

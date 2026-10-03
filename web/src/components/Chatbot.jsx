@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { MessageSquare, X, Send, Phone, MessageCircle } from 'lucide-react';
 import './Chatbot.css';
 
@@ -14,12 +14,12 @@ const FAQ_KNOWLEDGE = {
   shipping: "Delivery is completely free on all orders!"
 };
 
-const DEFAULT_REPLY = "I'm still learning! For detailed help, please contact our support team directly:\n📞 +91 9876543210\n💬 WhatsApp us";
+const DEFAULT_REPLY = "I'm still learning! For detailed help, please contact our support team directly:\nðŸ“ž +91 9686068979\nðŸ’¬ WhatsApp us";
 
 export default function Chatbot() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { type: 'bot', text: 'Hi there! 👋 Welcome to Indian Local Store. How can I help you today?' }
+    { type: 'bot', text: 'Hi there! ðŸ‘‹ Welcome to Indian Local Store. How can I help you today?' }
   ]);
   const [input, setInput] = useState('');
   const endRef = useRef(null);
@@ -102,7 +102,7 @@ export default function Chatbot() {
             <a href="tel:+919876543210" className="cb-action-btn cb-call">
               <Phone size={14} /> Call
             </a>
-            <a href="https://wa.me/919876543210" target="_blank" rel="noreferrer" className="cb-action-btn cb-wa">
+            <a href="https://wa.me/919686068979" target="_blank" rel="noreferrer" className="cb-action-btn cb-wa">
               <MessageCircle size={14} /> WhatsApp
             </a>
           </div>
@@ -123,3 +123,4 @@ export default function Chatbot() {
     </>
   );
 }
+

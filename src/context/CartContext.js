@@ -2,6 +2,7 @@
 import { cartAPI } from '../utils/api';
 import { useAuth } from './AuthContext';
 import { Alert } from 'react-native';
+import Toast from 'react-native-toast-message';
 
 const CartContext = createContext(null);
 
@@ -30,10 +31,10 @@ export function CartProvider({ children }) {
     try {
       await cartAPI.addItem(productId, quantity, variants);
       await fetchCart();
-      Alert.alert('Success', 'Added to cart!');
+      Toast.show({ type: 'success', text1: 'Added to cart!', text2: 'View your cart to checkout.' });
       return true;
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.error || 'Failed to add to cart');
+      Toast.show({ type: 'error', text1: 'Error', text2: err.response?.data?.error || 'Failed to add to cart' });
       return false;
     }
   };
@@ -54,9 +55,9 @@ export function CartProvider({ children }) {
     try {
       await cartAPI.removeItem(itemId);
       await fetchCart();
-      Alert.alert('Success', 'Removed from cart');
+      Toast.show({ type: 'success', text1: 'Removed from cart' });
     } catch {
-      Alert.alert('Error', 'Failed to remove item');
+      Toast.show({ type: 'error', text1: 'Failed to remove item' });
     }
   };
 
@@ -65,7 +66,7 @@ export function CartProvider({ children }) {
       await cartAPI.clearCart();
       setCart(null);
     } catch {
-      Alert.alert('Error', 'Failed to clear cart');
+      Toast.show({ type: 'error', text1: 'Failed to clear cart' });
     }
   };
 
@@ -73,10 +74,10 @@ export function CartProvider({ children }) {
     try {
       const { data } = await cartAPI.applyCoupon(code);
       setCart(data);
-      Alert.alert('Success', 'Coupon applied!');
+      Toast.show({ type: 'success', text1: 'Coupon applied!' });
       return true;
     } catch (err) {
-      Alert.alert('Error', err.response?.data?.error || 'Invalid coupon');
+      Toast.show({ type: 'error', text1: 'Error', text2: err.response?.data?.error || 'Invalid coupon' });
       return false;
     }
   };
@@ -85,9 +86,9 @@ export function CartProvider({ children }) {
     try {
       const { data } = await cartAPI.removeCoupon();
       setCart(data);
-      Alert.alert('Success', 'Coupon removed');
+      Toast.show({ type: 'success', text1: 'Coupon removed' });
     } catch {
-      Alert.alert('Error', 'Failed to remove coupon');
+      Toast.show({ type: 'error', text1: 'Failed to remove coupon' });
     }
   };
 
@@ -107,4 +108,5 @@ export const useCart = () => {
   if (!ctx) throw new Error('useCart must be used inside CartProvider');
   return ctx;
 };
+
 

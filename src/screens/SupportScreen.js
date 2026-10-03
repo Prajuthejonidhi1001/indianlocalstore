@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
@@ -15,8 +15,8 @@ export default function SupportScreen({ navigation }) {
 
   const contactSupport = (method) => {
     if (method === 'email') Linking.openURL('mailto:support@indianlocalstore.com');
-    if (method === 'phone') Linking.openURL('tel:+919876543210');
-    if (method === 'whatsapp') Linking.openURL('whatsapp://send?phone=+919876543210&text=Hi,%20I%20need%20help');
+    if (method === 'phone') Linking.openURL('tel:+919686068979');
+    if (method === 'whatsapp') Linking.openURL('whatsapp://send?phone=+919686068979&text=Hi,%20I%20need%20help');
   };
 
   return (
@@ -88,3 +88,4 @@ const styles = StyleSheet.create({
   faqBody: { padding: 16, paddingTop: 0, backgroundColor: 'rgba(255,107,53,0.03)' },
   faqA: { fontSize: 14, color: COLORS.textMuted, lineHeight: 22 },
 });
+
