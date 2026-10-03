@@ -1,11 +1,10 @@
-﻿import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, 
   ScrollView, Alert, Image, ActivityIndicator, Animated, Easing, 
   KeyboardAvoidingView, Platform, Vibration
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useIsFocused } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -159,7 +158,7 @@ export default function RegisterScreen({ navigation }) {
       if (status !== 'granted') { triggerShake(); Alert.alert('Permission Denied'); setLocating(false); return; }
       const loc = await Location.getCurrentPositionAsync({});
       setCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-      Alert.alert('âœ… Location Captured', 'GPS coordinates saved.');
+      Alert.alert('✅ Location Captured', 'GPS coordinates saved.');
     } catch { triggerShake(); Alert.alert('Error', 'Failed to get location'); }
     finally { setLocating(false); }
   };
@@ -310,9 +309,9 @@ export default function RegisterScreen({ navigation }) {
           shopData.append('logo', { uri: shopPhoto.uri, name: filename, type: match ? `image/${match[1]}` : 'image/jpeg' });
         }
         await shopAPI.createShop(shopData);
-        Alert.alert('ðŸŽ‰ Welcome!', 'Account & Shop created successfully!');
+        Alert.alert('🎉 Welcome!', 'Account & Shop created successfully!');
       } else {
-        Alert.alert('âœ… Done!', 'Account created successfully!');
+        Alert.alert('✅ Done!', 'Account created successfully!');
       }
       
       const { authAPI: authApiInternal } = require('../utils/api');
@@ -350,7 +349,6 @@ export default function RegisterScreen({ navigation }) {
 
   return (
     <SafeAreaView style={styles.container}>
-      <LinearGradient colors={['#ffffff', '#fff5f0']} style={StyleSheet.absoluteFillObject} />
       {isFocused && (
         <FirebaseRecaptchaVerifierModal
           key={`recaptcha-${recaptchaKey}`}
@@ -367,7 +365,7 @@ export default function RegisterScreen({ navigation }) {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { translateX: shakeAnim }] }]}>
 
-            {/* â”€â”€ Header â”€â”€ */}
+            {/* ── Header ── */}
             <View style={styles.headerRow}>
               {navigation.canGoBack() && (
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -382,31 +380,31 @@ export default function RegisterScreen({ navigation }) {
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Shop & sell locally</Text>
 
-            {/* â”€â”€ Role Selector â€” large cards â”€â”€ */}
+            {/* ── Role Selector — large cards ── */}
                 <View style={styles.roleCardRow}>
                   <TouchableOpacity
                     style={[styles.roleCard, form.role === 'customer' && styles.roleCardActiveCustomer]}
                     onPress={() => setForm({ ...form, role: 'customer' })}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.roleCardEmoji}>ðŸ›’</Text>
+                    <Text style={styles.roleCardEmoji}>🛒</Text>
                     <Text style={[styles.roleCardTitle, form.role === 'customer' && { color: '#fff' }]}>Customer</Text>
                     <Text style={styles.roleCardDesc}>Browse & buy</Text>
-                    {form.role === 'customer' && <View style={styles.roleCardCheck}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>âœ“</Text></View>}
+                    {form.role === 'customer' && <View style={styles.roleCardCheck}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.roleCard, form.role === 'seller' && styles.roleCardActiveSeller]}
                     onPress={() => setForm({ ...form, role: 'seller' })}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.roleCardEmoji}>ðŸª</Text>
+                    <Text style={styles.roleCardEmoji}>🏪</Text>
                     <Text style={[styles.roleCardTitle, form.role === 'seller' && { color: '#FF6B00' }]}>Seller</Text>
                     <Text style={styles.roleCardDesc}>List & sell</Text>
-                    {form.role === 'seller' && <View style={[styles.roleCardCheck, { backgroundColor: '#FF6B00' }]}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>âœ“</Text></View>}
+                    {form.role === 'seller' && <View style={[styles.roleCardCheck, { backgroundColor: '#FF6B00' }]}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
                   </TouchableOpacity>
                 </View>
 
-                {/* â”€â”€ Basic Fields â”€â”€ */}
+                {/* ── Basic Fields ── */}
                 <View style={styles.row}>
                   <View style={styles.half}>
                     {renderInput('person-outline', 'First Name', form.first_name, 'first_name')}
@@ -517,14 +515,14 @@ export default function RegisterScreen({ navigation }) {
                 {confirmPassword.length > 0 && (
                   <Text style={{ fontSize: 12, fontWeight: '700', marginTop: -8, marginBottom: 10, textAlign: 'right',
                     color: confirmPassword === form.password ? '#2ECC71' : '#E74C3C' }}>
-                    {confirmPassword === form.password ? 'âœ“ Passwords match' : 'âœ— Passwords do not match'}
+                    {confirmPassword === form.password ? '✓ Passwords match' : '✗ Passwords do not match'}
                   </Text>
                 )}
 
-                {/* â”€â”€ Seller Section â”€â”€ */}
+                {/* ── Seller Section ── */}
                 {form.role === 'seller' && (
                   <View style={styles.sellerBox}>
-                    <Text style={styles.sellerTitle}>ðŸª Business Details</Text>
+                    <Text style={styles.sellerTitle}>🏪 Business Details</Text>
 
                     {renderInput('business-outline', 'Shop Name', form.shopName, 'shopName')}
 
@@ -540,11 +538,11 @@ export default function RegisterScreen({ navigation }) {
                       )}
                     </TouchableOpacity>
 
-                    {/* Category â€” single selection */}
+                    {/* Category — single selection */}
                     <Text style={styles.fieldLabel}>Shop Category *</Text>
                     <View style={styles.chipGrid}>
                       {categories.length === 0 ? (
-                        <Text style={styles.dimText}>Loadingâ€¦</Text>
+                        <Text style={styles.dimText}>Loading…</Text>
                       ) : categories.map(cat => (
                         <TouchableOpacity
                           key={cat.id}
@@ -559,7 +557,7 @@ export default function RegisterScreen({ navigation }) {
                       ))}
                     </View>
 
-                    {/* Subcategory â€” single selection */}
+                    {/* Subcategory — single selection */}
                     {subcategories.length > 0 && (
                       <>
                         <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Subcategory <Text style={styles.dimText}>(optional)</Text></Text>
@@ -581,19 +579,19 @@ export default function RegisterScreen({ navigation }) {
                     )}
 
                     {/* Pincode + Auto Location */}
-                    <Text style={styles.fieldLabel}>ðŸ“ Pincode {fetchingPin && <Text style={{ color: COLORS.primary }}> (fetchingâ€¦)</Text>}</Text>
+                    <Text style={styles.fieldLabel}>📍 Pincode {fetchingPin && <Text style={{ color: COLORS.primary }}> (fetching…)</Text>}</Text>
                     {renderInput('map-outline', '560001', form.pincode, 'pincode', false, 'numeric', { maxLength: 6 })}
 
                     {/* Auto-filled location */}
                     {(form.state || form.district) && (
                       <View style={styles.autoRow}>
                         <View style={styles.autoChip}>
-                          <Text style={styles.autoLabel}>ðŸ›ï¸ State</Text>
-                          <Text style={styles.autoValue}>{form.state || 'â€”'}</Text>
+                          <Text style={styles.autoLabel}>🏛️ State</Text>
+                          <Text style={styles.autoValue}>{form.state || '—'}</Text>
                         </View>
                         <View style={styles.autoChip}>
-                          <Text style={styles.autoLabel}>ðŸ—ºï¸ District</Text>
-                          <Text style={styles.autoValue}>{form.district || 'â€”'}</Text>
+                          <Text style={styles.autoLabel}>🗺️ District</Text>
+                          <Text style={styles.autoValue}>{form.district || '—'}</Text>
                         </View>
                       </View>
                     )}
@@ -613,7 +611,7 @@ export default function RegisterScreen({ navigation }) {
                         color={coords.lat ? '#2ECC71' : COLORS.textMuted}
                       />
                       <Text style={[styles.gpsBtnText, coords.lat && { color: '#2ECC71' }]}>
-                        {locating ? 'Detecting GPSâ€¦' : coords.lat ? 'GPS Captured âœ…' : 'Detect GPS Location'}
+                        {locating ? 'Detecting GPS…' : coords.lat ? 'GPS Captured ✅' : 'Detect GPS Location'}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -644,7 +642,7 @@ const styles = StyleSheet.create({
   bgOrb1: { position: 'absolute', top: -80, right: -80, width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(255,107,53,0.12)' },
   bgOrb2: { position: 'absolute', bottom: -60, left: -60, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(85,33,255,0.1)' },
   scroll: { flexGrow: 1, padding: 18, paddingBottom: 40 },
-  card: { backgroundColor: 'rgba(255, 255, 255, 0.95)', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255, 107, 53, 0.2)', shadowColor: 'rgba(255, 107, 53, 0.25)', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 1, shadowRadius: 40, elevation: 10 },
+  card: { backgroundColor: COLORS.glass, borderRadius: 28, padding: 22, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.xl },
 
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 18 },
   backBtn: { width: 42, height: 42, borderRadius: 21, backgroundColor: COLORS.elevated, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border },
@@ -727,4 +725,3 @@ const styles = StyleSheet.create({
   backToRegBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 30 },
   backToRegText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' }
 });
-
