@@ -132,6 +132,28 @@ export default function ProfilePage() {
     setAddressModalOpen(true);
   };
 
+  const [fetchingPin, setFetchingPin] = useState(false);
+
+  const handlePincodeChange = async (e) => {
+    const pin = e.target.value;
+    setAddressForm(prev => ({ ...prev, pincode: pin }));
+    if (pin.length === 6 && /^\d+$/.test(pin)) {
+      setFetchingPin(true);
+      try {
+        const res = await fetch(https://api.postalpincode.in/pincode/${pin});
+        const data = await res.json();
+        if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
+          const postOffice = data[0].PostOffice[0];
+          setAddressForm(prev => ({ ...prev, city: postOffice.District, state: postOffice.State }));
+        }
+      } catch (err) {
+        console.log('Failed to fetch pincode details', err);
+      } finally {
+        setFetchingPin(false);
+      }
+    }
+  };
+
   const handleSaveAddress = async (e) => {
     e.preventDefault();
     try {
@@ -577,10 +599,10 @@ export default function ProfilePage() {
                   </div>
                 </div>
                 <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label">Pincode</label>
-                    <input type="text" className="form-input" value={addressForm.pincode} onChange={e => setAddressForm({...addressForm, pincode: e.target.value})} required />
-                  </div>
+                                      <div className="form-group">
+                      <label className="form-label">Pincode {fetchingPin && <span className="spinner-sm" style={{ borderColor: 'var(--saffron)', width: 12, height: 12, display: 'inline-block', marginLeft: 5 }} />}</label>
+                      <input type="text" className="form-input" maxLength={6} value={addressForm.pincode} onChange={handlePincodeChange} required />
+                    </div>
                   <div className="form-group" style={{ display: 'flex', alignItems: 'center', paddingTop: '30px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
                       <input type="checkbox" checked={addressForm.is_default} onChange={e => setAddressForm({...addressForm, is_default: e.target.checked})} style={{ marginRight: '8px' }} />
@@ -605,3 +627,4 @@ export default function ProfilePage() {
 function StoreIcon() {
   return <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m2 7 4.41-4.41A2 2 0 0 1 7.83 2h8.34a2 2 0 0 1 1.42.59L22 7"/><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><path d="M15 22v-4a2 2 0 0 0-2-2h-2a2 2 0 0 0-2 2v4"/><path d="M2 7h20"/><path d="M22 7v3a2 2 0 0 1-2 2v0a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 16 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 12 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 8 12a2.7 2.7 0 0 1-1.59-.63.7.7 0 0 0-.82 0A2.7 2.7 0 0 1 4 12v0a2 2 0 0 1-2-2V7"/></svg>;
 }
+

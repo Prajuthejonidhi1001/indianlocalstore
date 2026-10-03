@@ -66,6 +66,7 @@ class Product(models.Model):
     description = models.TextField()
     price = models.DecimalField(max_digits=10, decimal_places=2)
     discount_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    gst_rate = models.DecimalField(max_digits=5, decimal_places=2, default=0.00, help_text="GST percentage (e.g. 18.00)")
     stock = models.IntegerField(default=0)
     
     variants = models.JSONField(default=list, blank=True, null=True)

@@ -46,6 +46,9 @@ class Shop(models.Model):
         choices=[('unverified', 'Unverified'), ('verified', 'Verified'), ('rejected', 'Rejected')],
         default='unverified'
     )
+    
+    # Financials
+    gst_number = models.CharField(max_length=15, null=True, blank=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

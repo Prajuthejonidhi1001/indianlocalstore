@@ -154,7 +154,7 @@ export default function ShopProductsScreen({ route, navigation }) {
             </View>
             <View style={{ flex: 1, paddingLeft: 16 }}>
               <Text style={styles.shopTitle} numberOfLines={1}>{shop.name}</Text>
-              <Text style={styles.shopCatText}>{shop.category_name || 'Retail'} · {shop.distance_km || '1.2'} km away</Text>
+              <Text style={styles.shopCatText}>{shop.category_name || 'Retail'} Â· {shop.distance_km || '1.2'} km away</Text>
             </View>
           </View>
 
@@ -226,16 +226,18 @@ export default function ShopProductsScreen({ route, navigation }) {
                         <Ionicons name={isInWishlist ? 'heart' : 'heart-outline'} size={18} color={isInWishlist ? COLORS.primary : COLORS.textMuted} />
                       </TouchableOpacity>
                     </View>
-                    <View style={styles.productInfo}>
-                      <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-                      <Text style={styles.productCat} numberOfLines={1}>{item.category_name}</Text>
-                      <View style={styles.priceRow}>
-                        <Text style={styles.productPrice}>₹{item.price}</Text>
-                        <TouchableOpacity style={styles.addCartBtn} onPress={() => addToCart(item.id)}>
-                          <Ionicons name="add" size={18} color="#fff" />
-                        </TouchableOpacity>
+                                          <View style={styles.productInfo}>
+                        <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
+                        <Text style={styles.productCat} numberOfLines={1}>{item.category_name}</Text>
+                        <View style={styles.priceRow}>
+                          <View>
+                            {(() => { const pPrice = typeof item.price === 'object' && item.price !== null ? (item.price.price || item.price.Size) : item.price; return (<><Text style={styles.productPrice}>₹{item.discount_price || pPrice}</Text>{item.discount_price && <Text style={{fontSize: 11, color: '#95a5a6', textDecorationLine: 'line-through'}}>₹{pPrice}</Text>}</>);})()}
+                          </View>
+                          <TouchableOpacity style={styles.addCartBtn} onPress={() => addToCart(item.id)}>
+                            <Ionicons name="add" size={18} color="#fff" />
+                          </TouchableOpacity>
+                        </View>
                       </View>
-                    </View>
                   </TouchableOpacity>
                 );
               })}

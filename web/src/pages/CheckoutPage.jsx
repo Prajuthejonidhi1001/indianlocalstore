@@ -158,10 +158,10 @@ export default function CheckoutPage() {
                       <input type="text" className="form-input" value={form.delivery_state} onChange={e => setForm({...form, delivery_state: e.target.value})} disabled={selectedAddressId !== 'new'} />
                     </div>
                   </div>
-                  <div className="form-group mt-3">
-                    <label className="form-label">Pincode</label>
-                    <input type="text" className="form-input" value={form.delivery_pincode} onChange={e => setForm({...form, delivery_pincode: e.target.value})} disabled={selectedAddressId !== 'new'} />
-                  </div>
+                                      <div className="form-group mt-3">
+                      <label className="form-label">Pincode {fetchingPin && <span className="spinner-sm" style={{ borderColor: 'var(--saffron)', width: 12, height: 12, display: 'inline-block', marginLeft: 5 }} />}</label>
+                      <input type="text" className="form-input" maxLength={6} value={form.delivery_pincode} onChange={handlePincodeChange} disabled={selectedAddressId !== 'new'} />
+                    </div>
                 </div>
               </div>
 
@@ -250,3 +250,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
+

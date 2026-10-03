@@ -36,6 +36,7 @@ export default function AddressBookScreen({ navigation }) {
     pincode: '',
     is_default: false
   });
+  const [fetchingPin, setFetchingPin] = useState(false);
 
   const fetchAddresses = async () => {
     try {
@@ -68,6 +69,29 @@ export default function AddressBookScreen({ navigation }) {
       setForm({ title: 'Home', name: '', phone: '', address_line: '', city: '', state: '', pincode: '', is_default: false });
     }
     setModalVisible(true);
+  };
+
+  const handlePincodeChange = async (pin) => {
+    setForm(prev => ({ ...prev, pincode: pin }));
+    if (pin.length === 6) {
+      setFetchingPin(true);
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+        const data = await res.json();
+        if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
+          const postOffice = data[0].PostOffice[0];
+          setForm(prev => ({
+            ...prev,
+            city: postOffice.District,
+            state: postOffice.State
+          }));
+        }
+      } catch (e) {
+        console.log('Failed to fetch pincode details', e);
+      } finally {
+        setFetchingPin(false);
+      }
+    }
   };
 
   const saveAddress = async () => {
@@ -222,8 +246,11 @@ export default function AddressBookScreen({ navigation }) {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Pincode</Text>
-                  <TextInput style={styles.input} value={form.pincode} onChangeText={t => setForm({...form, pincode: t})} keyboardType="number-pad" placeholder="123456" placeholderTextColor={COLORS.textMuted} />
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Text style={[styles.label, { marginBottom: 0 }]}>Pincode</Text>
+                    {fetchingPin && <ActivityIndicator size="small" color={COLORS.primary} />}
+                  </View>
+                  <TextInput style={styles.input} value={form.pincode} onChangeText={handlePincodeChange} keyboardType="number-pad" maxLength={6} placeholder="123456" placeholderTextColor={COLORS.textMuted} />
                 </View>
 
                 <TouchableOpacity 

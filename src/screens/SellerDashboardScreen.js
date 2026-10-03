@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Alert, Modal, Platform, Image, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -14,11 +14,12 @@ export default function SellerDashboardScreen({ navigation }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const [shopForm, setShopForm] = useState({ name: '', description: '', phone: '', email: '', address: '', city: '', state: '', pincode: '', is_open: true, online_delivery_enabled: false });
+  const [shopForm, setShopForm] = useState({ name: '', description: '', phone: '', email: '', address: '', city: '', state: '', pincode: '', is_open: true, online_delivery_enabled: false, gst_number: '' });
   const [savingShop, setSavingShop] = useState(false);
+  const [fetchingPin, setFetchingPin] = useState(false);
 
   const [showProductModal, setShowProductModal] = useState(false);
-  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '' });
+  const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '', gst_rate: '0' });
   const [productVariants, setProductVariants] = useState({ sizes: [], colors: [] });
   const [productImages, setProductImages] = useState([]);
   const [savingProduct, setSavingProduct] = useState(false);
@@ -70,6 +71,26 @@ export default function SellerDashboardScreen({ navigation }) {
       setLoading(false);
     }
   };
+
+  const handlePincodeChange = async (pin) => {
+    setShopForm(prev => ({ ...prev, pincode: pin }));
+    if (pin.length === 6) {
+      setFetchingPin(true);
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${pin}`);
+        const data = await res.json();
+        if (data && data[0] && data[0].Status === 'Success' && data[0].PostOffice) {
+          const postOffice = data[0].PostOffice[0];
+          setShopForm(prev => ({ ...prev, city: postOffice.District, state: postOffice.State }));
+        }
+      } catch (e) {
+        console.log('Failed to fetch pincode', e);
+      } finally {
+        setFetchingPin(false);
+      }
+    }
+  };
+
 
   const handleSaveShop = async () => {
     setSavingShop(true);
@@ -167,7 +188,7 @@ export default function SellerDashboardScreen({ navigation }) {
       const prodRes = await productAPI.getMyProducts();
       setProducts(prodRes.data.results || prodRes.data);
       setShowProductModal(false);
-      setProductForm({ name: '', description: '', price: '', stock: '' });
+      setProductForm({ name: '', description: '', price: '', stock: '', gst_rate: '0' });
       setProductImages([]);
       setProductVariants({ sizes: [], colors: [] });
       Alert.alert('Success', 'Product added!');
@@ -219,6 +240,102 @@ export default function SellerDashboardScreen({ navigation }) {
             </TouchableOpacity>
           )
         })}
+              {showProductModal && (
+          <Modal visible={true} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowProductModal(false)}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+              <View style={[styles.header, { paddingBottom: 10 }]}>
+                <View style={styles.flexBetween}>
+                  <Text style={styles.headerTitle}>{productForm.id ? 'Edit Product' : 'Add Product'}</Text>
+                  <TouchableOpacity onPress={() => setShowProductModal(false)}>
+                    <Ionicons name="close-circle" size={28} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <ScrollView style={{ padding: 20 }}>
+                {activeProductTab === 'basic' && (
+                  <View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Product Name *</Text>
+                      <TextInput style={styles.input} value={productForm.name} onChangeText={t => setProductForm({...productForm, name: t})} placeholder="e.g. Premium Cotton T-Shirt" />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Description *</Text>
+                      <TextInput style={styles.input} value={productForm.description} onChangeText={t => setProductForm({...productForm, description: t})} placeholder="Describe your product in detail..." multiline numberOfLines={4} style={[styles.input, { height: 100 }]} />
+                    </View>
+                  </View>
+                )}
+
+                {activeProductTab === 'pricing' && (
+                  <View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Price (₹) *</Text>
+                      <TextInput style={styles.input} value={productForm.price} onChangeText={t => setProductForm({...productForm, price: t})} placeholder="0.00" keyboardType="numeric" />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Discount Price (₹)</Text>
+                      </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>GST Rate (%)</Text>
+                      <TextInput style={styles.input} value={productForm.gst_rate} onChangeText={t => setProductForm({...productForm, gst_rate: t})} placeholder="18.00" keyboardType="numeric" />
+                      <TextInput style={styles.input} value={productForm.discount_price} onChangeText={t => setProductForm({...productForm, discount_price: t})} placeholder="0.00" keyboardType="numeric" />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Available Stock *</Text>
+                      <TextInput style={styles.input} value={productForm.stock} onChangeText={t => setProductForm({...productForm, stock: t})} placeholder="100" keyboardType="numeric" />
+                    </View>
+                  </View>
+                )}
+
+                {activeProductTab === 'media' && (
+                  <View>
+                    <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage}>
+                      <Ionicons name="image-outline" size={32} color={COLORS.primary} />
+                      <Text style={styles.imagePickerText}>Select Product Image *</Text>
+                    </TouchableOpacity>
+                    {productImages.length > 0 && (
+                      <Image source={{ uri: productImages[0] }} style={{ width: 100, height: 100, borderRadius: 8, marginTop: 16 }} />
+                    )}
+                  </View>
+                )}
+
+                {activeProductTab === 'variants' && (
+                  <View>
+                    <Text style={styles.label}>Product Options (Optional)</Text>
+                    <Text style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 16 }}>
+                      Currently, please use the website to manage complex variants like size and color.
+                    </Text>
+                  </View>
+                )}
+
+                <View style={{ height: 100 }} />
+              </ScrollView>
+
+              <View style={styles.modalFooter}>
+                {activeProductTab === 'basic' && (
+                  <TouchableOpacity style={styles.nextBtn} onPress={() => setActiveProductTab('pricing')}>
+                    <Text style={styles.nextBtnText}>Next: Pricing</Text>
+                  </TouchableOpacity>
+                )}
+                {activeProductTab === 'pricing' && (
+                  <TouchableOpacity style={styles.nextBtn} onPress={() => setActiveProductTab('media')}>
+                    <Text style={styles.nextBtnText}>Next: Media</Text>
+                  </TouchableOpacity>
+                )}
+                {activeProductTab === 'media' && (
+                  <TouchableOpacity style={styles.nextBtn} onPress={() => setActiveProductTab('variants')}>
+                    <Text style={styles.nextBtnText}>Next: Variants</Text>
+                  </TouchableOpacity>
+                )}
+                {activeProductTab === 'variants' && (
+                  <TouchableOpacity style={styles.submitBtn} onPress={handleSaveProduct} disabled={savingProduct}>
+                    {savingProduct ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>{productForm.id ? 'Update Product' : 'Publish Product'}</Text>}
+                  </TouchableOpacity>
+                )}
+              </View>
+            </SafeAreaView>
+          </Modal>
+        )}
       </ScrollView>
 
       {/* Main Content Area */}
@@ -315,7 +432,7 @@ export default function SellerDashboardScreen({ navigation }) {
                 <View key={p.id} style={styles.productRow}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.productName}>{p.name}</Text>
-                    <Text style={styles.productStats}>?{p.price} • {p.stock} in stock</Text>
+                    <Text style={styles.productStats}>Ã¢â€šÂ¹{typeof p.price === 'object' && p.price !== null ? (p.price.price || p.price.Size || 0) : p.price} Ã¢â‚¬Â¢ {p.stock} in stock</Text>
                   </View>
                   <View style={[styles.badge, p.is_active ? styles.badgeActive : styles.badgeInactive]}>
                     <Text style={[styles.badgeText, p.is_active ? styles.badgeTextActive : styles.badgeTextInactive]}>
@@ -337,13 +454,44 @@ export default function SellerDashboardScreen({ navigation }) {
                 <TextInput style={styles.input} value={shopForm.name} onChangeText={t => setShopForm({...shopForm, name: t})} />
               </View>
               <View style={styles.inputGroup}>
+                <Text style={styles.label}>GST Number (Optional)</Text>
+                <TextInput style={styles.input} value={shopForm.gst_number} onChangeText={t => setShopForm({...shopForm, gst_number: t})} placeholder="e.g. 22AAAAA0000A1Z5" autoCapitalize="characters" />
+              </View>
+              <View style={styles.inputGroup}>
                 <Text style={styles.label}>Description</Text>
                 <TextInput style={styles.input} value={shopForm.description} onChangeText={t => setShopForm({...shopForm, description: t})} multiline />
               </View>
-              <View style={styles.inputGroup}>
+                            <View style={styles.inputGroup}>
                 <Text style={styles.label}>Phone</Text>
                 <TextInput style={styles.input} value={shopForm.phone} onChangeText={t => setShopForm({...shopForm, phone: t})} />
               </View>
+
+              <View style={styles.inputGroup}>
+                <Text style={styles.label}>Shop Address</Text>
+                <TextInput style={[styles.input, { height: 80, textAlignVertical: 'top' }]} multiline value={shopForm.address} onChangeText={t => setShopForm({...shopForm, address: t})} />
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                    <Text style={[styles.label, { marginBottom: 0 }]}>Pincode</Text>
+                    {fetchingPin && <ActivityIndicator size="small" color={COLORS.primary} />}
+                  </View>
+                  <TextInput style={styles.input} value={shopForm.pincode} onChangeText={handlePincodeChange} keyboardType="number-pad" maxLength={6} placeholder="123456" />
+                </View>
+              </View>
+
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={styles.label}>City/District</Text>
+                  <TextInput style={styles.input} value={shopForm.city} onChangeText={t => setShopForm({...shopForm, city: t})} />
+                </View>
+                <View style={[styles.inputGroup, { flex: 1 }]}>
+                  <Text style={styles.label}>State</Text>
+                  <TextInput style={styles.input} value={shopForm.state} onChangeText={t => setShopForm({...shopForm, state: t})} />
+                </View>
+              </View>
+
               <View style={styles.togglesRow}>
                 <View style={styles.toggleItem}>
                   <Text style={styles.toggleLabel}>Shop Open</Text>
@@ -361,6 +509,102 @@ export default function SellerDashboardScreen({ navigation }) {
           </View>
         )}
 
+              {showProductModal && (
+          <Modal visible={true} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowProductModal(false)}>
+            <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+              <View style={[styles.header, { paddingBottom: 10 }]}>
+                <View style={styles.flexBetween}>
+                  <Text style={styles.headerTitle}>{productForm.id ? 'Edit Product' : 'Add Product'}</Text>
+                  <TouchableOpacity onPress={() => setShowProductModal(false)}>
+                    <Ionicons name="close-circle" size={28} color={COLORS.textMuted} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              <ScrollView style={{ padding: 20 }}>
+                {activeProductTab === 'basic' && (
+                  <View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Product Name *</Text>
+                      <TextInput style={styles.input} value={productForm.name} onChangeText={t => setProductForm({...productForm, name: t})} placeholder="e.g. Premium Cotton T-Shirt" />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Description *</Text>
+                      <TextInput style={styles.input} value={productForm.description} onChangeText={t => setProductForm({...productForm, description: t})} placeholder="Describe your product in detail..." multiline numberOfLines={4} style={[styles.input, { height: 100 }]} />
+                    </View>
+                  </View>
+                )}
+
+                {activeProductTab === 'pricing' && (
+                  <View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Price (₹) *</Text>
+                      <TextInput style={styles.input} value={productForm.price} onChangeText={t => setProductForm({...productForm, price: t})} placeholder="0.00" keyboardType="numeric" />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Discount Price (₹)</Text>
+                      </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>GST Rate (%)</Text>
+                      <TextInput style={styles.input} value={productForm.gst_rate} onChangeText={t => setProductForm({...productForm, gst_rate: t})} placeholder="18.00" keyboardType="numeric" />
+                      <TextInput style={styles.input} value={productForm.discount_price} onChangeText={t => setProductForm({...productForm, discount_price: t})} placeholder="0.00" keyboardType="numeric" />
+                    </View>
+                    <View style={styles.inputGroup}>
+                      <Text style={styles.label}>Available Stock *</Text>
+                      <TextInput style={styles.input} value={productForm.stock} onChangeText={t => setProductForm({...productForm, stock: t})} placeholder="100" keyboardType="numeric" />
+                    </View>
+                  </View>
+                )}
+
+                {activeProductTab === 'media' && (
+                  <View>
+                    <TouchableOpacity style={styles.imagePickerBtn} onPress={pickImage}>
+                      <Ionicons name="image-outline" size={32} color={COLORS.primary} />
+                      <Text style={styles.imagePickerText}>Select Product Image *</Text>
+                    </TouchableOpacity>
+                    {productImages.length > 0 && (
+                      <Image source={{ uri: productImages[0] }} style={{ width: 100, height: 100, borderRadius: 8, marginTop: 16 }} />
+                    )}
+                  </View>
+                )}
+
+                {activeProductTab === 'variants' && (
+                  <View>
+                    <Text style={styles.label}>Product Options (Optional)</Text>
+                    <Text style={{ fontSize: 13, color: COLORS.textMuted, marginBottom: 16 }}>
+                      Currently, please use the website to manage complex variants like size and color.
+                    </Text>
+                  </View>
+                )}
+
+                <View style={{ height: 100 }} />
+              </ScrollView>
+
+              <View style={styles.modalFooter}>
+                {activeProductTab === 'basic' && (
+                  <TouchableOpacity style={styles.nextBtn} onPress={() => setActiveProductTab('pricing')}>
+                    <Text style={styles.nextBtnText}>Next: Pricing</Text>
+                  </TouchableOpacity>
+                )}
+                {activeProductTab === 'pricing' && (
+                  <TouchableOpacity style={styles.nextBtn} onPress={() => setActiveProductTab('media')}>
+                    <Text style={styles.nextBtnText}>Next: Media</Text>
+                  </TouchableOpacity>
+                )}
+                {activeProductTab === 'media' && (
+                  <TouchableOpacity style={styles.nextBtn} onPress={() => setActiveProductTab('variants')}>
+                    <Text style={styles.nextBtnText}>Next: Variants</Text>
+                  </TouchableOpacity>
+                )}
+                {activeProductTab === 'variants' && (
+                  <TouchableOpacity style={styles.submitBtn} onPress={handleSaveProduct} disabled={savingProduct}>
+                    {savingProduct ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitBtnText}>{productForm.id ? 'Update Product' : 'Publish Product'}</Text>}
+                  </TouchableOpacity>
+                )}
+              </View>
+            </SafeAreaView>
+          </Modal>
+        )}
       </ScrollView>
     </SafeAreaView>
   );
@@ -444,3 +688,13 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: COLORS.primary, padding: 16, borderRadius: RADIUS.lg, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });
+
+
+
+
+
+
+
+
+
+

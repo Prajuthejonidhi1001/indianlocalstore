@@ -2,10 +2,10 @@ import { initializeApp } from "firebase/app";
 import { initializeAuth, getReactNativePersistence } from "firebase/auth";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const LOCAL_API_URL = 'http://10.245.191.172:8000/api';
+const LOCAL_API_URL = 'http://172.31.209.169:8000/api';
 const RENDER_API_URL = 'https://indianlocalstore-api-cjiq.onrender.com/api';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || RENDER_API_URL;
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || LOCAL_API_URL;
 
 const firebaseConfig = {
   apiKey: "AIzaSyC4Yhpk0zw-Om-mNWSFn4mwQOy97tufzHE",
@@ -27,3 +27,4 @@ export default {
   RAZORPAY_KEY: process.env.REACT_APP_RAZORPAY_KEY || '',
   firebaseConfig
 };
+

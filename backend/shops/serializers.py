@@ -1,4 +1,4 @@
-from rest_framework import serializers
+﻿from rest_framework import serializers
 from .models import Shop, ShopReview, ShopService
 
 
@@ -24,7 +24,7 @@ class ShopListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Shop
         fields = ['id', 'shop_code', 'name', 'logo', 'city', 'rating', 'reviews_count',
-                  'verification_status', 'distance', 'seller_id', 'is_open', 'online_delivery_enabled',
+                  'verification_status', 'distance', 'seller_id', 'is_open', 'online_delivery_enabled', 'gst_number',
                   'category', 'subcategory']
 
     def get_distance(self, obj):
@@ -57,7 +57,7 @@ class ShopDetailSerializer(serializers.ModelSerializer):
         fields = ['id', 'shop_code', 'name', 'description', 'logo', 'banner', 'address', 'city',
                   'state', 'pincode', 'phone', 'email', 'rating', 'reviews_count',
                   'opening_time', 'closing_time', 'verification_status', 'seller', 'seller_id',
-                  'category', 'subcategory', 'is_open', 'online_delivery_enabled',
+                  'category', 'subcategory', 'is_open', 'online_delivery_enabled', 'gst_number',
                   'shop_reviews', 'services', 'created_at']
 
 
@@ -69,4 +69,5 @@ class ShopCreateUpdateSerializer(serializers.ModelSerializer):
         fields = ['id', 'shop_code', 'name', 'description', 'logo', 'banner', 'latitude', 'longitude',
                   'address', 'city', 'state', 'pincode', 'phone', 'email',
                   'category', 'subcategory',
-                  'opening_time', 'closing_time', 'is_open', 'online_delivery_enabled']
+                  'opening_time', 'closing_time', 'is_open', 'online_delivery_enabled', 'gst_number']
+

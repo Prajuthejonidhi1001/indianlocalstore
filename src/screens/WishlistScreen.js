@@ -5,11 +5,12 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../utils/api';
 import { useCart } from '../context/CartContext';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 
 export default function WishlistScreen({ navigation }) {
-  const { user, toggleWishlist, getWishlist } = useAuth();
+  const { user } = useAuth();
   const { addToCart } = useCart();
 
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -25,7 +26,8 @@ export default function WishlistScreen({ navigation }) {
   const fetchWishlist = async () => {
     setLoading(true);
     try {
-      const items = await getWishlist();
+      const res = await authAPI.getWishlist();
+      const items = res.data.results || res.data;
       setWishlistItems(items);
     } catch (error) {
       console.error('Failed to fetch wishlist:', error);
@@ -43,7 +45,7 @@ export default function WishlistScreen({ navigation }) {
 
   const handleRemoveFromWishlist = async (productId) => {
     try {
-      await toggleWishlist(productId);
+      await authAPI.toggleWishlist(productId);
       setWishlistItems(prev => prev.filter(item => item.product !== productId));
     } catch (error) {
       console.error('Failed to remove from wishlist:', error);

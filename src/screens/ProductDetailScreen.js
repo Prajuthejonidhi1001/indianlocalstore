@@ -6,6 +6,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { authAPI } from '../utils/api';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 
 const { width, height } = Dimensions.get('window');
@@ -22,7 +23,7 @@ function generateHistogram(reviews) {
 export default function ProductDetailScreen({ route, navigation }) {
   const { product } = route.params;
   const { addToCart } = useCart();
-  const { user, toggleWishlist, getWishlist } = useAuth();
+  const { user } = useAuth();
   const [imageModalVisible, setImageModalVisible] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
   const [addedToCart, setAddedToCart] = useState(false);
@@ -31,16 +32,18 @@ export default function ProductDetailScreen({ route, navigation }) {
   const [quantity, setQuantity] = useState(1);
   const [activeAccordion, setActiveAccordion] = useState('desc');
 
-  const reviews = product.product_reviews || [];
+  const safeProduct = product || {};
+  const reviews = safeProduct.product_reviews || [];
   const { counts: histCounts, total: histTotal } = generateHistogram(reviews);
 
   useEffect(() => {
     const fetchWishlist = async () => {
       if (!user) return;
       try {
-        const wishlistItems = await getWishlist();
+        const res = await authAPI.getWishlist();
+          const wishlistItems = res.data.results || res.data;
         const wishlistProductIds = wishlistItems.map(item => item.product);
-        setWishlist(wishlistProductIds.includes(product.id));
+        setWishlist(wishlistItems.some(item => (item.product.id || item.product) === product.id));
       } catch (error) {
         console.error('Failed to fetch wishlist:', error);
       }
@@ -48,7 +51,8 @@ export default function ProductDetailScreen({ route, navigation }) {
     fetchWishlist();
   }, [user, product.id]);
 
-  const price = parseFloat(product.price || 0);
+  const basePriceObj = typeof product.price === 'object' && product.price !== null ? product.price.price : product.price;
+  const price = parseFloat(basePriceObj || 0);
   const discountPrice = product.discount_price ? parseFloat(product.discount_price) : null;
   const discount = discountPrice ? Math.round((1 - discountPrice / price) * 100) : 0;
 
@@ -60,7 +64,7 @@ export default function ProductDetailScreen({ route, navigation }) {
 
   const handleAddToCart = async () => {
     if (product.variants && product.variants.length > 0) {
-      const requiredTypes = product.variants.map(v => v.type);
+      const requiredTypes = product.variants.filter(v => v.type !== '_MATRIX_').map(v => v.type);
       const selectedKeys = Object.keys(selectedVariants);
       const missing = requiredTypes.filter(t => !selectedKeys.includes(t));
       if (missing.length > 0) {
@@ -120,7 +124,7 @@ export default function ProductDetailScreen({ route, navigation }) {
             </TouchableOpacity>
             <TouchableOpacity style={styles.roundActionBtn} onPress={async () => {
               if (!user) return alert('Please login to save items');
-              try { await toggleWishlist(product.id); setWishlist(!wishlist); } catch (e) {}
+              try { await authAPI.toggleWishlist(product.id); setWishlist(!wishlist); } catch (e) {}
             }}>
               <Ionicons name={wishlist ? 'heart' : 'heart-outline'} size={20} color={wishlist ? COLORS.red : COLORS.text} />
             </TouchableOpacity>
@@ -176,15 +180,18 @@ export default function ProductDetailScreen({ route, navigation }) {
           {/* Variants */}
           {product.variants && product.variants.length > 0 && (
             <View style={styles.variantsBox}>
-              {product.variants.map(v => (
+              {product.variants.filter(v => v.type !== '_MATRIX_').map(v => (
                 <View key={v.type} style={styles.variantGroup}>
                   <Text style={styles.variantLabel}>{v.type}: <Text style={{fontWeight:'700'}}>{selectedVariants[v.type] || 'Select'}</Text></Text>
                   <View style={styles.variantOptions}>
-                    {v.values.map(val => {
-                      const isActive = selectedVariants[v.type] === val;
+                    {v.values.map((val, idx) => {
+                      const displayValue = typeof val === 'object' && val !== null ? 
+                        (val[v.type] || val.combo || val.value || val.name || Object.values(val).find(x => typeof x === 'string' || typeof x === 'number') || String(val)) 
+                        : String(val);
+                      const isActive = selectedVariants[v.type] === displayValue;
                       return (
-                        <TouchableOpacity key={val} style={[styles.variantBtn, isActive && styles.variantBtnActive]} onPress={() => setSelectedVariants({...selectedVariants, [v.type]: val})}>
-                          <Text style={[styles.variantBtnText, isActive && styles.variantBtnTextActive]}>{val}</Text>
+                        <TouchableOpacity key={idx} style={[styles.variantBtn, isActive && styles.variantBtnActive]} onPress={() => setSelectedVariants({...selectedVariants, [v.type]: displayValue})}>
+                          <Text style={[styles.variantBtnText, isActive && styles.variantBtnTextActive]}>{displayValue}</Text>
                         </TouchableOpacity>
                       );
                     })}
@@ -418,3 +425,6 @@ const styles = StyleSheet.create({
   modalClose: { position: 'absolute', top: 50, right: 20, zIndex: 10, padding: 8 },
   fullImage: { width, height: height * 0.7 },
 });
+
+
+

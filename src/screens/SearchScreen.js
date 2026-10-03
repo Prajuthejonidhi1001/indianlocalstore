@@ -123,7 +123,7 @@ export default function SearchScreen({ navigation }) {
               <Image source={{ uri: item.image || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400&q=80' }} style={styles.productImage} />
               <View style={styles.productDetails}>
                 <Text style={styles.productName} numberOfLines={2}>{item.name}</Text>
-                <Text style={styles.price}>₹{item.price}</Text>
+                <Text style={styles.price}>₹{typeof item.price === 'object' && item.price !== null ? (item.price.price || item.price.Size || 0) : item.price}</Text>
               </View>
             </TouchableOpacity>
           )}
@@ -416,3 +416,4 @@ const styles = StyleSheet.create({
     color: COLORS.primary,
   }
 });
+

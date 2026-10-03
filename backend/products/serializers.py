@@ -1,4 +1,4 @@
-from rest_framework import serializers
+﻿from rest_framework import serializers
 from .models import Category, SubCategory, Product, ProductReview, ProductImage, Wishlist
 
 
@@ -39,7 +39,7 @@ class ProductListSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'name', 'price', 'discount_price', 'discount_percentage',
+        fields = ['id', 'name', 'price', 'discount_price', 'discount_percentage', 'gst_rate',
                   'variants', 'image', 'images', 'rating', 'stock', 'category_name', 'subcategory_name', 'seller_name', 'is_active']
 
     def get_discount_percentage(self, obj):
@@ -69,8 +69,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 class ProductCreateUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Product
-        fields = ['category', 'subcategory', 'name', 'description', 'price',
-                  'discount_price', 'stock', 'variants', 'image', 'is_active']
+        fields = ['category', 'subcategory', 'name', 'description', 'price', 'discount_price', 'gst_rate', 'stock', 'variants', 'image', 'is_active']
         read_only_fields = ['category', 'subcategory']
 
 
@@ -84,3 +83,4 @@ class WishlistSerializer(serializers.ModelSerializer):
         model = Wishlist
         fields = ['id', 'product', 'product_id', 'created_at']
         read_only_fields = ['id', 'created_at']
+

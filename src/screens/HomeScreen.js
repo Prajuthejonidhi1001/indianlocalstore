@@ -1,35 +1,51 @@
-import React, { useState, useEffect, useRef } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, StatusBar, Dimensions, ActivityIndicator,
-  FlatList, Animated, ImageBackground, Platform, SafeAreaView
+﻿import React, { useState, useEffect, useRef } from 'react';
+import { 
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
+  Image, Dimensions, FlatList, Animated, StatusBar,
+  SafeAreaView, ImageBackground, Platform
 } from 'react-native';
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SHADOWS, RADIUS, TYPOGRAPHY } from '../constants';
-import { shopAPI, productAPI, authAPI } from '../utils/api';
+import { productAPI, shopAPI } from '../utils/api';
 import { useAuth } from '../context/AuthContext';
-import { useLocation } from '../context/LocationContext';
-import { useCart } from '../context/CartContext';
-import * as Location from 'expo-location';
+import { COLORS } from '../constants';
+import config from '../config';
 
 const { width } = Dimensions.get('window');
 
 const CAT_EMOJIS = {
-  'Vegetables': '🥦', 'Fruits': '🍎', 'Dairy': '🧀', 'Spices': '🌶️',
-  'Grains': '🌾', 'Snacks': '🥨', 'Meat': '🥩', 'Beverages': '🥤',
-  'Bakery': '🥐', 'Personal Care': '🧴', 'Home & Living': '🛋️',
-  'Electronics': '💻', 'Clothing': '👕', 'Pharmacy': '💊',
-  'Fashion': '👗', 'Agriculture': '🚜', 'Automobile': '🚗',
-  'Construction': '🏗️', 'Furniture': '🪑', 'Furnitures': '🪑',
-  'Mart': '🏪', 'Traders': '🏬', 'Event Management': '🎉',
-  'Second Hand Vehicles': '🛵',
+  'Vegetables': '\u{1F966}', 'Fruits': '\u{1F34E}', 'Dairy': '\u{1F95B}', 'Spices': '\u{1F336}',
+  'Grains': '\u{1F33E}', 'Snacks': '\u{1F37F}', 'Meat': '\u{1F969}', 'Beverages': '\u{1F964}',
+  'Bakery': '\u{1F35E}', 'Personal Care': '\u{1F6C0}', 'Home & Living': '\u{1F6CF}',
+  'Electronics': '\u{1F4F1}', 'Clothing': '\u{1F455}', 'Pharmacy': '\u{1F48A}',
+  'Fashion': '\u{1F460}', 'Agriculture': '\u{1F69C}', 'Automobile': '\u{1F697}',
+  'Construction': '\u{1F3D7}', 'Furniture': '\u{1FA91}', 'Furnitures': '\u{1FA91}',
+  'Mart': '\u{1F6D2}', 'Traders': '\u{1F4BC}', 'Event Management': '\u{1F389}',
+  'Second Hand Vehicles': '\u{1F699}',
 };
 
 const HERO_BANNERS = [
-  { id: 1, title: 'Mega Electronics Sale', subtitle: 'Up to 40% Off on Top Brands', colors: ['#1e3c72', '#2a5298'], image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=800&auto=format&fit=crop' },
-  { id: 2, title: 'Fresh Groceries Delivered', subtitle: 'In 30 Minutes or Less', colors: ['#11998e', '#38ef7d'], image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800&auto=format&fit=crop' },
-  { id: 3, title: 'Fashion Clearance', subtitle: 'Trendy Styles at Unbeatable Prices', colors: ['#ff9a9e', '#fecfef'], image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop' }
+  { 
+    id: 1, 
+    title: 'Mega Electronics Sale', 
+    subtitle: 'Up to 40% Off on Top Brands', 
+    colors: ['#0f2027', '#203a43'], 
+    image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=800&auto=format&fit=crop' 
+  },
+  { 
+    id: 2, 
+    title: 'Fresh Groceries Delivered', 
+    subtitle: 'In 30 Minutes or Less', 
+    colors: ['#11998e', '#38ef7d'], 
+    image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?q=80&w=800&auto=format&fit=crop' 
+  },
+  { 
+    id: 3, 
+    title: 'Premium Local Fashion', 
+    subtitle: 'Trendy Styles at Unbeatable Prices', 
+    colors: ['#8A2387', '#E94057'], 
+    image: 'https://images.unsplash.com/photo-1483985988355-763728e1935b?q=80&w=800&auto=format&fit=crop' 
+  }
 ];
 
 const CAT_GRADIENTS = [
@@ -41,27 +57,21 @@ const CAT_GRADIENTS = [
 ];
 
 export default function HomeScreen({ navigation }) {
-  const { user } = useAuth();
-  const { location, setLocation } = useLocation();
-  const { cartItems } = useCart();
+  const { user, location, triggerGPS } = useAuth();
   const [categories, setCategories] = useState([]);
   const [shops, setShops] = useState([]);
   const [trendingProducts, setTrendingProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [locating, setLocating] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(3600 * 5);
-  const [wishlistItems, setWishlistItems] = useState(new Set());
-  
-  const scrollY = useRef(new Animated.Value(0)).current;
-  const flatListRef = useRef(null);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const flatListRef = useRef(null);
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Countdown timer for Flash Deals (5 hours)
+  const [timeLeft, setTimeLeft] = useState(3600 * 5);
 
   useEffect(() => {
-    fetchInitialData();
-  }, [location?.district]);
-  
-  useEffect(() => {
-    const timer = setInterval(() => setTimeLeft(prev => prev > 0 ? prev - 1 : 0), 1000);
+    const timer = setInterval(() => setTimeLeft(t => (t > 0 ? t - 1 : 0)), 1000);
     return () => clearInterval(timer);
   }, []);
   
@@ -93,45 +103,32 @@ export default function HomeScreen({ navigation }) {
           shopData = allShopRes.data.results || allShopRes.data;
         }
         setShops(shopData);
-      } catch (e) { console.error('Shop fetch error:', e); }
-      
-    } catch (error) {
-      console.error('Error fetching home data:', error);
+      } catch (e) {
+        console.error(e);
+      }
+    } catch (err) {
+      console.error(err);
     } finally {
       setLoading(false);
     }
   };
 
-  const triggerGPS = async () => {
-    setLocating(true);
-    try {
-      let { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return alert('Location permission denied');
-      let loc = await Location.getCurrentPositionAsync({});
-      let geocode = await Location.reverseGeocodeAsync({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
-      let city = geocode[0]?.city || geocode[0]?.subregion || geocode[0]?.district || 'Unknown Location';
-      setLocation({ name: city, district: city, coords: { lat: loc.coords.latitude, lng: loc.coords.longitude }});
-      
-      const res = await shopAPI.getNearbyShops({ latitude: loc.coords.latitude, longitude: loc.coords.longitude });
-      setShops(res.data.results || res.data);
-    } catch (e) {
-      console.error('GPS error:', e);
-      alert('Failed to get location');
-    } finally { setLocating(false); }
-  };
+  useEffect(() => {
+    fetchInitialData();
+  }, [location?.district]);
 
   const formatTime = (seconds) => {
     const h = Math.floor(seconds / 3600);
     const m = Math.floor((seconds % 3600) / 60);
     const s = seconds % 60;
-    return ${h.toString().padStart(2, '0')}h : m : s;
+    return `${h.toString().padStart(2, '0')}h : ${m.toString().padStart(2, '0')}m : ${s.toString().padStart(2, '0')}s`;
   };
 
   const renderBanner = ({ item }) => (
     <View style={styles.bannerSlide}>
       <LinearGradient colors={item.colors} style={styles.bannerGradient} start={{x: 0, y: 0}} end={{x: 1, y: 1}}>
-        <Image source={{ uri: item.image }} style={styles.bannerImage} />
-        <LinearGradient colors={['rgba(0,0,0,0.8)', 'transparent']} style={styles.bannerOverlay} start={{x: 0, y: 0.5}} end={{x: 1, y: 0.5}} />
+        <Image source={{ uri: item.image }} style={styles.bannerImage} resizeMode="cover" />
+        <LinearGradient colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.2)', 'transparent']} style={styles.bannerOverlay} start={{x: 0, y: 0.5}} end={{x: 1, y: 0.5}} />
         <View style={styles.bannerContent}>
           <View style={styles.ltoBadge}><Text style={styles.ltoText}>Limited Time Offer</Text></View>
           <Text style={styles.bannerTitle}>{item.title}</Text>
@@ -153,7 +150,7 @@ export default function HomeScreen({ navigation }) {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.welcomeText}>Hello, {user?.first_name || 'Guest'} 👋</Text>
+            <Text style={styles.welcomeText}>Hello, {user?.first_name || 'Guest'} ðŸ‘‹</Text>
             <TouchableOpacity style={styles.locationSelector} onPress={triggerGPS}>
               <Ionicons name="location" size={16} color={COLORS.primary} />
               <Text style={styles.locationText} numberOfLines={1}>
@@ -168,9 +165,6 @@ export default function HomeScreen({ navigation }) {
             </TouchableOpacity>
             <TouchableOpacity style={styles.iconBtn} onPress={() => navigation.navigate('Cart')}>
               <Ionicons name="cart-outline" size={24} color={COLORS.text} />
-              {cartItems?.length > 0 && (
-                <View style={styles.badge}><Text style={styles.badgeText}>{cartItems.length}</Text></View>
-              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -216,11 +210,23 @@ export default function HomeScreen({ navigation }) {
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.catScroll}>
             {categories.slice(0, 10).map((cat, idx) => {
               const gradient = CAT_GRADIENTS[idx % CAT_GRADIENTS.length];
+              const hasIcon = cat.icon;
+              const backendHost = config.API_BASE_URL.replace(/\/api\/?$/, '');
+              let iconUrl = cat.icon;
+              if (hasIcon && !iconUrl.startsWith('http')) {
+                iconUrl = iconUrl.startsWith('/') ? `${backendHost}${iconUrl}` : `${backendHost}/media/${iconUrl}`;
+              }
               return (
                 <TouchableOpacity key={cat.id} style={styles.catWrap} onPress={() => navigation.navigate('ShopList', { categoryId: cat.id })}>
-                  <LinearGradient colors={gradient} style={styles.catCircle}>
-                    <Text style={styles.catEmoji}>{CAT_EMOJIS[cat.name] || '🛍️'}</Text>
-                  </LinearGradient>
+                  {hasIcon ? (
+                    <View style={[styles.catCircle, { overflow: 'hidden', backgroundColor: '#F0F0F0' }]}>
+                      <Image source={{ uri: iconUrl }} style={{ width: '100%', height: '100%' }} />
+                    </View>
+                  ) : (
+                    <LinearGradient colors={gradient} style={styles.catCircle}>
+                      <Text style={styles.catEmoji}>{CAT_EMOJIS[cat.name] || 'ðŸ›ï¸'}</Text>
+                    </LinearGradient>
+                  )}
                   <Text style={styles.catName} numberOfLines={1}>{cat.name}</Text>
                 </TouchableOpacity>
               );
@@ -242,21 +248,28 @@ export default function HomeScreen({ navigation }) {
             </View>
             
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.hScroll}>
-              {trendingProducts.map(product => (
-                <TouchableOpacity key={product.id} style={styles.flashCard} onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}>
-                  <Image source={{ uri: product.image || 'https://via.placeholder.com/150' }} style={styles.flashImage} />
-                  <View style={styles.discountBadge}>
-                    <Text style={styles.discountText}>-20%</Text>
-                  </View>
-                  <View style={styles.flashInfo}>
-                    <Text style={styles.flashName} numberOfLines={2}>{product.name}</Text>
-                    <View style={styles.flashPriceRow}>
-                      <Text style={styles.flashPrice}>₹{product.price}</Text>
-                      <Text style={styles.flashOldPrice}>₹{(product.price * 1.2).toFixed(0)}</Text>
+              {trendingProducts.map(product => {
+                  const prodPrice = typeof product.price === 'object' && product.price !== null ? product.price.price : product.price;
+                  const hasDiscount = product.discount_price && parseFloat(product.discount_price) < parseFloat(prodPrice);
+                  const discountPercent = hasDiscount ? Math.round((1 - (parseFloat(product.discount_price) / parseFloat(prodPrice))) * 100) : 0;
+                  return (
+                  <TouchableOpacity key={product.id} style={styles.flashCard} onPress={() => navigation.navigate('ProductDetail', { product: product })}>
+                    <Image source={{ uri: product.image || 'https://via.placeholder.com/150' }} style={styles.flashImage} />
+                    {hasDiscount && (
+                      <View style={styles.discountBadge}>
+                        <Text style={styles.discountText}>-{discountPercent}%</Text>
+                      </View>
+                    )}
+                    <View style={styles.flashInfo}>
+                      <Text style={styles.flashName} numberOfLines={2}>{product.name}</Text>
+                      <View style={styles.flashPriceRow}>
+                        <Text style={styles.flashPrice}>â‚¹{hasDiscount ? product.discount_price : prodPrice}</Text>
+                        {hasDiscount && <Text style={styles.flashOldPrice}>â‚¹{prodPrice}</Text>}
+                      </View>
                     </View>
-                  </View>
-                </TouchableOpacity>
-              ))}
+                  </TouchableOpacity>
+                  );
+                })}
             </ScrollView>
           </View>
         )}
@@ -272,7 +285,7 @@ export default function HomeScreen({ navigation }) {
           
           <View style={styles.shopGrid}>
             {shops.map((shop, idx) => (
-              <TouchableOpacity key={shop.id} style={styles.shopCard} onPress={() => navigation.navigate('ShopList', { categoryId: shop.category })}>
+              <TouchableOpacity key={shop.id} style={styles.shopCard} onPress={() => navigation.navigate('ShopProducts', { shopId: shop.id, shopName: shop.name })}>
                 <ImageBackground 
                   source={{ uri: shop.banner_image || 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=800&auto=format&fit=crop' }} 
                   style={styles.shopBanner} 
@@ -294,6 +307,40 @@ export default function HomeScreen({ navigation }) {
                 </View>
               </TouchableOpacity>
             ))}
+          </View>
+        </View>
+
+        {/* Recommended For You */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={styles.titleRow}>
+              <Ionicons name="trending-up" size={22} color="#3498db" />
+              <Text style={[styles.sectionTitle, { marginLeft: 8 }]}>Recommended For You</Text>
+            </View>
+          </View>
+          
+          <View style={styles.recommendedGrid}>
+            {trendingProducts.slice(0, 10).map((prod) => {
+              const prodPrice = typeof prod.price === 'object' && prod.price !== null ? prod.price.price : prod.price;
+              const hasDiscount = prod.discount_price && parseFloat(prod.discount_price) < parseFloat(prodPrice);
+              const finalPrice = hasDiscount ? prod.discount_price : prodPrice;
+              return (
+                <TouchableOpacity key={prod.id} style={styles.recCard} onPress={() => navigation.navigate('ProductDetail', { product: prod })}>
+                  <Image source={{ uri: prod.image || 'https://via.placeholder.com/300' }} style={styles.recImage} />
+                  <View style={styles.recInfo}>
+                    <Text style={styles.recName} numberOfLines={2}>{prod.name}</Text>
+                    <View style={styles.recRating}>
+                      <Ionicons name="star" size={12} color="#FFD700" />
+                      <Text style={styles.recRatingText}>{prod.average_rating || '4.5'}</Text>
+                    </View>
+                    <View style={styles.recPriceRow}>
+                      <Text style={styles.recPrice}>â‚¹{finalPrice}</Text>
+                      {hasDiscount && <Text style={styles.recOldPrice}>â‚¹{prodPrice}</Text>}
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
         </View>
       </ScrollView>
@@ -326,11 +373,11 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 40 },
   
   heroContainer: { height: 200, marginTop: 16, paddingHorizontal: 16 },
-  bannerSlide: { width: width - 32, height: 200, borderRadius: 20, overflow: 'hidden' },
+  bannerSlide: { width: width - 32, height: 200, borderRadius: 20, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 5 },
   bannerGradient: { flex: 1 },
-  bannerImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', opacity: 0.6 },
+  bannerImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', opacity: 0.7 },
   bannerOverlay: { ...StyleSheet.absoluteFillObject },
-  bannerContent: { flex: 1, justifyContent: 'center', padding: 24, paddingRight: 80 },
+  bannerContent: { flex: 1, justifyContent: 'center', padding: 24, paddingRight: 60 },
   ltoBadge: { backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, alignSelf: 'flex-start', marginBottom: 12 },
   ltoText: { color: '#FFF', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
   bannerTitle: { fontSize: 24, fontWeight: '900', color: '#FFF', marginBottom: 8, lineHeight: 30 },
@@ -371,11 +418,23 @@ const styles = StyleSheet.create({
   shopCard: { backgroundColor: '#FFF', borderRadius: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 3 },
   shopBanner: { height: 140, justifyContent: 'flex-end', padding: 12 },
   shopBannerOverlay: { ...StyleSheet.absoluteFillObject, borderTopLeftRadius: 16, borderTopRightRadius: 16 },
-  shopRating: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, gap: 4, backdropFilter: 'blur(4px)' },
+  shopRating: { position: 'absolute', top: 12, right: 12, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.6)', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, gap: 4 },
   shopRatingText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
   shopInfo: { flexDirection: 'row', alignItems: 'center', padding: 16, gap: 12 },
   shopLogo: { width: 48, height: 48, borderRadius: 24, borderWidth: 2, borderColor: '#FFF', marginTop: -32, backgroundColor: '#FFF' },
   shopTextWrap: { flex: 1 },
   shopName: { fontSize: 16, fontWeight: '800', color: COLORS.text, marginBottom: 2 },
   shopDesc: { fontSize: 12, color: COLORS.textMuted, fontWeight: '500' },
+
+  recommendedGrid: { paddingHorizontal: 20, flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  recCard: { width: '48%', backgroundColor: '#FFF', borderRadius: 16, marginBottom: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 },
+  recImage: { width: '100%', height: 140, borderTopLeftRadius: 16, borderTopRightRadius: 16, backgroundColor: '#F0F0F0' },
+  recInfo: { padding: 12 },
+  recName: { fontSize: 13, fontWeight: '700', color: COLORS.text, marginBottom: 4, height: 36, lineHeight: 18 },
+  recRating: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, gap: 4 },
+  recRatingText: { fontSize: 11, color: COLORS.textMuted, fontWeight: '600' },
+  recPriceRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  recPrice: { fontSize: 15, fontWeight: '900', color: COLORS.primary },
+  recOldPrice: { fontSize: 11, color: COLORS.textMuted, textDecorationLine: 'line-through' },
 });
+

@@ -41,7 +41,6 @@ function HomeStack() {
       <Stack.Screen name="SectorDetail" component={SectorDetailScreen} />
       <Stack.Screen name="Subcategory" component={SubcategoryScreen} />
       <Stack.Screen name="ShopProducts" component={ShopProductsScreen} />
-      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
       <Stack.Screen name="Search" component={SearchScreen} />
     </Stack.Navigator>
   );
@@ -54,7 +53,6 @@ function CategoriesStack() {
       <Stack.Screen name="SectorDetail" component={SectorDetailScreen} />
       <Stack.Screen name="Subcategory" component={SubcategoryScreen} />
       <Stack.Screen name="ShopProducts" component={ShopProductsScreen} />
-      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} />
     </Stack.Navigator>
   );
 }
@@ -167,3 +165,4 @@ const styles = StyleSheet.create({
     marginTop: -5,
   }
 });
+
