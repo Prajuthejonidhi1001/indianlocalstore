@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -219,8 +219,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border
   },
-  cityIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,107,53,0.1)', alignItems: 'center', justifyContent: 'center', marginRight: 15 },
+  cityIcon: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255₹07,53,0.1)', alignItems: 'center', justifyContent: 'center', marginRight: 15 },
   cityName: { color: COLORS.text, fontSize: 16, fontWeight: '700' },
   citySub: { color: COLORS.textMuted, fontSize: 13, marginTop: 2 },
   emptyText: { color: COLORS.textMuted, textAlign: 'center', marginTop: 40 }
 });
+

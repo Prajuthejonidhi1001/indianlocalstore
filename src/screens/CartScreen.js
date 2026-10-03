@@ -80,6 +80,8 @@ export default function CartScreen({ navigation }) {
               const productId = item.product;
               const name = item.product_name || 'Product';
               const price = item.product_price || 0;
+              const discountPrice = item.product_discount_price || null;
+              const effectivePrice = discountPrice || price;
               const imgSrc = resolveMediaUrl(item.product_image, PLACEHOLDER_IMAGE);
               
               let itemVariants = item.variants || {};
@@ -94,7 +96,7 @@ export default function CartScreen({ navigation }) {
                   </View>
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemName} numberOfLines={2}>{name}</Text>
-                    <Text style={styles.itemPrice}>₹{parseFloat(price).toFixed(2)}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}><Text style={styles.itemPrice}>₹{parseFloat(effectivePrice).toFixed(2)}</Text>{discountPrice && <Text style={{ fontSize: 12, textDecorationLine: 'line-through', color: '#999' }}>₹{parseFloat(price).toFixed(2)}</Text>}</View>
                     
                     {Object.keys(itemVariants).length > 0 && (
                       <Text style={styles.itemVariants}>
@@ -119,7 +121,7 @@ export default function CartScreen({ navigation }) {
                     </View>
                   </View>
                   <View style={styles.itemLineTotal}>
-                    <Text style={styles.lineTotalText}>₹{(parseFloat(price) * item.quantity).toFixed(2)}</Text>
+                    <Text style={styles.lineTotalText}>₹{(parseFloat(effectivePrice) * item.quantity).toFixed(2)}</Text>
                   </View>
                 </View>
               );
@@ -238,7 +240,7 @@ const styles = StyleSheet.create({
   summaryValue: { color: COLORS.text, fontSize: 14, fontWeight: '600' },
   summaryFree: { color: COLORS.green, fontSize: 14, fontWeight: '700' },
   
-  couponBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(34,197,94,0.1)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.full },
+  couponBadge: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(34₹97,94,0.1)', paddingHorizontal: 10, paddingVertical: 6, borderRadius: RADIUS.full },
   couponText: { color: COLORS.green, fontSize: 12, fontWeight: '700' },
   discountValue: { color: COLORS.green, fontSize: 14, fontWeight: '600' },
   
@@ -257,6 +259,8 @@ const styles = StyleSheet.create({
   continueBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 },
   continueBtnText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
 });
+
+
 
 
 

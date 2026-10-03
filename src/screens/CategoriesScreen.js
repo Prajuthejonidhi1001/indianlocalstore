@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, 
   Text, 
@@ -62,7 +62,7 @@ export default function CategoriesScreen({ navigation }) {
       {/* Hero Header */}
       <View style={styles.hero}>
         <View style={styles.heroInner}>
-          <Text style={styles.heroLabel}>🛍️ Browse All</Text>
+          <Text style={styles.heroLabel}>ðŸ›ï¸ Browse All</Text>
           <Text style={styles.heroTitle}>Shop by Category</Text>
           
           <View style={styles.searchWrap}>
@@ -83,7 +83,7 @@ export default function CategoriesScreen({ navigation }) {
         <ActivityIndicator size="large" color={COLORS.primary} style={styles.loader} />
       ) : filtered.length === 0 ? (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyIcon}>🔍</Text>
+          <Text style={styles.emptyIcon}>ðŸ”</Text>
           <Text style={styles.emptyTitle}>No results for "{search}"</Text>
         </View>
       ) : (
@@ -137,7 +137,7 @@ export default function CategoriesScreen({ navigation }) {
                             {sub.icon ? (
                               <Image source={{ uri: sub.icon }} style={styles.subImg} />
                             ) : (
-                              <Text style={styles.subEmoji}>🏪</Text>
+                              <Text style={styles.subEmoji}>ðŸª</Text>
                             )}
                           </View>
                           <Text style={styles.subName} numberOfLines={2}>{sub.name}</Text>
@@ -203,6 +203,7 @@ const styles = StyleSheet.create({
   subEmoji: { fontSize: 20 },
   subName: { fontSize: 12, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
 
-  viewAllBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255,107,53,0.1)', padding: 16, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: 'rgba(255,107,53,0.2)' },
+  viewAllBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: 'rgba(255₹07,53,0.1)', padding: 16, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: 'rgba(255₹07,53,0.2)' },
   viewAllText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 });
+

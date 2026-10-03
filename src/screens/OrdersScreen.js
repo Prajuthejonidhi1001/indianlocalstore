@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -188,4 +188,5 @@ const styles = StyleSheet.create({
   shopBtn: { backgroundColor: COLORS.primary, paddingHorizontal: 25, paddingVertical: 12, borderRadius: RADIUS.md },
   shopBtnText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
+
 

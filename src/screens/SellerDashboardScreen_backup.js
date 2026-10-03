@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -29,7 +29,7 @@ export default function SellerDashboardScreen({ navigation }) {
   const [shopForm, setShopForm] = useState({ name: '', description: '', phone: '', email: '', address: '', city: '', state: '', pincode: '', is_open: true, online_delivery_enabled: false });
   const [savingShop, setSavingShop] = useState(false);
 
-  // Product Form — no category/subcat
+  // Product Form â€” no category/subcat
   const [showProductModal, setShowProductModal] = useState(false);
   const [productForm, setProductForm] = useState({ name: '', description: '', price: '', stock: '' });
   const [productVariants, setProductVariants] = useState({ sizes: [], colors: [] });
@@ -205,7 +205,7 @@ export default function SellerDashboardScreen({ navigation }) {
       setShowProductModal(false);
       setProductForm({ name: '', description: '', price: '', stock: '' });
       setProductImages([]);
-      Alert.alert('Success', '✅ Product added! It is now visible in your shop.');
+      Alert.alert('Success', 'âœ… Product added! It is now visible in your shop.');
     } catch (err) {
       console.error('Error saving product:', err.response?.data || err);
       const msg = err.response?.data;
@@ -261,11 +261,11 @@ export default function SellerDashboardScreen({ navigation }) {
           <View style={styles.card}>
             <Text style={styles.sectionTitle}>Shop Settings</Text>
 
-            {/* ── Toggles at TOP ── */}
+            {/* â”€â”€ Toggles at TOP â”€â”€ */}
             <View style={styles.togglesRow}>
               <View style={styles.toggleCard}>
                 <View style={styles.toggleCardInfo}>
-                  <Text style={styles.toggleCardIcon}>{shopForm.is_open ? '🟢' : '🔴'}</Text>
+                  <Text style={styles.toggleCardIcon}>{shopForm.is_open ? 'ðŸŸ¢' : 'ðŸ”´'}</Text>
                   <View>
                     <Text style={styles.toggleCardLabel}>Shop Status</Text>
                     <Text style={styles.toggleCardSub}>{shopForm.is_open ? 'Open' : 'Closed'}</Text>
@@ -296,7 +296,7 @@ export default function SellerDashboardScreen({ navigation }) {
               </View>
             </View>
 
-            {/* ── Shop Details Form ── */}
+            {/* â”€â”€ Shop Details Form â”€â”€ */}
             <View style={styles.field}>
               <Text style={styles.label}>Shop Name *</Text>
               <TextInput style={styles.input} value={shopForm.name} placeholder="My Local Shop" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, name: t})} />
@@ -323,7 +323,7 @@ export default function SellerDashboardScreen({ navigation }) {
               <TextInput style={[styles.input, {height: 60}]} multiline value={shopForm.address} placeholder="Street, area, landmark" placeholderTextColor={COLORS.textMuted} onChangeText={t => setShopForm({...shopForm, address: t})} />
             </View>
 
-            {/* Shop ID badge — shown after shop is created */}
+            {/* Shop ID badge â€” shown after shop is created */}
             {shop?.shop_code && (
               <View style={styles.idCard}>
                 <View style={styles.idCardHeader}>
@@ -351,7 +351,7 @@ export default function SellerDashboardScreen({ navigation }) {
             {catsLocked ? (
               <View style={styles.lockedBanner}>
                 <Ionicons name="lock-closed" size={16} color="#E74C3C" />
-                <Text style={styles.lockedText}>Categories locked — contact support to change.</Text>
+                <Text style={styles.lockedText}>Categories locked â€” contact support to change.</Text>
               </View>
             ) : (
               <View style={styles.unlockNotice}>
@@ -392,7 +392,7 @@ export default function SellerDashboardScreen({ navigation }) {
             })}
             {!catsLocked && (
               <TouchableOpacity style={[styles.primaryBtn, { marginTop: 20 }]} onPress={handleSaveCats} disabled={savingCats || selectedCats.length === 0}>
-                {savingCats ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryBtnText}>🔒 Lock & Save Categories</Text>}
+                {savingCats ? <ActivityIndicator size="small" color="#fff" /> : <Text style={styles.primaryBtnText}>ðŸ”’ Lock & Save Categories</Text>}
               </TouchableOpacity>
             )}
           </View>
@@ -423,9 +423,9 @@ export default function SellerDashboardScreen({ navigation }) {
                 <View key={p.id ? String(p.id) : `${p.name}-${idx}`} style={styles.productRow}>
                   <View style={styles.productInfo}>
                     <Text style={styles.productName}>{p.name}</Text>
-                    <Text style={styles.productStats}>₹{p.price} • {p.stock} in stock</Text>
+                    <Text style={styles.productStats}>₹{p.price} â€¢ {p.stock} in stock</Text>
                   </View>
-                  <View style={[styles.statusBadge, { backgroundColor: p.is_active !== false ? 'rgba(46,204,113,0.1)' : 'rgba(255,107,53,0.1)' }]}>
+                  <View style={[styles.statusBadge, { backgroundColor: p.is_active !== false ? 'rgba(46,204₹13,0.1)' : 'rgba(255₹07,53,0.1)' }]}>
                     <Text style={[styles.statusText, { color: p.is_active !== false ? COLORS.green : COLORS.primary }]}>{p.is_active !== false ? 'ACTIVE' : 'DRAFT'}</Text>
                   </View>
                 </View>
@@ -454,7 +454,7 @@ export default function SellerDashboardScreen({ navigation }) {
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>Product Images * (1–5)</Text>
+              <Text style={styles.label}>Product Images * (1â€“5)</Text>
               <View style={styles.imageGrid}>
                 {productImages.map((img, idx) => (
                   <View key={idx} style={styles.imageThumbWrap}>
@@ -493,7 +493,7 @@ export default function SellerDashboardScreen({ navigation }) {
                     return (
                       <TouchableOpacity 
                         key={size}
-                        style={{ minWidth: 44, height: 38, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 6, borderWidth: 1.5, borderColor: isSel ? COLORS.primary : COLORS.borderStrong, backgroundColor: isSel ? 'rgba(255,107,53,0.08)' : COLORS.glass }}
+                        style={{ minWidth: 44, height: 38, paddingHorizontal: 8, alignItems: 'center', justifyContent: 'center', borderRadius: 6, borderWidth: 1.5, borderColor: isSel ? COLORS.primary : COLORS.borderStrong, backgroundColor: isSel ? 'rgba(255₹07,53,0.08)' : COLORS.glass }}
                         onPress={() => {
                           setProductVariants(prev => ({
                             ...prev,
@@ -559,7 +559,7 @@ const styles = StyleSheet.create({
 
   tabContainer: { flexDirection: 'row', paddingHorizontal: 24, marginBottom: 15, backgroundColor: '#fff', paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   tab: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 10, paddingHorizontal: 20, marginRight: 12, borderRadius: RADIUS.full, backgroundColor: COLORS.background },
-  tabActive: { backgroundColor: 'rgba(255,107,53,0.1)' },
+  tabActive: { backgroundColor: 'rgba(255₹07,53,0.1)' },
   tabText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '700' },
   tabTextActive: { color: COLORS.primary },
 
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
   // Categories tab
   lockedBanner: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(231,76,60,0.05)', borderRadius: RADIUS.lg, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(231,76,60,0.15)' },
   lockedText: { color: '#E74C3C', fontSize: 14, fontWeight: '700', flex: 1 },
-  unlockNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: 'rgba(255,107,53,0.05)', borderRadius: RADIUS.lg, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255,107,53,0.15)' },
+  unlockNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, backgroundColor: 'rgba(255₹07,53,0.05)', borderRadius: RADIUS.lg, padding: 16, marginBottom: 20, borderWidth: 1, borderColor: 'rgba(255₹07,53,0.15)' },
   unlockText: { color: COLORS.primary, fontSize: 14, flex: 1, fontWeight: '600' },
   catBlock: { backgroundColor: '#fff', borderRadius: RADIUS.lg, marginBottom: 15, borderWidth: 1.5, borderColor: COLORS.border, overflow: 'hidden' },
   catBlockSelected: { borderColor: COLORS.primary, backgroundColor: '#fff', shadowColor: COLORS.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4 },
@@ -619,14 +619,14 @@ const styles = StyleSheet.create({
   catBtnText: { fontSize: 16, fontWeight: '800', color: COLORS.text },
   subcatRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, paddingHorizontal: 16, paddingBottom: 16, borderTopWidth: 1, borderTopColor: COLORS.border, paddingTop: 16 },
   subcatChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: RADIUS.full, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.background },
-  subcatChipOn: { borderColor: COLORS.primary, backgroundColor: 'rgba(255,107,53,0.08)' },
+  subcatChipOn: { borderColor: COLORS.primary, backgroundColor: 'rgba(255₹07,53,0.08)' },
   subcatChipText: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary },
 
   // Multi-image grid
   imageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
   imageThumbWrap: { width: 88, height: 88, borderRadius: RADIUS.lg, overflow: 'hidden', position: 'relative', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.1, shadowRadius: 8, elevation: 4 },
   imageThumb: { width: '100%', height: '100%', resizeMode: 'cover' },
-  mainBadge: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(46,204,113,0.9)', paddingVertical: 4, alignItems: 'center' },
+  mainBadge: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(46,204₹13,0.9)', paddingVertical: 4, alignItems: 'center' },
   mainBadgeText: { color: '#fff', fontSize: 10, fontWeight: '900', letterSpacing: 0.5 },
   removeImgBtn: { position: 'absolute', top: 4, right: 4, backgroundColor: '#fff', borderRadius: 12 },
   addImageTile: { width: 88, height: 88, borderRadius: RADIUS.lg, borderWidth: 1.5, borderColor: COLORS.border, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
@@ -639,3 +639,4 @@ const styles = StyleSheet.create({
   idCardValue: { color: COLORS.text, fontSize: 15, fontWeight: '800', fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace' },
   idCardFooter: { color: COLORS.textDim, fontSize: 11, marginTop: 6, fontStyle: 'italic', fontWeight: '500' },
 });
+

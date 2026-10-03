@@ -30,7 +30,7 @@ const HERO_BANNERS = [
     title: 'Mega Electronics Sale', 
     subtitle: 'Up to 40% Off on Top Brands', 
     colors: ['#0f2027', '#203a43'], 
-    image: 'https://images.unsplash.com/photo-1550009158-9ebf69173e03?q=80&w=800&auto=format&fit=crop' 
+    image: 'https://images.unsplash.com/photo-1498049794561-7780e7231661?q=80&w=800&auto=format&fit=crop' 
   },
   { 
     id: 2, 
@@ -263,8 +263,8 @@ export default function HomeScreen({ navigation }) {
                     <View style={styles.flashInfo}>
                       <Text style={styles.flashName} numberOfLines={2}>{product.name}</Text>
                       <View style={styles.flashPriceRow}>
-                        <Text style={styles.flashPrice}>â‚¹{hasDiscount ? product.discount_price : prodPrice}</Text>
-                        {hasDiscount && <Text style={styles.flashOldPrice}>â‚¹{prodPrice}</Text>}
+                        <Text style={styles.flashPrice}>₹{hasDiscount ? product.discount_price : prodPrice}</Text>
+                        {hasDiscount && <Text style={styles.flashOldPrice}>₹{prodPrice}</Text>}
                       </View>
                     </View>
                   </TouchableOpacity>
@@ -287,7 +287,7 @@ export default function HomeScreen({ navigation }) {
             {shops.map((shop, idx) => (
               <TouchableOpacity key={shop.id} style={styles.shopCard} onPress={() => navigation.navigate('ShopProducts', { shopId: shop.id, shopName: shop.name })}>
                 <ImageBackground 
-                  source={{ uri: shop.banner_image || 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=800&auto=format&fit=crop' }} 
+                  source={{ uri: shop.banner || 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?q=80&w=800&auto=format&fit=crop' }} 
                   style={styles.shopBanner} 
                   imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }}
                 >
@@ -334,8 +334,8 @@ export default function HomeScreen({ navigation }) {
                       <Text style={styles.recRatingText}>{prod.average_rating || '4.5'}</Text>
                     </View>
                     <View style={styles.recPriceRow}>
-                      <Text style={styles.recPrice}>â‚¹{finalPrice}</Text>
-                      {hasDiscount && <Text style={styles.recOldPrice}>â‚¹{prodPrice}</Text>}
+                      <Text style={styles.recPrice}>₹{finalPrice}</Text>
+                      {hasDiscount && <Text style={styles.recOldPrice}>₹{prodPrice}</Text>}
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -437,5 +437,8 @@ const styles = StyleSheet.create({
   recPrice: { fontSize: 15, fontWeight: '900', color: COLORS.primary },
   recOldPrice: { fontSize: 11, color: COLORS.textMuted, textDecorationLine: 'line-through' },
 });
+
+
+
 
 

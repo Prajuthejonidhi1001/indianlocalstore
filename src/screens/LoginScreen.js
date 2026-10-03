@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, 
   ScrollView, Alert, Animated, Easing, KeyboardAvoidingView, Platform, Dimensions, Vibration
@@ -254,7 +254,7 @@ export default function LoginScreen({ navigation }) {
                     <Ionicons name="call" size={20} color={focusedInput === 'phone' ? '#FF6B00' : COLORS.textMuted} style={styles.icon} />
                     <Text style={{color: COLORS.text, fontSize: 17, marginRight: 8, fontWeight: '500'}}>+91</Text>
                     <TextInput 
-                      placeholder="10-digit number" value={phone} onChangeText={t => setPhone(t.replace(/\D/g, '').slice(0,10))} 
+                      placeholder="10-digit number" value={phone} onChangeText={t => setPhone(t.replace(/\D/g, '').slice(0₹0))} 
                       style={styles.input} keyboardType="phone-pad" placeholderTextColor={COLORS.borderStrong}
                       onFocus={() => setFocusedInput('phone')} onBlur={() => setFocusedInput(null)}
                     />
@@ -350,3 +350,4 @@ const styles = StyleSheet.create({
   loginBtnText: { color: '#FFF', fontSize: 17, fontWeight: '800', marginRight: 10, letterSpacing: 0.5 },
   footerAction: { color: '#00D4FF', fontSize: 15, fontWeight: '800' },
 });
+

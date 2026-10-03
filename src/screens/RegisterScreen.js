@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, 
   ScrollView, Alert, Image, ActivityIndicator, Animated, Easing, 
@@ -158,7 +158,7 @@ export default function RegisterScreen({ navigation }) {
       if (status !== 'granted') { triggerShake(); Alert.alert('Permission Denied'); setLocating(false); return; }
       const loc = await Location.getCurrentPositionAsync({});
       setCoords({ lat: loc.coords.latitude, lng: loc.coords.longitude });
-      Alert.alert('✅ Location Captured', 'GPS coordinates saved.');
+      Alert.alert('âœ… Location Captured', 'GPS coordinates saved.');
     } catch { triggerShake(); Alert.alert('Error', 'Failed to get location'); }
     finally { setLocating(false); }
   };
@@ -309,9 +309,9 @@ export default function RegisterScreen({ navigation }) {
           shopData.append('logo', { uri: shopPhoto.uri, name: filename, type: match ? `image/${match[1]}` : 'image/jpeg' });
         }
         await shopAPI.createShop(shopData);
-        Alert.alert('🎉 Welcome!', 'Account & Shop created successfully!');
+        Alert.alert('ðŸŽ‰ Welcome!', 'Account & Shop created successfully!');
       } else {
-        Alert.alert('✅ Done!', 'Account created successfully!');
+        Alert.alert('âœ… Done!', 'Account created successfully!');
       }
       
       const { authAPI: authApiInternal } = require('../utils/api');
@@ -365,7 +365,7 @@ export default function RegisterScreen({ navigation }) {
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <Animated.View style={[styles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }, { translateX: shakeAnim }] }]}>
 
-            {/* ── Header ── */}
+            {/* â”€â”€ Header â”€â”€ */}
             <View style={styles.headerRow}>
               {navigation.canGoBack() && (
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
@@ -380,31 +380,31 @@ export default function RegisterScreen({ navigation }) {
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Shop & sell locally</Text>
 
-            {/* ── Role Selector — large cards ── */}
+            {/* â”€â”€ Role Selector â€” large cards â”€â”€ */}
                 <View style={styles.roleCardRow}>
                   <TouchableOpacity
                     style={[styles.roleCard, form.role === 'customer' && styles.roleCardActiveCustomer]}
                     onPress={() => setForm({ ...form, role: 'customer' })}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.roleCardEmoji}>🛒</Text>
+                    <Text style={styles.roleCardEmoji}>ðŸ›’</Text>
                     <Text style={[styles.roleCardTitle, form.role === 'customer' && { color: '#fff' }]}>Customer</Text>
                     <Text style={styles.roleCardDesc}>Browse & buy</Text>
-                    {form.role === 'customer' && <View style={styles.roleCardCheck}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
+                    {form.role === 'customer' && <View style={styles.roleCardCheck}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>âœ“</Text></View>}
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.roleCard, form.role === 'seller' && styles.roleCardActiveSeller]}
                     onPress={() => setForm({ ...form, role: 'seller' })}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.roleCardEmoji}>🏪</Text>
+                    <Text style={styles.roleCardEmoji}>ðŸª</Text>
                     <Text style={[styles.roleCardTitle, form.role === 'seller' && { color: '#FF6B00' }]}>Seller</Text>
                     <Text style={styles.roleCardDesc}>List & sell</Text>
-                    {form.role === 'seller' && <View style={[styles.roleCardCheck, { backgroundColor: '#FF6B00' }]}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>✓</Text></View>}
+                    {form.role === 'seller' && <View style={[styles.roleCardCheck, { backgroundColor: '#FF6B00' }]}><Text style={{ color: '#fff', fontSize: 11, fontWeight: '900' }}>âœ“</Text></View>}
                   </TouchableOpacity>
                 </View>
 
-                {/* ── Basic Fields ── */}
+                {/* â”€â”€ Basic Fields â”€â”€ */}
                 <View style={styles.row}>
                   <View style={styles.half}>
                     {renderInput('person-outline', 'First Name', form.first_name, 'first_name')}
@@ -427,7 +427,7 @@ export default function RegisterScreen({ navigation }) {
                 </View>
                 {emailOtpSent && (
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: -4, marginBottom: 12 }}>
-                    <View style={[styles.inputRow, { flex: 1, marginBottom: 0, borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' }]}>
+                    <View style={[styles.inputRow, { flex: 1, marginBottom: 0, borderColor: '#FF6B00', backgroundColor: 'rgba(255₹07,53,0.05)' }]}>
                       <Ionicons name="key-outline" size={18} color="#FF6B00" style={{ marginRight: 10 }} />
                       <TextInput placeholder="Email OTP (6 digits)" value={emailOtp} onChangeText={setEmailOtp} style={styles.inputText} keyboardType="number-pad" maxLength={6} placeholderTextColor={COLORS.textMuted} editable={!emailVerified} />
                     </View>
@@ -436,7 +436,7 @@ export default function RegisterScreen({ navigation }) {
                         <Text style={[styles.inlineBtnText, { color: '#fff' }]}>{verifyingEmail ? '...' : 'Verify'}</Text>
                       </TouchableOpacity>
                     ) : (
-                      <View style={[styles.inlineBtn, { backgroundColor: 'rgba(46,204,113,0.1)', borderColor: '#2ECC71' }]}>
+                      <View style={[styles.inlineBtn, { backgroundColor: 'rgba(46,204₹13,0.1)', borderColor: '#2ECC71' }]}>
                         <Text style={[styles.inlineBtnText, { color: '#2ECC71' }]}>Verified</Text>
                       </View>
                     )}
@@ -465,7 +465,7 @@ export default function RegisterScreen({ navigation }) {
                 </View>
                 {phoneOtpSent && (
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: -4, marginBottom: 12 }}>
-                    <View style={[styles.inputRow, { flex: 1, marginBottom: 0, borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' }]}>
+                    <View style={[styles.inputRow, { flex: 1, marginBottom: 0, borderColor: '#FF6B00', backgroundColor: 'rgba(255₹07,53,0.05)' }]}>
                       <Ionicons name="key-outline" size={18} color="#FF6B00" style={{ marginRight: 10 }} />
                       <TextInput placeholder="Phone OTP (6 digits)" value={phoneOtp} onChangeText={setPhoneOtp} style={styles.inputText} keyboardType="number-pad" maxLength={6} placeholderTextColor={COLORS.textMuted} editable={!phoneVerified} />
                     </View>
@@ -474,7 +474,7 @@ export default function RegisterScreen({ navigation }) {
                         <Text style={[styles.inlineBtnText, { color: '#fff' }]}>{verifyingPhone ? '...' : 'Verify'}</Text>
                       </TouchableOpacity>
                     ) : (
-                      <View style={[styles.inlineBtn, { backgroundColor: 'rgba(46,204,113,0.1)', borderColor: '#2ECC71' }]}>
+                      <View style={[styles.inlineBtn, { backgroundColor: 'rgba(46,204₹13,0.1)', borderColor: '#2ECC71' }]}>
                         <Text style={[styles.inlineBtnText, { color: '#2ECC71' }]}>Verified</Text>
                       </View>
                     )}
@@ -515,14 +515,14 @@ export default function RegisterScreen({ navigation }) {
                 {confirmPassword.length > 0 && (
                   <Text style={{ fontSize: 12, fontWeight: '700', marginTop: -8, marginBottom: 10, textAlign: 'right',
                     color: confirmPassword === form.password ? '#2ECC71' : '#E74C3C' }}>
-                    {confirmPassword === form.password ? '✓ Passwords match' : '✗ Passwords do not match'}
+                    {confirmPassword === form.password ? 'âœ“ Passwords match' : 'âœ— Passwords do not match'}
                   </Text>
                 )}
 
-                {/* ── Seller Section ── */}
+                {/* â”€â”€ Seller Section â”€â”€ */}
                 {form.role === 'seller' && (
                   <View style={styles.sellerBox}>
-                    <Text style={styles.sellerTitle}>🏪 Business Details</Text>
+                    <Text style={styles.sellerTitle}>ðŸª Business Details</Text>
 
                     {renderInput('business-outline', 'Shop Name', form.shopName, 'shopName')}
 
@@ -538,11 +538,11 @@ export default function RegisterScreen({ navigation }) {
                       )}
                     </TouchableOpacity>
 
-                    {/* Category — single selection */}
+                    {/* Category â€” single selection */}
                     <Text style={styles.fieldLabel}>Shop Category *</Text>
                     <View style={styles.chipGrid}>
                       {categories.length === 0 ? (
-                        <Text style={styles.dimText}>Loading…</Text>
+                        <Text style={styles.dimText}>Loadingâ€¦</Text>
                       ) : categories.map(cat => (
                         <TouchableOpacity
                           key={cat.id}
@@ -557,7 +557,7 @@ export default function RegisterScreen({ navigation }) {
                       ))}
                     </View>
 
-                    {/* Subcategory — single selection */}
+                    {/* Subcategory â€” single selection */}
                     {subcategories.length > 0 && (
                       <>
                         <Text style={[styles.fieldLabel, { marginTop: 14 }]}>Subcategory <Text style={styles.dimText}>(optional)</Text></Text>
@@ -579,19 +579,19 @@ export default function RegisterScreen({ navigation }) {
                     )}
 
                     {/* Pincode + Auto Location */}
-                    <Text style={styles.fieldLabel}>📍 Pincode {fetchingPin && <Text style={{ color: COLORS.primary }}> (fetching…)</Text>}</Text>
+                    <Text style={styles.fieldLabel}>ðŸ“ Pincode {fetchingPin && <Text style={{ color: COLORS.primary }}> (fetchingâ€¦)</Text>}</Text>
                     {renderInput('map-outline', '560001', form.pincode, 'pincode', false, 'numeric', { maxLength: 6 })}
 
                     {/* Auto-filled location */}
                     {(form.state || form.district) && (
                       <View style={styles.autoRow}>
                         <View style={styles.autoChip}>
-                          <Text style={styles.autoLabel}>🏛️ State</Text>
-                          <Text style={styles.autoValue}>{form.state || '—'}</Text>
+                          <Text style={styles.autoLabel}>ðŸ›ï¸ State</Text>
+                          <Text style={styles.autoValue}>{form.state || 'â€”'}</Text>
                         </View>
                         <View style={styles.autoChip}>
-                          <Text style={styles.autoLabel}>🗺️ District</Text>
-                          <Text style={styles.autoValue}>{form.district || '—'}</Text>
+                          <Text style={styles.autoLabel}>ðŸ—ºï¸ District</Text>
+                          <Text style={styles.autoValue}>{form.district || 'â€”'}</Text>
                         </View>
                       </View>
                     )}
@@ -611,7 +611,7 @@ export default function RegisterScreen({ navigation }) {
                         color={coords.lat ? '#2ECC71' : COLORS.textMuted}
                       />
                       <Text style={[styles.gpsBtnText, coords.lat && { color: '#2ECC71' }]}>
-                        {locating ? 'Detecting GPS…' : coords.lat ? 'GPS Captured ✅' : 'Detect GPS Location'}
+                        {locating ? 'Detecting GPSâ€¦' : coords.lat ? 'GPS Captured âœ…' : 'Detect GPS Location'}
                       </Text>
                     </TouchableOpacity>
                   </View>
@@ -639,7 +639,7 @@ export default function RegisterScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
-  bgOrb1: { position: 'absolute', top: -80, right: -80, width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(255,107,53,0.12)' },
+  bgOrb1: { position: 'absolute', top: -80, right: -80, width: 280, height: 280, borderRadius: 140, backgroundColor: 'rgba(255₹07,53,0.12)' },
   bgOrb2: { position: 'absolute', bottom: -60, left: -60, width: 220, height: 220, borderRadius: 110, backgroundColor: 'rgba(85,33,255,0.1)' },
   scroll: { flexGrow: 1, padding: 18, paddingBottom: 40 },
   card: { backgroundColor: COLORS.glass, borderRadius: 28, padding: 22, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.xl },
@@ -655,7 +655,7 @@ const styles = StyleSheet.create({
   roleCardRow: { flexDirection: 'row', gap: 12, marginBottom: 22 },
   roleCard: { flex: 1, alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 2, borderColor: 'rgba(0,0,0,0.1)', backgroundColor: 'rgba(0,0,0,0.02)', position: 'relative' },
   roleCardActiveCustomer: { borderColor: 'rgba(0,0,0,0.3)', backgroundColor: 'rgba(0,0,0,0.05)' },
-  roleCardActiveSeller: { borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.1)' },
+  roleCardActiveSeller: { borderColor: '#FF6B00', backgroundColor: 'rgba(255₹07,53,0.1)' },
   roleCardEmoji: { fontSize: 28, marginBottom: 6 },
   roleCardTitle: { fontSize: 15, fontWeight: '800', color: COLORS.textMuted, marginBottom: 2 },
   roleCardDesc: { fontSize: 11, color: COLORS.textMuted, textAlign: 'center' },
@@ -666,9 +666,9 @@ const styles = StyleSheet.create({
 
   // Input
   inputRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.elevated, borderRadius: 14, paddingHorizontal: 14, height: 52, marginBottom: 12, borderWidth: 1.5, borderColor: COLORS.border },
-  inputRowFocused: { borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.05)' },
+  inputRowFocused: { borderColor: '#FF6B00', backgroundColor: 'rgba(255₹07,53,0.05)' },
   inputText: { flex: 1, color: COLORS.text, fontSize: 15, fontWeight: '500' },
-  inlineBtn: { height: 52, paddingHorizontal: 12, backgroundColor: 'rgba(255,107,53,0.1)', borderRadius: 14, borderWidth: 1, borderColor: '#FF6B00', alignItems: 'center', justifyContent: 'center' },
+  inlineBtn: { height: 52, paddingHorizontal: 12, backgroundColor: 'rgba(255₹07,53,0.1)', borderRadius: 14, borderWidth: 1, borderColor: '#FF6B00', alignItems: 'center', justifyContent: 'center' },
   inlineBtnText: { color: '#FF6B00', fontWeight: '800', fontSize: 13 },
 
   // Password strength
@@ -677,7 +677,7 @@ const styles = StyleSheet.create({
   strengthLabel: { fontSize: 11, textAlign: 'right', fontWeight: '700' },
 
   // Seller box
-  sellerBox: { backgroundColor: 'rgba(255,107,53,0.05)', borderWidth: 1, borderColor: 'rgba(255,107,53,0.2)', borderRadius: 20, padding: 16, marginBottom: 16, gap: 0 },
+  sellerBox: { backgroundColor: 'rgba(255₹07,53,0.05)', borderWidth: 1, borderColor: 'rgba(255₹07,53,0.2)', borderRadius: 20, padding: 16, marginBottom: 16, gap: 0 },
   sellerTitle: { fontSize: 15, fontWeight: '800', color: '#FF6B00', marginBottom: 14 },
 
   // Photo picker
@@ -692,7 +692,7 @@ const styles = StyleSheet.create({
   chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4 },
   chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.elevated },
   chipSm: { paddingHorizontal: 10, paddingVertical: 6 },
-  chipSelected: { borderColor: '#FF6B00', backgroundColor: 'rgba(255,107,53,0.18)' },
+  chipSelected: { borderColor: '#FF6B00', backgroundColor: 'rgba(255₹07,53,0.18)' },
   chipText: { color: COLORS.textMuted, fontSize: 13, fontWeight: '600' },
   chipTextSelected: { color: COLORS.text },
 
@@ -704,7 +704,7 @@ const styles = StyleSheet.create({
 
   // GPS button
   gpsBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, height: 48, borderRadius: 12, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.elevated, marginBottom: 4, marginTop: 4 },
-  gpsBtnDone: { borderColor: 'rgba(46,204,113,0.4)', backgroundColor: 'rgba(46,204,113,0.06)' },
+  gpsBtnDone: { borderColor: 'rgba(46,204₹13,0.4)', backgroundColor: 'rgba(46,204₹13,0.06)' },
   gpsBtnText: { color: COLORS.textMuted, fontWeight: '700', fontSize: 14 },
 
   // Submit
@@ -725,3 +725,4 @@ const styles = StyleSheet.create({
   backToRegBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginTop: 30 },
   backToRegText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' }
 });
+

@@ -1,4 +1,4 @@
-from django.db import models
+﻿from django.db import models
 from django.db.models import Sum, F
 from django.core.validators import MinValueValidator
 from users.models import User
@@ -32,7 +32,7 @@ class Cart(models.Model):
 
     def get_total(self):
         items = self.items.all()
-        total = items.aggregate(total=Sum(F('product__price') * F('quantity')))['total'] or 0
+        total = sum([item.get_total() for item in items])
         return total
 
     def get_discount_total(self):
@@ -174,3 +174,4 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment for {self.order.order_id} - {self.amount}"
+

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform, Alert, ActivityIndicator, ScrollView
@@ -69,7 +69,7 @@ export default function ForgotPasswordScreen({ navigation }) {
     setLoading(true);
     try {
       await userAPI.resetPassword(identifier.trim(), otp.trim(), newPassword);
-      Alert.alert('Success! 🎉', 'Your password has been reset. Please log in with your new password.', [
+      Alert.alert('Success! ðŸŽ‰', 'Your password has been reset. Please log in with your new password.', [
         { text: 'Go to Login', onPress: () => navigation.navigate('Login') }
       ]);
     } catch (err) {
@@ -88,7 +88,7 @@ export default function ForgotPasswordScreen({ navigation }) {
         </TouchableOpacity>
 
         <View style={styles.iconWrap}>
-          <Text style={styles.iconEmoji}>🔐</Text>
+          <Text style={styles.iconEmoji}>ðŸ”</Text>
         </View>
 
         <Text style={styles.title}>Reset Password</Text>
@@ -193,7 +193,7 @@ export default function ForgotPasswordScreen({ navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.secondaryBtn} onPress={() => setStep(1)}>
-              <Text style={styles.secondaryBtnText}>← Back to Email</Text>
+              <Text style={styles.secondaryBtnText}>â† Back to Email</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   scroll: { flexGrow: 1, padding: 25, paddingTop: 60, alignItems: 'center' },
   backBtn: { alignSelf: 'flex-start', padding: 8, backgroundColor: COLORS.card, borderRadius: 12, marginBottom: 20, ...SHADOWS.sm },
-  iconWrap: { width: 64, height: 64, borderRadius: 20, backgroundColor: 'rgba(255,107,53,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  iconWrap: { width: 64, height: 64, borderRadius: 20, backgroundColor: 'rgba(255₹07,53,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   iconEmoji: { fontSize: 32 },
   title: { fontSize: 28, fontWeight: '800', color: COLORS.text, marginBottom: 10, textAlign: 'center' },
   subtitle: { fontSize: 15, color: COLORS.textMuted, textAlign: 'center', marginBottom: 30, paddingHorizontal: 10, lineHeight: 22 },
@@ -221,3 +221,4 @@ const styles = StyleSheet.create({
   secondaryBtn: { marginTop: 15, alignItems: 'center', paddingVertical: 10 },
   secondaryBtnText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' }
 });
+

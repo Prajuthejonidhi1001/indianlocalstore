@@ -1,4 +1,4 @@
-from rest_framework import serializers
+﻿from rest_framework import serializers
 from .models import Cart, CartItem, Order, OrderItem, Payment
 
 
@@ -6,11 +6,12 @@ class CartItemSerializer(serializers.ModelSerializer):
     product_name = serializers.CharField(source='product.name', read_only=True)
     product_image = serializers.ImageField(source='product.image', read_only=True)
     product_price = serializers.DecimalField(source='product.price', max_digits=10, decimal_places=2, read_only=True)
+    product_discount_price = serializers.DecimalField(source='product.discount_price', max_digits=10, decimal_places=2, read_only=True)
     total = serializers.SerializerMethodField()
 
     class Meta:
         model = CartItem
-        fields = ['id', 'product', 'product_name', 'product_image', 'product_price', 'variants', 'quantity', 'total']
+        fields = ['id', 'product', 'product_name', 'product_image', 'product_price', 'product_discount_price', 'variants', 'quantity', 'total']
 
     def get_total(self, obj):
         return str(obj.get_total())
@@ -71,3 +72,4 @@ class PaymentSerializer(serializers.ModelSerializer):
         model = Payment
         fields = ['id', 'order', 'payment_method', 'amount', 'razorpay_order_id', 'status']
         read_only_fields = ['id', 'razorpay_order_id', 'status']
+

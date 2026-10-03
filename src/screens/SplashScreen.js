@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+﻿import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated, Dimensions, StatusBar } from 'react-native';
 import { COLORS } from '../constants';
 
@@ -67,11 +67,11 @@ export default function SplashScreen({ onFinish }) {
           <View style={styles.flagMini}>
             <View style={[styles.flagBand, { backgroundColor: '#FF8C00' }]} />
             <View style={[styles.flagBand, { backgroundColor: '#FFFFFF' }]}>
-              <Text style={styles.chakra}>☸</Text>
+              <Text style={styles.chakra}>â˜¸</Text>
             </View>
             <View style={[styles.flagBand, { backgroundColor: '#138808' }]} />
           </View>
-          <Text style={styles.cartEmoji}>🛒</Text>
+          <Text style={styles.cartEmoji}>ðŸ›’</Text>
         </View>
       </Animated.View>
 
@@ -83,7 +83,7 @@ export default function SplashScreen({ onFinish }) {
 
       {/* Tagline */}
       <Animated.Text style={[styles.tagline, { opacity: taglineOpacity }]}>
-        Your Trusted Neighbourhood Marketplace 🇮🇳
+        Your Trusted Neighbourhood Marketplace ðŸ‡®ðŸ‡³
       </Animated.Text>
 
       {/* Bottom flag strip */}
@@ -144,9 +144,9 @@ const styles = StyleSheet.create({
   logoBox: {
     width: 130, height: 130,
     borderRadius: 36,
-    backgroundColor: 'rgba(255,107,53,0.12)',
+    backgroundColor: 'rgba(255₹07,53,0.12)',
     borderWidth: 1.5,
-    borderColor: 'rgba(255,107,53,0.3)',
+    borderColor: 'rgba(255₹07,53,0.3)',
     justifyContent: 'center',
     alignItems: 'center',
     shadowColor: '#FF6B35',
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: COLORS.text,
     letterSpacing: 8,
-    textShadowColor: 'rgba(255,107,53,0.5)',
+    textShadowColor: 'rgba(255₹07,53,0.5)',
     textShadowOffset: { width: 0, height: 0 },
     textShadowRadius: 20,
   },
@@ -215,3 +215,4 @@ const styles = StyleSheet.create({
     borderRadius: 3,
   },
 });
+

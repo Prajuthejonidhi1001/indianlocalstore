@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -71,7 +71,7 @@ export default function SubcategoryScreen({ route, navigation }) {
       )}
       
       <View style={[styles.statusBadge, { 
-        backgroundColor: shop.verification_status === 'verified' ? 'rgba(46,204,113,0.1)' : 'rgba(255,107,53,0.1)' 
+        backgroundColor: shop.verification_status === 'verified' ? 'rgba(46,204₹13,0.1)' : 'rgba(255₹07,53,0.1)' 
       }]}>
         <Text style={[styles.statusText, { 
           color: shop.verification_status === 'verified' ? COLORS.green : COLORS.primary 
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', 
     alignItems: 'center', 
     gap: 4, 
-    backgroundColor: 'rgba(255,182,39,0.1)', 
+    backgroundColor: 'rgba(255₹82,39,0.1)', 
     paddingHorizontal: 8, 
     paddingVertical: 4, 
     borderRadius: RADIUS.sm 
@@ -180,3 +180,4 @@ const styles = StyleSheet.create({
   emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginTop: 15, marginBottom: 5 },
   emptySub: { fontSize: 14, color: COLORS.textMuted, textAlign: 'center' },
 });
+

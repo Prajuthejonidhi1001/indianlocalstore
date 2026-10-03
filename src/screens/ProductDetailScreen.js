@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, Dimensions, Modal, TextInput, Animated, ActivityIndicator
@@ -159,9 +159,9 @@ export default function ProductDetailScreen({ route, navigation }) {
           </View>
 
           <View style={styles.pricing}>
-            <Text style={styles.priceSymbol}>â‚¹</Text>
+            <Text style={styles.priceSymbol}>Ã¢â€šÂ¹</Text>
             <Text style={styles.priceMain}>{(discountPrice || price).toFixed(2)}</Text>
-            {discount > 0 && <Text style={styles.priceOld}>â‚¹{price.toFixed(2)}</Text>}
+            {discount > 0 && <Text style={styles.priceOld}>Ã¢â€šÂ¹{price.toFixed(2)}</Text>}
             {discount > 0 && <Text style={styles.discountPct}>{discount}% off</Text>}
           </View>
 
@@ -269,7 +269,7 @@ export default function ProductDetailScreen({ route, navigation }) {
               </View>
               <View style={styles.fbtTotal}>
                 <Text style={{color: COLORS.textMuted, fontSize: 12}}>Total price:</Text>
-                <Text style={{fontSize: 20, fontWeight: '800', color: COLORS.primary, marginBottom: 8}}>â‚¹{((discountPrice || price) + 499).toFixed(2)}</Text>
+                <Text style={{fontSize: 20, fontWeight: '800', color: COLORS.primary, marginBottom: 8}}>Ã¢â€šÂ¹{((discountPrice || price) + 499).toFixed(2)}</Text>
                 <TouchableOpacity style={styles.fbtBtn}><Text style={styles.fbtBtnText}>Add all 3 to Cart</Text></TouchableOpacity>
               </View>
             </View>
@@ -287,7 +287,7 @@ export default function ProductDetailScreen({ route, navigation }) {
                 <Text style={styles.rsTotal}>{histTotal} global ratings</Text>
               </View>
               <View style={styles.rsHist}>
-                {[5,4,3,2,1].map(star => {
+                {[5,4,3,2₹].map(star => {
                   const percent = histTotal === 0 ? 0 : Math.round((histCounts[star] / histTotal) * 100);
                   return (
                     <View key={star} style={styles.histRow}>
@@ -363,7 +363,7 @@ const styles = StyleSheet.create({
   variantLabel: { fontSize: 14, color: COLORS.textMuted, marginBottom: 10 },
   variantOptions: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   variantBtn: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: COLORS.border, backgroundColor: COLORS.surface },
-  variantBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(255,107,53,0.1)' },
+  variantBtnActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(255₹07,53,0.1)' },
   variantBtnText: { fontSize: 13, color: COLORS.text, fontWeight: '600' },
   variantBtnTextActive: { color: COLORS.primary },
 
@@ -429,6 +429,7 @@ const styles = StyleSheet.create({
   modalClose: { position: 'absolute', top: 50, right: 20, zIndex: 10, padding: 8 },
   fullImage: { width, height: height * 0.7 },
 });
+
 
 
 

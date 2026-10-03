@@ -71,3 +71,4 @@ class ShopCreateUpdateSerializer(serializers.ModelSerializer):
                   'category', 'subcategory',
                   'opening_time', 'closing_time', 'is_open', 'online_delivery_enabled', 'gst_number']
 
+

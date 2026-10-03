@@ -85,7 +85,8 @@ const styles = StyleSheet.create({
   faqCard: { backgroundColor: COLORS.card, borderRadius: RADIUS.lg, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden' },
   faqHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
   faqQ: { fontSize: 15, fontWeight: '700', color: COLORS.text, flex: 1, marginRight: 10 },
-  faqBody: { padding: 16, paddingTop: 0, backgroundColor: 'rgba(255,107,53,0.03)' },
+  faqBody: { padding: 16, paddingTop: 0, backgroundColor: 'rgba(255₹07,53,0.03)' },
   faqA: { fontSize: 14, color: COLORS.textMuted, lineHeight: 22 },
 });
+
 

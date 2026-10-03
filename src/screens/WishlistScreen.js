@@ -162,11 +162,11 @@ export default function WishlistScreen({ navigation }) {
 
               <View style={styles.priceRow}>
                 <Text style={styles.priceCurrent}>
-                  â‚¹{(item.product_discount_price || item.product_price).toFixed(2)}
+                  ₹{(item.product_discount_price || item.product_price).toFixed(2)}
                 </Text>
                 {item.product_discount_price && (
                   <Text style={styles.priceOriginal}>
-                    â‚¹{item.product_price.toFixed(2)}
+                    ₹{item.product_price.toFixed(2)}
                   </Text>
                 )}
               </View>
@@ -347,7 +347,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 6,
-    backgroundColor: 'rgba(255,107,53,0.1)',
+    backgroundColor: 'rgba(255₹07,53,0.1)',
     borderWidth: 1,
     borderColor: COLORS.primary,
     borderRadius: RADIUS.md,
@@ -377,4 +377,6 @@ const styles = StyleSheet.create({
     marginLeft: 72,
   },
 });
+
+
 

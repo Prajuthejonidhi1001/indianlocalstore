@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+﻿import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authAPI } from '../utils/api';
 import { registerForPushNotificationsAsync } from '../utils/pushNotifications';
@@ -29,7 +29,7 @@ export const AuthProvider = ({ children }) => {
         console.log('Quiet push token update failed:', err);
       }
     } catch (error) {
-      console.error('Fetch user error:', error);
+      console.warn('Fetch user error (expected if token expired):', error.message);
       await AsyncStorage.removeItem('access_token');
       await AsyncStorage.removeItem('refresh_token');
     } finally {
@@ -95,3 +95,4 @@ export const useAuth = () => {
   if (!ctx) throw new Error('useAuth must be used inside AuthProvider');
   return ctx;
 };
+

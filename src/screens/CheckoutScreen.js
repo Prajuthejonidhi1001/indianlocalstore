@@ -100,7 +100,7 @@ export default function CheckoutScreen({ navigation }) {
       const orderNumber = res.data?.order_id || res.data?.id || '';
 
       Alert.alert(
-        'Order placed Ã°Å¸Å½â€°',
+        'Order placed 🎉',
         orderNumber
           ? `Your order ${orderNumber} is confirmed. Pay cash when it arrives.`
           : 'Your order is confirmed. Pay cash when it arrives.',
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
 
   scroll: { paddingHorizontal: 20 },
   
-  summaryBox: { backgroundColor: 'rgba(255,107,53,0.1)', paddingVertical: 20, borderRadius: RADIUS.lg, alignItems: 'center', marginBottom: 25, borderWidth: 1, borderColor: 'rgba(255,107,53,0.2)' },
+  summaryBox: { backgroundColor: 'rgba(255₹07,53,0.1)', paddingVertical: 20, borderRadius: RADIUS.lg, alignItems: 'center', marginBottom: 25, borderWidth: 1, borderColor: 'rgba(255₹07,53,0.2)' },
   summaryLabel: { color: COLORS.primary, fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 5 },
   summaryValue: { color: COLORS.text, fontSize: 32, fontWeight: '900' },
 
@@ -301,13 +301,13 @@ const styles = StyleSheet.create({
   input: { backgroundColor: COLORS.elevated, borderWidth: 1.5, borderColor: COLORS.border, borderRadius: RADIUS.md, padding: 12, color: COLORS.text, fontSize: 15 },
 
   paymentCard: { backgroundColor: COLORS.card, padding: 15, borderRadius: RADIUS.lg, borderWidth: 1.5, borderColor: COLORS.border, marginBottom: 12 },
-  paymentActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(255,107,53,0.05)' },
+  paymentActive: { borderColor: COLORS.primary, backgroundColor: 'rgba(255₹07,53,0.05)' },
   paymentRow: { flexDirection: 'row', alignItems: 'center' },
   paymentInfo: { flex: 1, marginLeft: 15 },
   paymentName: { color: COLORS.text, fontSize: 16, fontWeight: '700', marginBottom: 2 },
   paymentDesc: { color: COLORS.textMuted, fontSize: 12 },
   paymentNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 2 },
-  comingSoonBadge: { backgroundColor: 'rgba(255,107,53,0.15)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(255,107,53,0.3)' },
+  comingSoonBadge: { backgroundColor: 'rgba(255₹07,53,0.15)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: RADIUS.sm, borderWidth: 1, borderColor: 'rgba(255₹07,53,0.3)' },
   comingSoonText: { color: COLORS.primary, fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: COLORS.textDim, alignItems: 'center', justifyContent: 'center' },
@@ -317,6 +317,7 @@ const styles = StyleSheet.create({
   submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: COLORS.primary, paddingVertical: 18, borderRadius: RADIUS.lg, ...SHADOWS.brand, marginTop: 10 },
   submitText: { color: '#fff', fontSize: 18, fontWeight: '800' }
 });
+
 
 
 

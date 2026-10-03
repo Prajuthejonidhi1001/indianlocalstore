@@ -355,14 +355,14 @@ export default function SellerDashboardScreen({ navigation }) {
                 </View>
               </View>
               <View style={styles.metricCard}>
-                <View style={[styles.metricIcon, { backgroundColor: 'rgba(255,107,53,0.1)' }]}><Ionicons name="cube" size={16} color={COLORS.primary} /></View>
+                <View style={[styles.metricIcon, { backgroundColor: 'rgba(255₹07,53,0.1)' }]}><Ionicons name="cube" size={16} color={COLORS.primary} /></View>
                 <View>
                   <Text style={styles.metricLabel}>TOTAL ORDERS</Text>
                   <Text style={styles.metricValue}>0</Text>
                 </View>
               </View>
               <View style={styles.metricCard}>
-                <View style={[styles.metricIcon, { backgroundColor: 'rgba(255,107,53,0.1)' }]}><Ionicons name="cube-outline" size={16} color={COLORS.primary} /></View>
+                <View style={[styles.metricIcon, { backgroundColor: 'rgba(255₹07,53,0.1)' }]}><Ionicons name="cube-outline" size={16} color={COLORS.primary} /></View>
                 <View>
                   <Text style={styles.metricLabel}>ACTIVE PRODUCTS</Text>
                   <Text style={styles.metricValue}>{products.length}</Text>
@@ -621,9 +621,9 @@ const styles = StyleSheet.create({
   badgesWrap: { flexDirection: 'row', gap: 8 },
   hexBadge: { backgroundColor: 'rgba(231,76,60,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
   hexText: { color: COLORS.red, fontSize: 10, fontWeight: '800' },
-  statusBadge: { backgroundColor: 'rgba(46,204,113,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(46,204,113,0.3)' },
+  statusBadge: { backgroundColor: 'rgba(46,204₹13,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(46,204₹13,0.3)' },
   statusText: { color: COLORS.green, fontSize: 10, fontWeight: '800' },
-  unverifiedBadge: { backgroundColor: 'rgba(255,107,53,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(255,107,53,0.3)' },
+  unverifiedBadge: { backgroundColor: 'rgba(255₹07,53,0.1)', paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full, borderWidth: 1, borderColor: 'rgba(255₹07,53,0.3)' },
   unverifiedText: { color: COLORS.primary, fontSize: 10, fontWeight: '800' },
   
   headerTitle: { fontSize: 28, fontWeight: '900', color: COLORS.text, letterSpacing: -0.5, marginBottom: 4 },
@@ -633,7 +633,7 @@ const styles = StyleSheet.create({
   navScroll: { maxHeight: 54, minHeight: 54, borderBottomWidth: 1, borderBottomColor: COLORS.border, backgroundColor: '#fff' },
   navContainer: { paddingHorizontal: 20, alignItems: 'center', gap: 8 },
   navItem: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 16, paddingVertical: 8, borderRadius: RADIUS.full, backgroundColor: 'transparent' },
-  navItemActive: { backgroundColor: 'rgba(255,107,53,0.1)' },
+  navItemActive: { backgroundColor: 'rgba(255₹07,53,0.1)' },
   navText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
   navTextActive: { color: COLORS.primary, fontWeight: '800' },
 
@@ -644,7 +644,7 @@ const styles = StyleSheet.create({
 
   metricGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 },
   metricCard: { flex: 1, minWidth: '45%', backgroundColor: '#fff', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: COLORS.border, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 8, elevation: 2 },
-  metricIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(46,204,113,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
+  metricIcon: { width: 32, height: 32, borderRadius: 16, backgroundColor: 'rgba(46,204₹13,0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 16 },
   metricLabel: { fontSize: 11, fontWeight: '800', color: COLORS.textMuted, marginBottom: 4, letterSpacing: 0.5 },
   metricValue: { fontSize: 24, fontWeight: '900', color: COLORS.text },
 
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
   productName: { fontSize: 16, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
   productStats: { fontSize: 13, color: COLORS.textMuted, fontWeight: '500' },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: RADIUS.full },
-  badgeActive: { backgroundColor: 'rgba(46,204,113,0.1)' },
+  badgeActive: { backgroundColor: 'rgba(46,204₹13,0.1)' },
   badgeInactive: { backgroundColor: 'rgba(231,76,60,0.1)' },
   badgeText: { fontSize: 11, fontWeight: '800' },
   badgeTextActive: { color: COLORS.green },
@@ -688,6 +688,7 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: COLORS.primary, padding: 16, borderRadius: RADIUS.lg, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });
+
 
 
 

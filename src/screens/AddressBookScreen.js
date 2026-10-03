@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -285,7 +285,7 @@ const styles = StyleSheet.create({
   
   listContainer: { padding: 16, paddingBottom: 100 },
   card: { backgroundColor: '#fff', borderRadius: RADIUS.lg, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: COLORS.border, ...SHADOWS.small },
-  cardDefault: { borderColor: COLORS.primary, borderWidth: 1.5, backgroundColor: 'rgba(255,107,53,0.02)' },
+  cardDefault: { borderColor: COLORS.primary, borderWidth: 1.5, backgroundColor: 'rgba(255₹07,53,0.02)' },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
   titleWrap: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   title: { fontSize: 16, fontWeight: '800', color: COLORS.text, letterSpacing: -0.2 },
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
   modalContent: { padding: 20 },
   typeSelector: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   typeBtn: { flex: 1, paddingVertical: 12, alignItems: 'center', backgroundColor: COLORS.elevated, borderRadius: RADIUS.md, borderWidth: 1, borderColor: COLORS.border },
-  typeBtnActive: { backgroundColor: 'rgba(255,107,53,0.1)', borderColor: COLORS.primary },
+  typeBtnActive: { backgroundColor: 'rgba(255₹07,53,0.1)', borderColor: COLORS.primary },
   typeBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.textMuted },
   typeBtnTextActive: { color: COLORS.primary },
 
@@ -332,3 +332,4 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: COLORS.text, paddingVertical: 16, borderRadius: RADIUS.md, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontSize: 16, fontWeight: '800' },
 });
+

@@ -74,7 +74,7 @@ export default function ProfileScreen({ navigation }) {
             <Text style={styles.sectionTitle}>Account Settings</Text>
             
             <TouchableOpacity style={styles.menuListBtn} onPress={() => navigation.navigate('Orders')}>
-              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255,107,53,0.1)' }]}>
+              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255₹07,53,0.1)' }]}>
                 <Ionicons name="cube" size={22} color={COLORS.primary} />
               </View>
               <View style={styles.menuListText}>
@@ -85,7 +85,7 @@ export default function ProfileScreen({ navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.menuListBtn} onPress={() => navigation.navigate('Wishlist')}>
-              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255,107,53,0.1)' }]}>
+              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255₹07,53,0.1)' }]}>
                 <Ionicons name="heart" size={22} color={COLORS.primary} />
               </View>
               <View style={styles.menuListText}>
@@ -96,7 +96,7 @@ export default function ProfileScreen({ navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.menuListBtn} onPress={() => navigation.navigate('AddressBook')}>
-              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255,107,53,0.1)' }]}>
+              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255₹07,53,0.1)' }]}>
                 <Ionicons name="location" size={22} color={COLORS.primary} />
               </View>
               <View style={styles.menuListText}>
@@ -107,7 +107,7 @@ export default function ProfileScreen({ navigation }) {
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.menuListBtn}>
-              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255,107,53,0.1)' }]}>
+              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255₹07,53,0.1)' }]}>
                 <Ionicons name="shield-checkmark" size={22} color={COLORS.primary} />
               </View>
               <View style={styles.menuListText}>
@@ -117,7 +117,7 @@ export default function ProfileScreen({ navigation }) {
               <Ionicons name="chevron-forward" size={20} color={COLORS.border} />
             </TouchableOpacity>
             <TouchableOpacity style={[styles.menuListBtn, { borderBottomWidth: 0 }]} onPress={() => Linking.openURL('https://wa.me/919900000000')}>
-              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255,107,53,0.1)' }]}>
+              <View style={[styles.menuIconBg, { backgroundColor: 'rgba(255₹07,53,0.1)' }]}>
                 <Ionicons name="chatbubbles" size={22} color={COLORS.primary} />
               </View>
               <View style={styles.menuListText}>
@@ -215,6 +215,7 @@ const styles = StyleSheet.create({
   primaryBtn: { backgroundColor: COLORS.primary, width: '100%', paddingVertical: 20, borderRadius: RADIUS.xl, alignItems: 'center', marginBottom: 16, ...SHADOWS.lg },
   primaryBtnText: { color: '#fff', fontSize: 18, fontWeight: '900', letterSpacing: 0.5 },
 });
+
 
 
 
