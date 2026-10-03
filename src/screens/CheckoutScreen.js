@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -15,13 +15,54 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { orderAPI } from '../utils/api';
+import { orderAPI, addressAPI } from '../utils/api';
 
 export default function CheckoutScreen({ navigation }) {
   const { cartTotal, clearCart } = useCart();
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState('cod');
+  const [addresses, setAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState('new');
+  const [addressesLoading, setAddressesLoading] = useState(true);
+
+  useEffect(() => {
+    addressAPI.getAddresses()
+      .then(res => {
+        const data = res.data.results || res.data;
+        setAddresses(data);
+        const defaultAddr = data.find(a => a.is_default);
+        if (defaultAddr) {
+          setSelectedAddressId(defaultAddr.id);
+          populateFormWithAddress(defaultAddr);
+        } else if (data.length > 0) {
+          setSelectedAddressId(data[0].id);
+          populateFormWithAddress(data[0]);
+        }
+      })
+      .catch(console.error)
+      .finally(() => setAddressesLoading(false));
+  }, []);
+
+  const populateFormWithAddress = (addr) => {
+    setForm(prev => ({
+      ...prev,
+      delivery_address: addr.address_line,
+      delivery_city: addr.city,
+      delivery_state: addr.state,
+      delivery_pincode: addr.pincode,
+    }));
+  };
+
+  const handleAddressSelect = (addrId) => {
+    setSelectedAddressId(addrId);
+    if (addrId === 'new') {
+      setForm({ delivery_address: '', delivery_city: '', delivery_state: '', delivery_pincode: '' });
+    } else {
+      const addr = addresses.find(a => a.id === addrId);
+      if (addr) populateFormWithAddress(addr);
+    }
+  };
 
   // These keys must match the API's field names exactly. They were previously
   // `city` / `state` / `pincode`, which the serializer ignored -- so every
@@ -59,7 +100,7 @@ export default function CheckoutScreen({ navigation }) {
       const orderNumber = res.data?.order_id || res.data?.id || '';
 
       Alert.alert(
-        'Order placed 🎉',
+        'Order placed Ã°Å¸Å½â€°',
         orderNumber
           ? `Your order ${orderNumber} is confirmed. Pay cash when it arrives.`
           : 'Your order is confirmed. Pay cash when it arrives.',
@@ -104,12 +145,34 @@ export default function CheckoutScreen({ navigation }) {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Delivery Address</Text>
           
+          {!addressesLoading && addresses.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+              {addresses.map(addr => (
+                <TouchableOpacity 
+                  key={addr.id} 
+                  style={[styles.addressBadge, selectedAddressId === addr.id && styles.addressBadgeActive]}
+                  onPress={() => handleAddressSelect(addr.id)}
+                >
+                  <Text style={[styles.addressBadgeTitle, selectedAddressId === addr.id && styles.addressBadgeTextActive]}>{addr.title}</Text>
+                  <Text style={[styles.addressBadgeText, selectedAddressId === addr.id && styles.addressBadgeTextActive]} numberOfLines={1}>{addr.address_line}, {addr.city}</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity 
+                style={[styles.addressBadge, selectedAddressId === 'new' && styles.addressBadgeActive]}
+                onPress={() => handleAddressSelect('new')}
+              >
+                <Text style={[styles.addressBadgeTitle, selectedAddressId === 'new' && styles.addressBadgeTextActive]}>+ New Address</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          )}
+
           <View style={styles.card}>
             <Text style={styles.fieldLabel}>Complete Address</Text>
             <TextInput 
               style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
               value={form.delivery_address}
               onChangeText={t => setForm({...form, delivery_address: t})}
+              editable={selectedAddressId === 'new'}
               multiline
               placeholder="House, Street, Area..."
               placeholderTextColor={COLORS.textDim}
@@ -121,7 +184,7 @@ export default function CheckoutScreen({ navigation }) {
                  <TextInput
                   style={styles.input}
                   value={form.delivery_city}
-                  onChangeText={t => setForm({...form, delivery_city: t})}
+                  onChangeText={t => setForm({...form, delivery_city: t})} editable={selectedAddressId === 'new'}
                 />
               </View>
               <View style={[styles.field, { flex: 1 }]}>
@@ -129,7 +192,7 @@ export default function CheckoutScreen({ navigation }) {
                  <TextInput
                   style={styles.input}
                   value={form.delivery_state}
-                  onChangeText={t => setForm({...form, delivery_state: t})}
+                  onChangeText={t => setForm({...form, delivery_state: t})} editable={selectedAddressId === 'new'}
                 />
               </View>
             </View>
@@ -211,6 +274,12 @@ export default function CheckoutScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  addressBadge: { padding: 12, borderWidth: 1, borderColor: COLORS.border, borderRadius: RADIUS.sm, marginRight: 12, width: 140, backgroundColor: '#fff' },
+  addressBadgeActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primary + '11' },
+  addressBadgeTitle: { fontSize: 13, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
+  addressBadgeText: { fontSize: 12, color: COLORS.textMuted },
+  addressBadgeTextActive: { color: COLORS.primary },
+
   container: { flex: 1, backgroundColor: COLORS.background },
   header: { flexDirection: 'row', alignItems: 'center', paddingTop: 60, paddingHorizontal: 20, paddingBottom: 20 },
   backBtn: { width: 40, height: 40, borderRadius: RADIUS.md, backgroundColor: COLORS.card, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: COLORS.border, marginRight: 15 },
@@ -248,3 +317,8 @@ const styles = StyleSheet.create({
   submitBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: COLORS.primary, paddingVertical: 18, borderRadius: RADIUS.lg, ...SHADOWS.brand, marginTop: 10 },
   submitText: { color: '#fff', fontSize: 18, fontWeight: '800' }
 });
+
+
+
+
+

@@ -499,7 +499,7 @@ export default function SellerDashboardScreen({ navigation }) {
                 </View>
                 <View style={styles.toggleItem}>
                   <Text style={styles.toggleLabel}>Online Delivery</Text>
-                  <Switch value={shopForm.online_delivery_enabled} onValueChange={v => setShopForm({...shopForm, online_delivery_enabled: v})} trackColor={{ true: COLORS.primary }} />
+                  <Switch value={shopForm.online_delivery_enabled} onValueChange={v => { if (v && !shopForm.gst_number) { Alert.alert('GST Required', 'Please enter your GST number to enable Online Delivery.'); setShopForm({...shopForm, online_delivery_enabled: false}); } else { setShopForm({...shopForm, online_delivery_enabled: v}); } }} trackColor={{ true: COLORS.primary }} />
                 </View>
               </View>
               <TouchableOpacity style={styles.saveBtn} onPress={handleSaveShop} disabled={savingShop}>
@@ -688,6 +688,7 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: COLORS.primary, padding: 16, borderRadius: RADIUS.lg, alignItems: 'center' },
   saveBtnText: { color: '#fff', fontWeight: '800', fontSize: 15 },
 });
+
 
 
 
