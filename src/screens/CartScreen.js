@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { 
   View, 
   Text, 
@@ -64,7 +64,7 @@ export default function CartScreen({ navigation }) {
 
       {isEmpty ? (
          <View style={styles.emptyContainer}>
-            <Text style={styles.emptyIcon}>🛒</Text>
+            <Text style={styles.emptyIcon}>ðŸ›’</Text>
             <Text style={styles.emptyTitle}>Your cart is empty</Text>
             <Text style={styles.emptySub}>Looks like you haven't added anything to your cart yet.</Text>
             <TouchableOpacity style={styles.primaryBtn} onPress={() => navigation.navigate('Home')}>
@@ -94,7 +94,7 @@ export default function CartScreen({ navigation }) {
                   </View>
                   <View style={styles.itemDetails}>
                     <Text style={styles.itemName} numberOfLines={2}>{name}</Text>
-                    <Text style={styles.itemPrice}>₹{parseFloat(price).toFixed(2)}</Text>
+                    <Text style={styles.itemPrice}>â‚¹{parseFloat(price).toFixed(2)}</Text>
                     
                     {Object.keys(itemVariants).length > 0 && (
                       <Text style={styles.itemVariants}>
@@ -104,11 +104,11 @@ export default function CartScreen({ navigation }) {
                     
                     <View style={styles.itemActionsRow}>
                       <View style={styles.qtyControl}>
-                        <TouchableOpacity style={styles.qtyBtn} onPress={() => addToCart(productId, Math.max(1, item.quantity - 1), item.variants)}>
+                        <TouchableOpacity style={styles.qtyBtn} onPress={() => updateCartItem(item.id, Math.max(1, item.quantity - 1))}>
                           <Ionicons name="remove" size={16} color={COLORS.text} />
                         </TouchableOpacity>
                         <Text style={styles.qtyText}>{item.quantity}</Text>
-                        <TouchableOpacity style={styles.qtyBtn} onPress={() => addToCart(productId, item.quantity + 1, item.variants)}>
+                        <TouchableOpacity style={styles.qtyBtn} onPress={() => updateCartItem(item.id, item.quantity + 1)}>
                           <Ionicons name="add" size={16} color={COLORS.text} />
                         </TouchableOpacity>
                       </View>
@@ -119,7 +119,7 @@ export default function CartScreen({ navigation }) {
                     </View>
                   </View>
                   <View style={styles.itemLineTotal}>
-                    <Text style={styles.lineTotalText}>₹{(parseFloat(price) * item.quantity).toFixed(2)}</Text>
+                    <Text style={styles.lineTotalText}>â‚¹{(parseFloat(price) * item.quantity).toFixed(2)}</Text>
                   </View>
                 </View>
               );
@@ -133,7 +133,7 @@ export default function CartScreen({ navigation }) {
             
             <View style={styles.summaryRow}>
               <Text style={styles.summaryLabel}>Subtotal ({items.length} items)</Text>
-              <Text style={styles.summaryValue}>₹{cartSubtotal?.toFixed(2)}</Text>
+              <Text style={styles.summaryValue}>â‚¹{cartSubtotal?.toFixed(2)}</Text>
             </View>
 
             {cart?.applied_coupon_code ? (
@@ -145,7 +145,7 @@ export default function CartScreen({ navigation }) {
                     <Ionicons name="close" size={14} color={COLORS.textMuted} />
                   </TouchableOpacity>
                 </View>
-                <Text style={styles.discountValue}>-₹{(cartSubtotal - cartTotal).toFixed(2)}</Text>
+                <Text style={styles.discountValue}>-â‚¹{(cartSubtotal - cartTotal).toFixed(2)}</Text>
               </View>
             ) : (
               <View style={styles.couponInputRow}>
@@ -170,7 +170,7 @@ export default function CartScreen({ navigation }) {
             <View style={styles.divider} />
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>Total</Text>
-              <Text style={styles.totalValue}>₹{cartTotal.toFixed(2)}</Text>
+              <Text style={styles.totalValue}>â‚¹{cartTotal.toFixed(2)}</Text>
             </View>
 
             <TouchableOpacity style={styles.checkoutBtn} onPress={() => navigation.navigate('Checkout')}>
@@ -257,3 +257,4 @@ const styles = StyleSheet.create({
   continueBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16 },
   continueBtnText: { color: COLORS.textMuted, fontSize: 14, fontWeight: '600' },
 });
+

@@ -438,3 +438,4 @@ const styles = StyleSheet.create({
   recOldPrice: { fontSize: 11, color: COLORS.textMuted, textDecorationLine: 'line-through' },
 });
 
+

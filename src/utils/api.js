@@ -123,6 +123,7 @@ export const cartAPI = {
     quantity,
     variants,
   }),
+  updateItem: (itemId, quantity) => api.patch('/orders/cart/update_item/', { item_id: itemId, quantity }),
   removeItem: (itemId) => api.delete('/orders/cart/remove_item/', {
     data: { item_id: itemId },
   }),
@@ -140,4 +141,5 @@ export const orderAPI = {
 };
 
 export default api;
+
 

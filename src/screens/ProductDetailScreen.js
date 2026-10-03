@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Dimensions, Modal, TextInput
+  Image, Dimensions, Modal, TextInput, Animated, ActivityIndicator
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../context/CartContext';
@@ -30,6 +30,10 @@ export default function ProductDetailScreen({ route, navigation }) {
   const [selectedVariants, setSelectedVariants] = useState({});
   const [wishlist, setWishlist] = useState(false);
   const [quantity, setQuantity] = useState(1);
+  const [pincode, setPincode] = useState('');
+  const [checkingPin, setCheckingPin] = useState(false);
+  const [pinStatus, setPinStatus] = useState(null);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const [activeAccordion, setActiveAccordion] = useState('desc');
 
   const safeProduct = product || {};
@@ -155,9 +159,9 @@ export default function ProductDetailScreen({ route, navigation }) {
           </View>
 
           <View style={styles.pricing}>
-            <Text style={styles.priceSymbol}>₹</Text>
+            <Text style={styles.priceSymbol}>â‚¹</Text>
             <Text style={styles.priceMain}>{(discountPrice || price).toFixed(2)}</Text>
-            {discount > 0 && <Text style={styles.priceOld}>₹{price.toFixed(2)}</Text>}
+            {discount > 0 && <Text style={styles.priceOld}>â‚¹{price.toFixed(2)}</Text>}
             {discount > 0 && <Text style={styles.discountPct}>{discount}% off</Text>}
           </View>
 
@@ -265,7 +269,7 @@ export default function ProductDetailScreen({ route, navigation }) {
               </View>
               <View style={styles.fbtTotal}>
                 <Text style={{color: COLORS.textMuted, fontSize: 12}}>Total price:</Text>
-                <Text style={{fontSize: 20, fontWeight: '800', color: COLORS.primary, marginBottom: 8}}>₹{((discountPrice || price) + 499).toFixed(2)}</Text>
+                <Text style={{fontSize: 20, fontWeight: '800', color: COLORS.primary, marginBottom: 8}}>â‚¹{((discountPrice || price) + 499).toFixed(2)}</Text>
                 <TouchableOpacity style={styles.fbtBtn}><Text style={styles.fbtBtnText}>Add all 3 to Cart</Text></TouchableOpacity>
               </View>
             </View>
@@ -425,6 +429,8 @@ const styles = StyleSheet.create({
   modalClose: { position: 'absolute', top: 50, right: 20, zIndex: 10, padding: 8 },
   fullImage: { width, height: height * 0.7 },
 });
+
+
 
 
 

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, FlatList, TouchableOpacity,
   Image, Modal, Animated, Alert, ActivityIndicator
@@ -147,7 +147,7 @@ export default function WishlistScreen({ navigation }) {
                     : `${item.product_image.startsWith('/') ? '' : '/'}${item.product_image}`
                 }}
                 style={styles.productImage}
-                resizeMode="cover"
+                resizeMode="contain"
               />
             </TouchableOpacity>
 
@@ -162,11 +162,11 @@ export default function WishlistScreen({ navigation }) {
 
               <View style={styles.priceRow}>
                 <Text style={styles.priceCurrent}>
-                  ₹{(item.product_discount_price || item.product_price).toFixed(2)}
+                  â‚¹{(item.product_discount_price || item.product_price).toFixed(2)}
                 </Text>
                 {item.product_discount_price && (
                   <Text style={styles.priceOriginal}>
-                    ₹{item.product_price.toFixed(2)}
+                    â‚¹{item.product_price.toFixed(2)}
                   </Text>
                 )}
               </View>
@@ -377,3 +377,4 @@ const styles = StyleSheet.create({
     marginLeft: 72,
   },
 });
+

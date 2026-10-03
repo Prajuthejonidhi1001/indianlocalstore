@@ -22,10 +22,19 @@ export const auth = initializeAuth(app, {
   persistence: getReactNativePersistence(AsyncStorage)
 });
 
+export const resolveMediaUrl = (url, placeholder = '') => {
+  if (!url) return placeholder;
+  if (url.startsWith('http')) return url;
+  // Remove /api from API_BASE_URL to get the root host
+  const host = API_BASE_URL.replace('/api', '');
+  return host + url;
+};
+
 export default {
   API_BASE_URL,
   RAZORPAY_KEY: process.env.REACT_APP_RAZORPAY_KEY || '',
   firebaseConfig
 };
+
 
 

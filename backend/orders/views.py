@@ -49,6 +49,18 @@ class CartViewSet(viewsets.ModelViewSet):
         serializer = CartItemSerializer(cart_item)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=False, methods=['patch'])
+    def update_item(self, request):
+        cart = get_object_or_404(Cart, user=request.user)
+        item_id = request.data.get('item_id')
+        quantity = request.data.get('quantity')
+        if quantity is not None:
+            if int(quantity) <= 0:
+                CartItem.objects.filter(cart=cart, id=item_id).delete()
+            else:
+                CartItem.objects.filter(cart=cart, id=item_id).update(quantity=int(quantity))
+        return Response({'message': 'Item updated'}, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['delete'])
     def remove_item(self, request):
         cart = get_object_or_404(Cart, user=request.user)
@@ -158,7 +170,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             if seller and seller.id not in notified_sellers and seller.expo_push_token:
                 send_push_notification(
                     expo_push_token=seller.expo_push_token,
-                    title="New Order Received! 🛍️",
+                    title="New Order Received! ðŸ›ï¸",
                     body=f"You have a new order (#{order.order_id}). Please prepare the items for dispatch.",
                     data={"order_id": order.id}
                 )
@@ -291,7 +303,7 @@ class OrderViewSet(viewsets.ModelViewSet):
             if order.user.expo_push_token:
                 send_push_notification(
                     expo_push_token=order.user.expo_push_token,
-                    title="Order Dispatched! 🚚",
+                    title="Order Dispatched! ðŸšš",
                     body=f"Your order #{order.order_id} has been dispatched. Track it now!",
                     data={"order_id": order.id}
                 )
@@ -339,16 +351,17 @@ class OrderViewSet(viewsets.ModelViewSet):
             status_msgs = {
                 'confirmed': "has been confirmed by the seller",
                 'shipped': "has been shipped",
-                'delivered': "has been delivered! Enjoy your items 🎁",
+                'delivered': "has been delivered! Enjoy your items ðŸŽ",
                 'cancelled': "has been cancelled."
             }
             if new_status in status_msgs:
                 send_push_notification(
                     expo_push_token=order.user.expo_push_token,
-                    title=f"Order Update: {new_status.capitalize()} 📦",
+                    title=f"Order Update: {new_status.capitalize()} ðŸ“¦",
                     body=f"Your order #{order.order_id} {status_msgs[new_status]}",
                     data={"order_id": order.id}
                 )
         
         serializer = self.get_serializer(order)
         return Response(serializer.data)
+

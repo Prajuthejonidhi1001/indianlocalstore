@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+﻿import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { cartAPI } from '../utils/api';
 import { useAuth } from './AuthContext';
 import { Alert } from 'react-native';
@@ -34,6 +34,18 @@ export function CartProvider({ children }) {
       return true;
     } catch (err) {
       Alert.alert('Error', err.response?.data?.error || 'Failed to add to cart');
+      return false;
+    }
+  };
+
+  const updateCartItem = async (itemId, quantity) => {
+    if (!isAuthenticated) return false;
+    try {
+      await cartAPI.updateItem(itemId, quantity);
+      await fetchCart();
+      return true;
+    } catch (err) {
+      console.error(err);
       return false;
     }
   };
@@ -95,3 +107,4 @@ export const useCart = () => {
   if (!ctx) throw new Error('useCart must be used inside CartProvider');
   return ctx;
 };
+

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+﻿import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, Dimensions, Animated, TextInput, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, SHADOWS, RADIUS } from '../constants';
@@ -154,7 +154,7 @@ export default function ShopProductsScreen({ route, navigation }) {
             </View>
             <View style={{ flex: 1, paddingLeft: 16 }}>
               <Text style={styles.shopTitle} numberOfLines={1}>{shop.name}</Text>
-              <Text style={styles.shopCatText}>{shop.category_name || 'Retail'} Â· {shop.distance_km || '1.2'} km away</Text>
+              <Text style={styles.shopCatText}>{shop.category_name || 'Retail'} Ã‚Â· {shop.distance_km || '1.2'} km away</Text>
             </View>
           </View>
 
@@ -231,7 +231,7 @@ export default function ShopProductsScreen({ route, navigation }) {
                         <Text style={styles.productCat} numberOfLines={1}>{item.category_name}</Text>
                         <View style={styles.priceRow}>
                           <View>
-                            {(() => { const pPrice = typeof item.price === 'object' && item.price !== null ? (item.price.price || item.price.Size) : item.price; return (<><Text style={styles.productPrice}>₹{item.discount_price || pPrice}</Text>{item.discount_price && <Text style={{fontSize: 11, color: '#95a5a6', textDecorationLine: 'line-through'}}>₹{pPrice}</Text>}</>);})()}
+                            {(() => { const pPrice = typeof item.price === 'object' && item.price !== null ? (item.price.price || item.price.Size) : item.price; return (<><Text style={styles.productPrice}>â‚¹{item.discount_price || pPrice}</Text>{item.discount_price && <Text style={{fontSize: 11, color: '#95a5a6', textDecorationLine: 'line-through'}}>â‚¹{pPrice}</Text>}</>);})()}
                           </View>
                           <TouchableOpacity style={styles.addCartBtn} onPress={() => addToCart(item.id)}>
                             <Ionicons name="add" size={18} color="#fff" />
@@ -327,3 +327,4 @@ const styles = StyleSheet.create({
   productPrice: { fontSize: 16, fontWeight: '900', color: COLORS.primary },
   addCartBtn: { width: 28, height: 28, borderRadius: 8, backgroundColor: COLORS.text, justifyContent: 'center', alignItems: 'center' },
 });
+
